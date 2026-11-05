@@ -1,0 +1,141 @@
+class_name En
+extends RefCounted
+## Враг или босс — поля объекта врага из enemies.js (имена те же, что в JS, чтобы код переносился один в один).
+## В JS у врагов было много «необязательных» полей: здесь они объявлены все; NAN — «не задано» (undefined).
+
+var uid := 0
+var type := ""
+var def: Dictionary = {}
+var sprite := ""
+var alive := true
+var hittable := true
+var boss := false
+var mini := false
+var horiz := false
+var x := 0.0
+var y := 0.0
+var vx := 0.0
+var vy := 0.0
+var w := 10.0
+var h := 10.0
+var r := 4.0
+var rx := 0.0
+var ry := 0.0
+var hp := 1.0
+var maxHp := 1.0
+var score := 0.0
+var coins := 0.0
+var xp := 0.0
+var elite := false
+var isChild := false
+var larva := false
+var tint = null               # { hue, bright } или null
+var cv: Texture2D = null
+var age := 0.0
+var phase := 0.0              # у врага — фаза покачивания, у босса — номер фазы боя (1..3)
+var st := 0
+var t := 0.0
+var n := 0
+var fireT := 1.0
+var fireT2 := 2.0
+var flash := 0.0
+var frozen := 0.0
+var emp := 0.0
+var alpha := 1.0
+var bank := 0.0
+var lastX := 0.0
+var leaving := false
+var barrier := 0.0
+var shield := 0.0
+var shieldMax := 0.0
+var shieldHitT := 0.0
+var shieldRegenWait := 0.0
+var spd := 0.0
+var ty := 0.0
+var ty2 := 0.0
+var tx := 0.0
+var baseX := 0.0
+var baseY := 0.0
+var amp := 0.0
+var dir := 0.0
+var face := 1.0
+var spinAng := NAN
+var spin := 0.0
+var ai := ""
+var idx := 0
+var stay := 0.0
+var cyc := 0.0
+var jx := 0.0
+var spawnT := 0.0
+var spawned := 0
+var on := false
+var shotT := 0.0
+var ax := 0.0
+var ay := 0.0
+var R := 0.0
+var ang := 0.0
+var w0 := 0.0
+var chargeT := 0.0
+var charge := 0.0
+var dirx := 1.0
+var stepT := 0.0
+var walking := false
+var volley := 0
+var pat := 0
+var patT := 0.0
+var run := 0.0
+var runT := 0.0
+var slotX := 0.0
+var passes := 0
+var broadT := 0.0
+var misT := 0.0
+var splitVx := 0.0
+var vxBase := NAN
+var dodgeCd := NAN
+var v := 0.0
+var target := 0.0
+var shot := false
+var aim := 0.0
+var lane := 0.0
+var fog := false
+var dmgSum := 0.0
+var dmgT0 := 0.0
+var dmgCrit := false
+var hitT := -10.0
+var burn := 0.0
+var burnT := 0.0
+var burnDps := 0.0
+var enAcc := 0.0
+var extra := {}               # редкие поля врагов 3.1 (foes.js): ключ → значение
+
+# ── босс ──
+var bdef: Dictionary = {}
+var fallback := false
+var entering := false
+var reborn := false
+var cycle := 0
+var num := 1
+var pt := {}
+var orbs: Array = []
+var aim2 = null
+var dive = null
+var dash = null
+var gat = null
+var vuln := 0.0
+var trans := 0.0
+var rage := false
+var fx := 1.0
+var baseHp := 0.0
+var vt := 0.0
+var drained := 0.0
+var vtAll := 0.0
+var xn := 0
+var _dt := 0.0
+
+
+func g(key: String, default = null) -> Variant:
+	return extra.get(key, default)
+
+
+func s(key: String, value) -> void:
+	extra[key] = value
