@@ -301,7 +301,7 @@ func sectorDef(k: int) -> Dictionary:
 
 func bossDef(num: int) -> Dictionary:
 	var o = run.get("bossOrder") if run else null
-	var i := (num - 1) % D.BOSSES.size()
+	var i: int = (num - 1) % D.BOSSES.size()
 	return D.BOSSES[o[i] if o else i]
 
 
@@ -436,7 +436,7 @@ func onKey(code: String, down: bool) -> void:
 func clampPlayer() -> void:
 	var p := player
 	var m := p.w * 0.42
-	var bottom := G.H - Ui.bottomInset() - p.w * 0.45
+	var bottom: float = G.H - Ui.bottomInset() - p.w * 0.45
 	p.x = U.clamp(p.x, m, G.FW - m)
 	p.y = U.clamp(p.y, G.H * 0.14, maxf(G.H * 0.5, bottom))
 
@@ -3264,7 +3264,7 @@ func crescent(ctx: Ctx, w: Dictionary, th: float) -> void:
 
 func drawBullets(ctx: Ctx) -> void:
 	ctx.additive = true
-	var trail := G.has("fx_tr_rocket") and Main.quality > 0
+	var trail: bool = G.has("fx_tr_rocket") and Main.quality > 0
 	var vortex := G.has("fx_vortex")
 	for b in bullets:
 		if b.dead: continue
@@ -3386,7 +3386,7 @@ func drawPlayer(ctx: Ctx) -> void:
 	var blink: bool = p.inv > 0 and state == "play" and int(floor(p.inv * 14)) % 2 == 0
 	ctx.alpha = 0.35 if blink else 1.0
 	# в прыжке между секторами двигатели на форсаже
-	var boost := (1.3 if buffs.get("rapid", 0.0) > 0 or run.skillFx.get("sk_overclock", 0.0) > 0 else 1.0) + (scene.warp * 1.5 if scene != null and scene.kind == "jump" else 0.0)
+	var boost: float = (1.3 if buffs.get("rapid", 0.0) > 0 or run.skillFx.get("sk_overclock", 0.0) > 0 else 1.0) + (scene.warp * 1.5 if scene != null and scene.kind == "jump" else 0.0)
 	drawShip(ctx, s.ship.model, s.ship.skin, s.ship.trail, p.x, p.y, p.w, p.tilt, t, boost, run.get("parts"))
 	ctx.alpha = 1.0
 	# ресурс текущего оружия — вертикальная шкала слева от корабля

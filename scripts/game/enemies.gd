@@ -527,7 +527,7 @@ func _ai_kamikaze(e: En, dt: float) -> void:
 		e.x = U.damp(e.x, p.x, 0.8, dt)
 		e.t += dt
 		if e.t > 0.9:
-			e.st = 1; e.t = 0.45; A.play("mine", {"rate": 0.7})
+			e.st = 1; e.t = 0.45; e.dir = atan2(p.y - e.y, p.x - e.x); A.play("mine", {"rate": 0.7})
 	elif e.st == 1:
 		e.t -= dt
 		e.dir = atan2(p.y - e.y, p.x - e.x)
@@ -710,7 +710,7 @@ func _ai_hunter(e: En, dt: float) -> void:
 		e.x = U.damp(e.x, p.x, 2.4, dt)
 		e.t += dt
 		if e.t > 1.3:
-			e.st = 1; e.t = 0.38
+			e.st = 1; e.t = 0.38; e.dir = atan2(p.y - e.y, p.x - e.x)  # сразу: в JS до первого расчёта dir был undefined и спрайт не поворачивался
 	elif e.st == 1:
 		e.t -= dt
 		e.dir = atan2(p.y - e.y, p.x - e.x)
@@ -1259,3 +1259,151 @@ func hitTest(e: En, x: float, y: float, pad: float, k := 1.0) -> bool:
 		return dx * dx + dy * dy <= 1.0
 	var rr := e.r * k + pad
 	return U.dist2(e.x, e.y, x, y) <= rr * rr
+
+
+## горизонтальные спрайты: «смотрят» влево (босс) или вправо (Рейдер, миноукладчик, био-мех) — отражаем по ходу движения
+func horizFlip(e: En) -> float:
+	if e.boss: return -1.0 if (e.sprite == "b_mothership" or e.sprite == "b_heavycruiser") and e.face > 0 else 1.0
+	if e.horiz: return -1.0 if e.vx < 0 else 1.0
+	return 1.0
+
+
+# ════════════════════════════════════════════════════════════
+# ОТРИСОВКА
+# ════════════════════════════════════════════════════════════
+func drawFrame(ctx: Ctx, sprite: String, cv: Texture2D, w: float, h: float) -> void:
+	if cv:
+		ctx.draw_tex(cv, -w / 2, -h / 2, w, h)
+		return
+	var f := G.frame(sprite)
+	if not f.is_empty(): ctx.draw_image(G.src(f), f[0], f[1], f[2], f[3], -w / 2, -h / 2, w, h)
+
+
+func _lighter(ctx: Ctx, a: float) -> void:
+	ctx.additive = true
+	ctx.alpha = a
+
+
+func _normal(ctx: Ctx, a := 1.0) -> void:
+	ctx.additive = false
+	ctx.alpha = a
+
+
+func drawAll(ctx: Ctx) -> void:
+	var S := G.S
+	# останки боссов
+	for c: Dictionary in corpses:
+		var k: float = c.t / c.dur
+		ctx.save()
+		ctx.translate(c.x + U.rand(-3, 3) * S * k, c.y + U.rand(-3, 3) * S * k)
+		if c.rot: ctx.rotate(c.rot)
+		if c.flip < 0: ctx.scale(-1, 1)
+		ctx.alpha = 1 - k * 0.6
+		drawFrame(ctx, c.sprite, c.cv, c.w, c.h)
+		_lighter(ctx, k * 0.8)
+		var wh := G.white(c.sprite)
+		if wh: ctx.draw_tex(wh, -c.w / 2, -c.h / 2, c.w, c.h)
+		ctx.restore()
+	var bubble := G.has("fx_sh_bubble")
+	for e: En in Game.enemies:
+		if not e.alive: continue
+		if e.boss:
+			B.drawBoss(ctx, e)
+			continue
+		var def: Dictionary = e.def
+		var ai: String = def.ai
+		if e.tint != null and e.cv == null: e.cv = G.tinted(e.sprite, e.tint)
+		# полоса удара тарана
+		if ai == "ram" and e.st == 2:
+			_lighter(ctx, 0.16 + 0.14 * absf(sin(e.age * 20)))
+			ctx.fill = U.col("#ff3d3d")
+			ctx.fill_rect(e.lane - e.w * 0.35, e.y, e.w * 0.7, G.H - e.y)
+			ctx.alpha = 0.55 + 0.45 * absf(sin(e.age * 10))
+			G.draw(ctx, "fx_warn", e.lane, G.H * 0.8, 26 * S)
+			_normal(ctx)
+		ctx.save()
+		ctx.translate(e.x, e.y)
+		ctx.alpha = e.alpha
+		# аура элиты / заморозка
+		if e.elite or e.frozen > 0:
+			_lighter(ctx, e.alpha * (0.35 + sin(e.age * 6) * 0.12))
+			var gs := e.w * 1.6
+			ctx.draw_tex(G.soft("#9be8ff" if e.frozen > 0 else "#ffc83d", 64), -gs / 2, -gs / 2, gs, gs)
+			_normal(ctx, e.alpha)
+		# предупреждение камикадзе/охотника
+		if (ai == "kamikaze" or ai == "hunter") and e.st == 1:
+			_lighter(ctx, 0.6 + 0.4 * sin(e.age * 40))
+			var gs := e.w * 1.8
+			ctx.draw_tex(G.glow("#ff3d5a", 64), -gs / 2, -gs / 2, gs, gs)
+			_normal(ctx, e.alpha)
+		# заряд ионного луча
+		if ai == "ion" and e.st == 2:
+			var k := 1 - maxf(0, e.charge) / 0.85
+			var gs := e.w * (0.6 + k * 1.2)
+			_lighter(ctx, 0.5 + 0.5 * k)
+			ctx.draw_tex(G.glow("#7ff6ff", 64), -gs / 2, e.h * 0.4 - gs / 2, gs, gs)
+			_normal(ctx, e.alpha)
+		if e.horiz:
+			if horizFlip(e) < 0: ctx.scale(-1, 1)
+		elif not is_nan(e.spinAng):
+			ctx.rotate(e.spinAng)
+		else:
+			# def.rot без своего поворота — PI (D дополняет при загрузке)
+			var rot: float = def.rot + e.bank
+			if (ai == "kamikaze" or ai == "hunter") and e.st >= 1: rot = e.dir - PI / 2
+			if (e.ai == "diver" and e.st == 2) or e.ai == "flank": rot = def.rot + e.dir - PI / 2
+			if e.larva: rot = e.dir - PI / 2
+			ctx.rotate(rot)
+		drawFrame(ctx, e.sprite, e.cv, e.w, e.h)
+		if e.flash > 0:
+			_lighter(ctx, minf(1, e.flash * 12) * 0.8)
+			var wh := G.white(e.sprite)
+			if wh: ctx.draw_tex(wh, -e.w / 2, -e.h / 2, e.w, e.h)
+		ctx.restore()
+		# энергобарьер Редута
+		if e.barrier > 0:
+			var r := e.w * 0.62
+			_lighter(ctx, 0.3 + 0.15 * sin(e.age * 14) + (0.35 if e.shieldHitT > 0 else 0.0))
+			if bubble: G.draw_canvas(ctx, G.tinted("fx_sh_bubble", {"hue": 275}), e.x, e.y, r * 2.25, 0)
+			else: ctx.draw_tex(G.soft("#b06bff", 64), e.x - r * 1.2, e.y - r * 1.2, r * 2.4, r * 2.4)
+			ctx.alpha = 0.8
+			ctx.stroke = Color.WHITE if e.shieldHitT > 0 else U.col("#d9b8ff"); ctx.line_width = 2 * S
+			ctx.begin_path(); ctx.arc(e.x, e.y, r, e.age * 3, e.age * 3 + TAU * 0.85); ctx.stroke_path()
+			_normal(ctx)
+		# щит
+		if e.shield > 0:
+			var r := e.w * 0.66
+			var k := e.shield / e.shieldMax
+			_lighter(ctx, 0.18 + k * 0.2 + (0.4 if e.shieldHitT > 0 else 0.0))
+			if bubble: G.draw(ctx, "fx_sh_bubble", e.x, e.y, r * 2.25)
+			else: ctx.draw_tex(G.soft("#4cb8ff", 64), e.x - r * 1.15, e.y - r * 1.15, r * 2.3, r * 2.3)
+			ctx.alpha = 0.5 + k * 0.4
+			ctx.stroke = Color.WHITE if e.shieldHitT > 0 else U.col("#7fd8ff"); ctx.line_width = 2 * S
+			ctx.begin_path(); ctx.arc(e.x, e.y, r, 0, TAU * k); ctx.stroke_path()
+			_normal(ctx)
+		# значок угрозы над камикадзе/охотником
+		if (ai == "kamikaze" or ai == "hunter") and e.st == 1:
+			_lighter(ctx, 0.6 + 0.4 * absf(sin(e.age * 12)))
+			G.draw(ctx, "fx_warn", e.x, e.y - e.h * 0.7, 24 * S)
+			_normal(ctx)
+		# прицел снайпера
+		if ai == "sniper" and (e.st == 1 or e.st == 2):
+			var locked := e.st == 2
+			_lighter(ctx, 0.55 + 0.45 * sin(e.age * 50) if locked else 0.28)
+			ctx.stroke = U.col("#ff3d5a"); ctx.line_width = (2.0 if locked else 1.0) * S
+			ctx.stroke_line(e.x, e.y + e.h * 0.3, e.x + cos(e.aim) * 1400, e.y + sin(e.aim) * 1400)
+			_normal(ctx)
+		# полоса прочности: у мини-боссов и элиты всегда, у остальных — 1,5 с после попадания и гаснет (3.1: меньше мусора на экране)
+		var barA := 1.0 if e.mini or e.elite else U.clamp((1.5 - (Game.t - e.hitT)) / 0.4, 0, 1)
+		if e.hp < e.maxHp and e.alpha > 0.5 and barA > 0 and (e.mini or e.maxHp > 60 or e.elite):
+			var bw := minf(e.w * 0.8, 120 * S) if e.mini else maxf(24 * S, e.w * 0.5)
+			var bh := 5 * S if e.mini else 2.5 * S
+			var bx := e.x - bw / 2
+			var by := maxf(e.y - e.h * 0.55 - 6 * S, Hud.top_inset() - 32)
+			ctx.alpha = barA
+			ctx.fill = Color(0, 0, 0, 0.55); ctx.fill_rect(bx - 1, by - 1, bw + 2, bh + 2)
+			var k := maxf(0, e.hp / e.maxHp)
+			ctx.fill = U.col("#ff5c4d" if e.mini else ("#3dffa2" if k > 0.5 else ("#ffc83d" if k > 0.25 else "#ff4d5e")))
+			ctx.fill_rect(bx, by, bw * k, bh)
+			ctx.alpha = 1.0
+	_normal(ctx)

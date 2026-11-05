@@ -23,6 +23,11 @@ func _init() -> void:
 		push_error("Файл данных повреждён: " + PATH)
 		return
 	data = parsed
+	# у врагов без своего поворота спрайт смотрит вниз (в JS: def.rot !== undefined ? def.rot : Math.PI) —
+	# без этого дополнение ниже дало бы им rot = 0
+	for e in data.ENEMIES.values():
+		if not e.has("rot"):
+			e.rot = PI
 	for t in RECORD_TABLES:
 		if data.has(t):
 			_normalize(data[t])
