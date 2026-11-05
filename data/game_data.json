@@ -1,0 +1,5320 @@
+{
+ "BASE_LIVES": 4,
+ "DIFFS": {
+  "zen": {
+   "name": "ЗЕН",
+   "color": "#3dffd0",
+   "lead": 0,
+   "count": 0.65,
+   "hp": 0.6,
+   "spd": 0.8,
+   "fire": 0.45,
+   "bspd": 0.75,
+   "elite": 0,
+   "coins": 0.5,
+   "score": 1,
+   "xp": 1,
+   "power": 0,
+   "desc": "Мало врагов и пуль — спокойный полёт"
+  },
+  "easy": {
+   "name": "ЛЕГКО",
+   "color": "#3dffa2",
+   "lead": 0.3,
+   "count": 0.8,
+   "hp": 0.8,
+   "spd": 0.9,
+   "fire": 0.7,
+   "bspd": 0.85,
+   "elite": 0,
+   "coins": 0.75,
+   "score": 1,
+   "xp": 1,
+   "power": 0,
+   "desc": "Враги слабее и реже стреляют"
+  },
+  "normal": {
+   "name": "НОРМА",
+   "color": "#3de0ff",
+   "lead": 0.6,
+   "count": 1,
+   "hp": 1,
+   "spd": 1,
+   "fire": 1,
+   "bspd": 1,
+   "elite": 0.03,
+   "coins": 1,
+   "score": 1,
+   "xp": 1,
+   "power": 100,
+   "desc": "Задуманный баланс"
+  },
+  "hard": {
+   "name": "СЛОЖНО",
+   "color": "#ffc83d",
+   "lead": 0.75,
+   "waveOffset": 3,
+   "count": 1.25,
+   "hp": 2,
+   "spd": 1.08,
+   "fire": 1.3,
+   "bspd": 1.1,
+   "elite": 0.08,
+   "coins": 1.5,
+   "score": 1,
+   "xp": 1,
+   "power": 250,
+   "unlock": "normal",
+   "eliteShield": true,
+   "desc": "Больше врагов, элита со щитами и ускорением"
+  },
+  "nightmare": {
+   "name": "КОШМАР",
+   "color": "#ff8a3d",
+   "lead": 0.85,
+   "waveOffset": 6,
+   "count": 1.5,
+   "hp": 3,
+   "spd": 1.16,
+   "fire": 1.6,
+   "bspd": 1.2,
+   "elite": 0.14,
+   "coins": 2.1,
+   "score": 1,
+   "xp": 1,
+   "power": 450,
+   "unlock": "hard",
+   "bossRage": true,
+   "desc": "Плотный огонь, у боссов дополнительная фаза ярости"
+  },
+  "god": {
+   "name": "БОГ ВОЙНЫ",
+   "short": "БОГ",
+   "color": "#ff3d5a",
+   "lead": 0.95,
+   "waveOffset": 10,
+   "count": 1.8,
+   "hp": 3.9,
+   "spd": 1.25,
+   "fire": 1.95,
+   "bspd": 1.3,
+   "elite": 0.22,
+   "coins": 3,
+   "score": 1,
+   "xp": 1,
+   "power": 700,
+   "unlock": "nightmare",
+   "eliteShield": true,
+   "bossRage": true,
+   "drops": 0.6,
+   "desc": "Щиты у элиты, ярость боссов и меньше бонусов"
+  },
+  "hell": {
+   "name": "АД",
+   "color": "#ff2a1a",
+   "lead": 1,
+   "waveOffset": 14,
+   "count": 2,
+   "hp": 5.2,
+   "spd": 1.3,
+   "fire": 2.3,
+   "bspd": 1.4,
+   "elite": 0.3,
+   "coins": 4,
+   "score": 1,
+   "xp": 1,
+   "power": 1100,
+   "unlock": "god",
+   "eliteShield": true,
+   "bossRage": true,
+   "drops": 0.5,
+   "hell": true,
+   "desc": "Всё как на «Боге войны», только злее: сбитый враг огрызается кольцом пуль"
+  }
+ },
+ "DIFF_UNLOCK_WAVE": 25,
+ "DIFF_ORDER": [
+  "zen",
+  "easy",
+  "normal",
+  "hard",
+  "nightmare",
+  "god",
+  "hell"
+ ],
+ "MODES": {
+  "normal": {
+   "name": "ОБЫЧНЫЙ",
+   "ico": "🗺️",
+   "desc": "Карта секторов, боссы, станции"
+  },
+  "rush": {
+   "name": "БОСС-РАШ",
+   "ico": "👑",
+   "desc": "Только боссы, один за другим; между ними станция и трофей"
+  },
+  "survival": {
+   "name": "ВЫЖИВАНИЕ",
+   "ico": "⏱️",
+   "desc": "Без передышек и боссов: враги идут сплошным потоком и всё злее"
+  }
+ },
+ "WEAPONS": {
+  "laser": {
+   "name": "ЛАЗЕР",
+   "color": "#3de0ff",
+   "price": 0,
+   "rate": {
+    "dmg": 2,
+    "speed": 5,
+    "area": 1,
+    "range": 5
+   },
+   "tags": [
+    "Точный",
+    "Дальний бой"
+   ],
+   "desc": "Скорострельные импульсы. «Фокус»: чем дольше бьёте одну цель, тем сильнее — до +20%.",
+   "base": {
+    "dmg": 10,
+    "cd": 0.14,
+    "speed": 1050,
+    "pierce": 0,
+    "focus": 0.02,
+    "focusMax": 10,
+    "focusT": 0.6
+   },
+   "ups": [
+    {
+     "id": "dmg",
+     "name": "Мощность",
+     "max": 8,
+     "step": 0.12,
+     "unit": "% урона",
+     "costs": [
+      80,
+      140,
+      220,
+      350,
+      530,
+      780,
+      1120,
+      1610
+     ]
+    },
+    {
+     "id": "rate",
+     "name": "Темп стрельбы",
+     "max": 6,
+     "step": 0.08,
+     "unit": "% темпа",
+     "costs": [
+      110,
+      200,
+      320,
+      500,
+      760,
+      1120
+     ]
+    },
+    {
+     "id": "pierce",
+     "name": "Пробитие",
+     "max": 3,
+     "step": 1,
+     "unit": " врага насквозь",
+     "abs": true,
+     "costs": [
+      560,
+      1260,
+      2520
+     ]
+    }
+   ]
+  },
+  "shotgun": {
+   "name": "ДРОБОВИК",
+   "color": "#ffc83d",
+   "price": 600,
+   "rate": {
+    "dmg": 4,
+    "speed": 2,
+    "area": 3,
+    "range": 1
+   },
+   "tags": [
+    "Ближний бой",
+    "Против роя"
+   ],
+   "desc": "Два выстрела и перезарядка. В упор урон ×1,5 — подлетайте ближе.",
+   "base": {
+    "dmg": 7,
+    "cd": 0.28,
+    "speed": 860,
+    "pellets": 5,
+    "life": 0.52,
+    "mag": 2,
+    "reload": 0.9,
+    "closeT": 0.15,
+    "closeMul": 1.5
+   },
+   "ups": [
+    {
+     "id": "dmg",
+     "name": "Мощность",
+     "max": 8,
+     "step": 0.12,
+     "unit": "% урона",
+     "costs": [
+      100,
+      170,
+      270,
+      410,
+      600,
+      880,
+      1260,
+      1820
+     ]
+    },
+    {
+     "id": "pellets",
+     "name": "Дробинки",
+     "max": 4,
+     "step": 1,
+     "unit": " дробинки",
+     "units": [
+      " дробинка",
+      " дробинки",
+      " дробинок"
+     ],
+     "abs": true,
+     "costs": [
+      350,
+      770,
+      1400,
+      2380
+     ]
+    },
+    {
+     "id": "rate",
+     "name": "Перезарядка",
+     "max": 6,
+     "step": 0.08,
+     "unit": "% темпа",
+     "costs": [
+      130,
+      220,
+      360,
+      560,
+      840,
+      1230
+     ]
+    }
+   ]
+  },
+  "rocket": {
+   "name": "РАКЕТЫ",
+   "color": "#ff8a3d",
+   "price": 900,
+   "rate": {
+    "dmg": 3,
+    "speed": 2,
+    "area": 3,
+    "range": 5
+   },
+   "tags": [
+    "Самонаведение",
+    "Взрыв"
+   ],
+   "desc": "Залп самонаводящихся ракет, потом перезарядка 3,7 с (прокачкой — до 2,5 с). Пока она идёт, стреляйте из другого оружия.",
+   "base": {
+    "dmg": 58,
+    "aoe": 40,
+    "radius": 56,
+    "cd": 0.12,
+    "speed": 540,
+    "mag": 4,
+    "reload": 3.7
+   },
+   "ups": [
+    {
+     "id": "dmg",
+     "name": "Боеголовка",
+     "max": 8,
+     "step": 0.12,
+     "unit": "% урона",
+     "costs": [
+      110,
+      180,
+      290,
+      450,
+      670,
+      980,
+      1400,
+      2030
+     ]
+    },
+    {
+     "id": "aoe",
+     "name": "Радиус взрыва",
+     "max": 5,
+     "step": 0.15,
+     "unit": "% радиуса",
+     "costs": [
+      210,
+      360,
+      590,
+      900,
+      1330
+     ]
+    },
+    {
+     "id": "salvo",
+     "name": "Залп",
+     "max": 2,
+     "step": 1,
+     "unit": " ракета в залпе",
+     "units": [
+      " ракета в залпе",
+      " ракеты в залпе",
+      " ракет в залпе"
+     ],
+     "abs": true,
+     "costs": [
+      1260,
+      3080
+     ]
+    },
+    {
+     "id": "rate",
+     "name": "Перезарядка",
+     "max": 6,
+     "step": 0.08,
+     "unit": "% темпа",
+     "costs": [
+      170,
+      290,
+      480,
+      730,
+      1090,
+      1610
+     ]
+    }
+   ]
+  },
+  "arc": {
+   "name": "СЕРП",
+   "color": "#7ff6ff",
+   "price": 1200,
+   "rate": {
+    "dmg": 3,
+    "speed": 3,
+    "area": 4,
+    "range": 3
+   },
+   "tags": [
+    "Прошивает строй",
+    "Манёвры"
+   ],
+   "desc": "Волны-полумесяцы расширяются в полёте и прошивают врагов, слабея с каждым (−20%). Движение заряжает: волна шире и сильнее (×0,75…×1,5).",
+   "base": {
+    "dmg": 26,
+    "cd": 0.42,
+    "speed": 560,
+    "life": 0.7,
+    "w0": 60,
+    "w1": 130,
+    "thick": 10,
+    "pierceLoss": 0.2,
+    "minLeft": 0.3,
+    "charge": 1.1,
+    "drain": 0.3,
+    "min": 0.75,
+    "max": 1.5
+   },
+   "ups": [
+    {
+     "id": "dmg",
+     "name": "Мощность",
+     "max": 8,
+     "step": 0.12,
+     "unit": "% урона",
+     "costs": [
+      130,
+      210,
+      340,
+      500,
+      760,
+      1090,
+      1540,
+      2240
+     ]
+    },
+    {
+     "id": "range",
+     "name": "Размах",
+     "max": 5,
+     "step": 0.08,
+     "unit": "% ширины и дальности",
+     "costs": [
+      220,
+      390,
+      630,
+      950,
+      1400
+     ]
+    },
+    {
+     "id": "rate",
+     "name": "Частота",
+     "max": 6,
+     "step": 0.08,
+     "unit": "% темпа",
+     "costs": [
+      150,
+      270,
+      420,
+      640,
+      950,
+      1370
+     ]
+    }
+   ]
+  },
+  "plasma": {
+   "name": "ПЛАЗМА",
+   "color": "#ff5cf0",
+   "price": 1500,
+   "rate": {
+    "dmg": 5,
+    "speed": 1,
+    "area": 4,
+    "range": 4
+   },
+   "tags": [
+    "Мощный взрыв",
+    "Медленный снаряд"
+   ],
+   "desc": "Шар растёт в полёте: чем дальше цель, тем сильнее взрыв (от ×0,6 до ×1,3). Стреляйте издалека.",
+   "base": {
+    "dmg": 34,
+    "aoe": 28,
+    "radius": 72,
+    "cd": 0.72,
+    "speed": 430,
+    "grow": 0.45,
+    "min": 0.6,
+    "max": 1.3
+   },
+   "ups": [
+    {
+     "id": "dmg",
+     "name": "Заряд",
+     "max": 8,
+     "step": 0.12,
+     "unit": "% урона",
+     "costs": [
+      140,
+      220,
+      360,
+      550,
+      810,
+      1180,
+      1680,
+      2380
+     ]
+    },
+    {
+     "id": "aoe",
+     "name": "Радиус взрыва",
+     "max": 5,
+     "step": 0.15,
+     "unit": "% радиуса",
+     "costs": [
+      240,
+      410,
+      640,
+      980,
+      1470
+     ]
+    },
+    {
+     "id": "rate",
+     "name": "Синтез",
+     "max": 6,
+     "step": 0.08,
+     "unit": "% темпа",
+     "costs": [
+      180,
+      310,
+      490,
+      740,
+      1090,
+      1570
+     ]
+    }
+   ]
+  },
+  "lightning": {
+   "name": "МОЛНИЯ",
+   "color": "#fff36b",
+   "price": 2500,
+   "rate": {
+    "dmg": 2,
+    "speed": 3,
+    "area": 4,
+    "range": 4
+   },
+   "tags": [
+    "Цепная",
+    "Автонаведение"
+   ],
+   "desc": "Цепная молния сама находит цели. Тратит энергию — собирайте энергоблоки из врагов, без энергии бьёт слабая искра.",
+   "base": {
+    "dmg": 39,
+    "cd": 0.32,
+    "chain": 3,
+    "range": 150,
+    "falloff": 0.8,
+    "cost": 0.06,
+    "block": 0.15,
+    "spark": 0.35,
+    "drop": 0.15,
+    "bossStep": 0.025,
+    "maxOnScreen": 4
+   },
+   "ups": [
+    {
+     "id": "dmg",
+     "name": "Разряд",
+     "max": 8,
+     "step": 0.12,
+     "unit": "% урона",
+     "costs": [
+      150,
+      250,
+      410,
+      620,
+      910,
+      1320,
+      1890,
+      2660
+     ]
+    },
+    {
+     "id": "chain",
+     "name": "Прыжки",
+     "max": 4,
+     "step": 1,
+     "unit": " прыжок",
+     "units": [
+      " прыжок",
+      " прыжка",
+      " прыжков"
+     ],
+     "abs": true,
+     "costs": [
+      420,
+      910,
+      1680,
+      2800
+     ]
+    },
+    {
+     "id": "range",
+     "name": "Радиус цепи",
+     "max": 4,
+     "step": 0.15,
+     "unit": "% радиуса",
+     "costs": [
+      280,
+      490,
+      780,
+      1200
+     ]
+    }
+   ]
+  },
+  "darkmatter": {
+   "name": "Т. МАТЕРИЯ",
+   "color": "#b06bff",
+   "price": 3500,
+   "rate": {
+    "dmg": 3,
+    "speed": 1,
+    "area": 5,
+    "range": 3
+   },
+   "tags": [
+    "Притяжение",
+    "Контроль толпы"
+   ],
+   "desc": "Сфера притягивает врагов, жжёт их и схлопывается взрывом. На экране одна сфера — новая после схлопывания.",
+   "base": {
+    "dmg": 15,
+    "tick": 0.15,
+    "burst": 90,
+    "radius": 62,
+    "cd": 0.95,
+    "speed": 360,
+    "life": 1.3,
+    "pull": 160
+   },
+   "ups": [
+    {
+     "id": "dmg",
+     "name": "Масса",
+     "max": 8,
+     "step": 0.12,
+     "unit": "% урона",
+     "costs": [
+      180,
+      290,
+      460,
+      700,
+      1040,
+      1480,
+      2100,
+      2940
+     ]
+    },
+    {
+     "id": "aoe",
+     "name": "Горизонт",
+     "max": 5,
+     "step": 0.15,
+     "unit": "% радиуса",
+     "costs": [
+      270,
+      450,
+      710,
+      1090,
+      1610
+     ]
+    },
+    {
+     "id": "pull",
+     "name": "Гравитация",
+     "max": 4,
+     "step": 0.2,
+     "unit": "% притяжения",
+     "costs": [
+      280,
+      480,
+      770,
+      1230
+     ]
+    }
+   ]
+  }
+ },
+ "WEAPON_ORDER": [
+  "laser",
+  "shotgun",
+  "rocket",
+  "arc",
+  "plasma",
+  "lightning",
+  "darkmatter"
+ ],
+ "ECON": {
+  "coins": 0.75,
+  "waveGrowth": 0.015,
+  "boss": 0.6,
+  "xp": 0.7,
+  "upgrade": 1.4
+ },
+ "MODULES": [
+  {
+   "id": "power",
+   "ico": "💥",
+   "name": "МОЩЬ ОРУДИЙ",
+   "rar": "rare",
+   "max": 2,
+   "desc": "+20% урона всем оружием"
+  },
+  {
+   "id": "cooling",
+   "ico": "❄️",
+   "name": "ОХЛАЖДЕНИЕ",
+   "rar": "rare",
+   "max": 2,
+   "desc": "+15% темп стрельбы"
+  },
+  {
+   "id": "plating",
+   "ico": "❤️",
+   "name": "БРОНЕПЛИТЫ",
+   "rar": "epic",
+   "max": 2,
+   "desc": "+2 к максимуму жизней и +2 жизни сейчас"
+  },
+  {
+   "id": "shieldcore",
+   "ico": "🛡️",
+   "name": "ЯДРО ЩИТА",
+   "rar": "epic",
+   "max": 1,
+   "desc": "Щит сейчас и восстановление каждые 20 с"
+  },
+  {
+   "id": "wings",
+   "ico": "🛩️",
+   "name": "БОРТОВЫЕ ПУШКИ",
+   "rar": "epic",
+   "max": 1,
+   "desc": "Две пушки по бортам стреляют вместе с оружием"
+  },
+  {
+   "id": "targeting",
+   "ico": "🎯",
+   "name": "ТАКТИЧЕСКИЙ КОМПЬЮТЕР",
+   "rar": "rare",
+   "max": 1,
+   "desc": "+12% шанс крита, крит наносит ×2,5"
+  },
+  {
+   "id": "hunter",
+   "ico": "🏹",
+   "name": "БРОНЕБОЙНЫЕ СНАРЯДЫ",
+   "rar": "rare",
+   "max": 1,
+   "desc": "+35% урона по боссам, мини-боссам и элите"
+  },
+  {
+   "id": "salvage",
+   "ico": "💰",
+   "name": "УТИЛИЗАТОР",
+   "rar": "rare",
+   "max": 1,
+   "desc": "+40% монет, радиус сбора ×1,5"
+  },
+  {
+   "id": "scanner",
+   "ico": "💠",
+   "name": "КРИСТАЛЬНЫЙ СКАНЕР",
+   "rar": "rare",
+   "max": 1,
+   "desc": "+35% опыта забега — улучшения чаще"
+  },
+  {
+   "id": "bombbay",
+   "ico": "💣",
+   "name": "БОМБОВЫЙ ОТСЕК",
+   "rar": "rare",
+   "max": 1,
+   "desc": "+2 бомбы сейчас, урон бомб +60%"
+  },
+  {
+   "id": "gyro",
+   "ico": "🌀",
+   "name": "ГИРОСКОП",
+   "rar": "rare",
+   "max": 1,
+   "desc": "+15% скорость корабля и +10% уклонение"
+  },
+  {
+   "id": "chrono",
+   "ico": "⏱️",
+   "name": "ХРОНО-МОДУЛЬ",
+   "rar": "rare",
+   "max": 1,
+   "desc": "Навыки и бомба перезаряжаются на 30% быстрее"
+  },
+  {
+   "id": "repair",
+   "ico": "🔧",
+   "name": "РЕМОНТНЫЙ ДРОН",
+   "rar": "epic",
+   "max": 1,
+   "desc": "+1 жизнь каждые 60 с"
+  },
+  {
+   "id": "emergency",
+   "ico": "🚨",
+   "name": "АВАРИЙНЫЙ ПРОТОКОЛ",
+   "rar": "legendary",
+   "max": 1,
+   "desc": "На последней жизни щит восстанавливается каждые 12 с"
+  }
+ ],
+ "MODULE_CHOICES": 3,
+ "PILOTS": {
+  "kai": {
+   "name": "КАЙ",
+   "title": "Курсант",
+   "ico": "🎓",
+   "color": "#3de0ff",
+   "lvl": 1,
+   "desc": "Учится на лету: +20% опыта забега — улучшения чаще"
+  },
+  "vega": {
+   "name": "ВЕГА",
+   "title": "Ас",
+   "ico": "🦅",
+   "color": "#ff5c7a",
+   "lvl": 3,
+   "desc": "+10% урона и +5% шанс крита"
+  },
+  "bork": {
+   "name": "БОРК",
+   "title": "Механик",
+   "ico": "🔧",
+   "color": "#ffc83d",
+   "lvl": 5,
+   "desc": "+1 к максимуму жизней; на каждой станции чинит корабль: +1 жизнь"
+  },
+  "lira": {
+   "name": "ЛИРА",
+   "title": "Торговка",
+   "ico": "💰",
+   "color": "#3dffa2",
+   "lvl": 8,
+   "desc": "+20% монет; на станции выбор из 4 модулей"
+  },
+  "nox": {
+   "name": "НОКС",
+   "title": "Призрак",
+   "ico": "👻",
+   "color": "#b06bff",
+   "lvl": 11,
+   "desc": "+12% уклонения; после попадания неуязвимость вдвое дольше"
+  },
+  "rex": {
+   "name": "РЕКС",
+   "title": "Канонир",
+   "ico": "💣",
+   "color": "#ff8a3d",
+   "lvl": 14,
+   "desc": "+2 бомбы на старте, урон бомб +50%, бомба перезаряжается вдвое быстрее"
+  }
+ },
+ "PILOT_ORDER": [
+  "kai",
+  "vega",
+  "bork",
+  "lira",
+  "nox",
+  "rex"
+ ],
+ "WAVE_EVENTS": {
+  "from": 3,
+  "chance": 0.3,
+  "forkShare": 0.5
+ },
+ "DANGER": {
+  "count": 1.4,
+  "elite": 0.15,
+  "coins": 2
+ },
+ "COMPANIONS": {
+  "gunner": {
+   "name": "СТРЕЛОК",
+   "ico": "🔫",
+   "sprite": "e_drone2",
+   "hue": 190,
+   "color": "#3de0ff",
+   "price": 0,
+   "lvl": 1,
+   "desc": "Бьёт ближайших врагов",
+   "cd": [
+    0.5,
+    0.45,
+    0.4,
+    0.35,
+    0.3
+   ],
+   "dmg": [
+    8,
+    10,
+    12,
+    14,
+    17
+   ],
+   "costs": [
+    300,
+    600,
+    1000,
+    1600
+   ],
+   "up": "чаще и сильнее"
+  },
+  "medic": {
+   "name": "САНИТАР",
+   "ico": "💚",
+   "sprite": "p_medship",
+   "color": "#5cff9d",
+   "price": 1500,
+   "lvl": 4,
+   "rot": 0,
+   "desc": "Чинит жизнь, а если цел — ставит щит",
+   "cd": [
+    70,
+    62,
+    55,
+    48,
+    40
+   ],
+   "costs": [
+    500,
+    900,
+    1400,
+    2000
+   ],
+   "up": "чинит чаще"
+  },
+  "collector": {
+   "name": "СБОРЩИК",
+   "ico": "🧲",
+   "sprite": "sp_radar",
+   "color": "#ffc83d",
+   "price": 1200,
+   "lvl": 3,
+   "desc": "Тянет монеты и кристаллы со всего экрана, +5% монет за уровень",
+   "costs": [
+    400,
+    800,
+    1200,
+    1800
+   ],
+   "up": "+5% монет"
+  },
+  "guard": {
+   "name": "СТРАЖ",
+   "ico": "🛡️",
+   "sprite": "sp_arm_core",
+   "color": "#7fd8ff",
+   "price": 2000,
+   "lvl": 6,
+   "desc": "Кружит вокруг корабля и ловит вражеские пули",
+   "cd": [
+    1.2,
+    1,
+    0.85,
+    0.7,
+    0.55
+   ],
+   "costs": [
+    600,
+    1000,
+    1500,
+    2200
+   ],
+   "up": "ловит чаще"
+  },
+  "bomber": {
+   "name": "ПОДРЫВНИК",
+   "ico": "💣",
+   "sprite": "c_red",
+   "color": "#ff8a3d",
+   "price": 2500,
+   "lvl": 8,
+   "desc": "Пускает самонаводящуюся бомбу в самого крепкого врага",
+   "cd": [
+    9,
+    8,
+    7,
+    6,
+    5
+   ],
+   "dmg": [
+    40,
+    55,
+    70,
+    85,
+    100
+   ],
+   "costs": [
+    700,
+    1200,
+    1800,
+    2600
+   ],
+   "up": "чаще и сильнее"
+  }
+ },
+ "COMPANION_ORDER": [
+  "gunner",
+  "collector",
+  "medic",
+  "guard",
+  "bomber"
+ ],
+ "MAP_NODES": {
+  "fight": {
+   "ico": "⚔️",
+   "name": "БОЙ",
+   "color": "#3de0ff",
+   "w": 40,
+   "first": true,
+   "desc": "Обычная волна"
+  },
+  "elite": {
+   "ico": "💀",
+   "name": "ЭЛИТА",
+   "color": "#ff4d6d",
+   "w": 16,
+   "first": false,
+   "desc": "Врагов больше, элита чаще — награда: сундук"
+  },
+  "shop": {
+   "ico": "🛒",
+   "name": "ТОРГОВЕЦ",
+   "color": "#ffc83d",
+   "w": 10,
+   "first": true,
+   "desc": "После волны — лавка: модули, улучшения, сундук"
+  },
+  "repair": {
+   "ico": "🔧",
+   "name": "РЕМОНТ",
+   "color": "#3dffa2",
+   "w": 10,
+   "first": false,
+   "desc": "После волны — +2 жизни (или щит, если здоровы)"
+  },
+  "cache": {
+   "ico": "📦",
+   "name": "ТАЙНИК",
+   "color": "#b06bff",
+   "w": 12,
+   "first": true,
+   "desc": "Волна полегче, после — монеты и шанс сундука"
+  },
+  "event": {
+   "ico": "❓",
+   "name": "СОБЫТИЕ",
+   "color": "#7fe7ff",
+   "w": 12,
+   "first": true,
+   "desc": "После волны — встреча с выбором"
+  },
+  "escort": {
+   "ico": "🛡",
+   "name": "ЭСКОРТ",
+   "color": "#ffc83d",
+   "w": 9,
+   "first": false,
+   "desc": "Доведите Торговца живым — скидка 30% в следующей лавке и сундук"
+  }
+ },
+ "CHESTS": {
+  "bronze": {
+   "name": "БРОНЗОВЫЙ СУНДУК",
+   "short": "БРОНЗОВЫЙ",
+   "color": "#e0965a",
+   "w": {
+    "common": 70,
+    "rare": 24,
+    "epic": 5,
+    "legendary": 0.6,
+    "cursed": 5
+   }
+  },
+  "silver": {
+   "name": "СЕРЕБРЯНЫЙ СУНДУК",
+   "short": "СЕРЕБРЯНЫЙ",
+   "color": "#9fd8ff",
+   "w": {
+    "common": 30,
+    "rare": 46,
+    "epic": 17,
+    "legendary": 3,
+    "cursed": 6
+   }
+  },
+  "gold": {
+   "name": "ЗОЛОТОЙ СУНДУК",
+   "short": "ЗОЛОТОЙ",
+   "color": "#ffc83d",
+   "w": {
+    "common": 0,
+    "rare": 40,
+    "epic": 40,
+    "legendary": 12,
+    "cursed": 8
+   }
+  }
+ },
+ "CHEST_ORDER": [
+  "bronze",
+  "silver",
+  "gold"
+ ],
+ "RELIC_DUPE": {
+  "common": 60,
+  "rare": 120,
+  "epic": 250,
+  "legendary": 500,
+  "cursed": 150
+ },
+ "RELIC_SLOTS": [
+  1,
+  6,
+  14
+ ],
+ "RELIC_RARITY": {
+  "common": {
+   "name": "ОБЫЧНАЯ",
+   "color": "#aab4d8",
+   "w": 50
+  },
+  "rare": {
+   "name": "РЕДКАЯ",
+   "color": "#3de0ff",
+   "w": 30
+  },
+  "epic": {
+   "name": "ЭПИЧЕСКАЯ",
+   "color": "#b06bff",
+   "w": 14
+  },
+  "legendary": {
+   "name": "ЛЕГЕНДАРНАЯ",
+   "color": "#ffc83d",
+   "w": 3
+  },
+  "cursed": {
+   "name": "ПРОКЛЯТАЯ",
+   "color": "#ff3d5a",
+   "w": 6
+  }
+ },
+ "RELICS": {
+  "r_lens": {
+   "rar": "common",
+   "ico": "🔍",
+   "name": "ФОКУСИРУЮЩАЯ ЛИНЗА",
+   "desc": "+12% урона"
+  },
+  "r_coolant": {
+   "rar": "common",
+   "ico": "🧊",
+   "name": "ХЛАДАГЕНТ",
+   "desc": "+12% темп стрельбы"
+  },
+  "r_scope": {
+   "rar": "common",
+   "ico": "🔭",
+   "name": "ПРИЦЕЛ ВЕТЕРАНА",
+   "desc": "+6% шанс крита, крит сильнее на ×0,5"
+  },
+  "r_kevlar": {
+   "rar": "common",
+   "ico": "🧥",
+   "name": "КЕВЛАРОВАЯ ОБШИВКА",
+   "desc": "+1 к максимуму жизней и +1 жизнь"
+  },
+  "r_gravlov": {
+   "rar": "common",
+   "ico": "🧲",
+   "name": "ГРАВИЛОВ",
+   "desc": "Радиус сбора ×2"
+  },
+  "r_purse": {
+   "rar": "common",
+   "ico": "👛",
+   "name": "ПИРАТСКИЙ КОШЕЛЬ",
+   "desc": "+25% монет"
+  },
+  "r_afterburner": {
+   "rar": "common",
+   "ico": "🚀",
+   "name": "ФОРСАЖНАЯ КАМЕРА",
+   "desc": "+12% скорость корабля, +5% уклонение"
+  },
+  "r_arsenal": {
+   "rar": "common",
+   "ico": "💣",
+   "name": "ЗАПАСНОЙ АРСЕНАЛ",
+   "desc": "+2 бомбы сейчас, урон бомб +40%"
+  },
+  "r_neuro": {
+   "rar": "common",
+   "ico": "🧠",
+   "name": "НЕЙРОЧИП",
+   "desc": "+25% опыта забега"
+  },
+  "r_combo": {
+   "rar": "common",
+   "ico": "🔥",
+   "name": "ТАЛИСМАН КОМБО",
+   "desc": "Комбо держится вдвое дольше"
+  },
+  "r_hourglass": {
+   "rar": "rare",
+   "ico": "⏳",
+   "name": "ПЕСОЧНЫЕ ЧАСЫ",
+   "desc": "Навыки и бомба перезаряжаются на 25% быстрее"
+  },
+  "r_dice": {
+   "rar": "rare",
+   "ico": "🎲",
+   "name": "СЧАСТЛИВЫЙ КУБИК",
+   "desc": "Бонусы выпадают на 50% чаще"
+  },
+  "r_trophy": {
+   "rar": "rare",
+   "ico": "🏆",
+   "name": "ТРОФЕЙ ОХОТНИКА",
+   "desc": "+30% урона по боссам и мини-боссам"
+  },
+  "r_hunteye": {
+   "rar": "rare",
+   "ico": "👁️",
+   "name": "ГЛАЗ ОХОТНИКА",
+   "desc": "+30% урона по элите, из элиты монеты ×2"
+  },
+  "r_reflector": {
+   "rar": "rare",
+   "ico": "🪞",
+   "name": "ОТРАЖАТЕЛЬ",
+   "desc": "Снаряды один раз отскакивают от краёв экрана"
+  },
+  "r_salvo": {
+   "rar": "rare",
+   "ico": "🎯",
+   "name": "СЧЁТЧИК ЗАЛПОВ",
+   "desc": "Каждый 10-й выстрел — ещё и самонаводящаяся ракета"
+  },
+  "r_shieldburst": {
+   "rar": "rare",
+   "ico": "💥",
+   "name": "ВЗРЫВНОЙ ЩИТ",
+   "desc": "Когда щит ломается, вокруг корабля взрыв"
+  },
+  "r_sparker": {
+   "rar": "rare",
+   "ico": "🌩️",
+   "name": "ИСКРОВОЙ РАЗРЯДНИК",
+   "desc": "Криты бьют молнией в ближайшего врага"
+  },
+  "r_frost": {
+   "rar": "rare",
+   "ico": "❄️",
+   "name": "ЛЕДЯНОЕ ЯДРО",
+   "desc": "10% шанс заморозить врага при попадании"
+  },
+  "r_redstar": {
+   "rar": "rare",
+   "ico": "⭐",
+   "name": "КРАСНАЯ ЗВЕЗДА",
+   "desc": "На последней жизни урон ×1,5"
+  },
+  "r_volatile": {
+   "rar": "rare",
+   "ico": "☢️",
+   "name": "НЕСТАБИЛЬНЫЙ РЕАКТОР",
+   "desc": "Уничтоженный враг взрывается и ранит соседей"
+  },
+  "r_chart": {
+   "rar": "rare",
+   "ico": "🗺️",
+   "name": "ЗВЁЗДНАЯ КАРТА",
+   "desc": "Торговцы на 25% дешевле, сундук забега с шансом 30% — на ступень лучше"
+  },
+  "r_bloodstone": {
+   "rar": "epic",
+   "ico": "🩸",
+   "name": "КРОВАВЫЙ КАМЕНЬ",
+   "desc": "Каждые 20 уничтоженных врагов — +1 жизнь"
+  },
+  "r_feather": {
+   "rar": "epic",
+   "ico": "🪶",
+   "name": "ПЕРО ФЕНИКСА",
+   "desc": "Один раз — воскрешение с 1 жизнью"
+  },
+  "r_buddy": {
+   "rar": "epic",
+   "ico": "🛸",
+   "name": "МАЛЕНЬКИЙ ПОМОЩНИК",
+   "desc": "+1 дрон-напарник"
+  },
+  "r_nano": {
+   "rar": "epic",
+   "ico": "🦠",
+   "name": "НАНОРОБОТЫ",
+   "desc": "+1 жизнь каждые 50 с"
+  },
+  "r_shieldgen": {
+   "rar": "epic",
+   "ico": "🔰",
+   "name": "ГЕНЕРАТОР ЩИТА",
+   "desc": "Щит в начале каждой волны"
+  },
+  "r_starheart": {
+   "rar": "epic",
+   "ico": "🌟",
+   "name": "СЕРДЦЕ ЗВЕЗДЫ",
+   "desc": "После каждого босса — +1 к максимуму жизней и +1 жизнь"
+  },
+  "r_crown": {
+   "rar": "epic",
+   "ico": "👑",
+   "name": "КОРОНА ЗАВОЕВАТЕЛЯ",
+   "desc": "Каждый побеждённый босс — +10% урона до конца забега"
+  },
+  "r_chrono": {
+   "rar": "epic",
+   "ico": "🕰️",
+   "name": "ХРОНОМЕТР",
+   "desc": "Когда остаётся последняя жизнь, враги замедляются на 3 с (раз в волну)"
+  },
+  "r_twins": {
+   "rar": "legendary",
+   "ico": "👯",
+   "name": "БЛИЗНЕЦЫ",
+   "desc": "+1 снаряд к каждому выстрелу"
+  },
+  "r_singularity": {
+   "rar": "legendary",
+   "ico": "🕳️",
+   "name": "ЯДРО СИНГУЛЯРНОСТИ",
+   "desc": "Бомба оставляет чёрную дыру на 4 с"
+  },
+  "r_stormeye": {
+   "rar": "legendary",
+   "ico": "🌪️",
+   "name": "ОКО БУРИ",
+   "desc": "Каждые 8 с молния бьёт самого крепкого врага на экране"
+  },
+  "r_cursedcoin": {
+   "rar": "cursed",
+   "ico": "🪙",
+   "name": "ПРОКЛЯТАЯ МОНЕТА",
+   "desc": "Монеты ×2, но враги на 15% крепче"
+  },
+  "r_glassblade": {
+   "rar": "cursed",
+   "ico": "🔪",
+   "name": "СТЕКЛЯННЫЙ КЛИНОК",
+   "desc": "Урон +40%, но максимум жизней −2"
+  }
+ },
+ "MAP_EVENTS": [
+  {
+   "id": "wreck",
+   "ico": "🛰️",
+   "title": "ДРЕЙФУЮЩИЙ КОРАБЛЬ",
+   "sub": "Сигнала нет. Внутри может быть что угодно",
+   "cards": [
+    {
+     "id": "search",
+     "ico": "🔦",
+     "name": "ОБЫСКАТЬ",
+     "desc": "60% — бронзовый сундук, 40% — засада: следующая волна элитная",
+     "rar": "rare"
+    },
+    {
+     "id": "pass",
+     "ico": "👋",
+     "name": "ПРОЛЕТЕТЬ МИМО",
+     "desc": "Не рисковать",
+     "rar": "common"
+    }
+   ]
+  },
+  {
+   "id": "black",
+   "ico": "🕶️",
+   "title": "ЧЁРНЫЙ РЫНОК",
+   "sub": "Тут платят не монетами",
+   "cards": [
+    {
+     "id": "blood",
+     "ico": "🩸",
+     "name": "ОТДАТЬ ЖИЗНЬ",
+     "desc": "−1 жизнь, взамен — золотой сундук",
+     "rar": "epic"
+    },
+    {
+     "id": "pass",
+     "ico": "👋",
+     "name": "УЙТИ",
+     "desc": "Сделка не нужна",
+     "rar": "common"
+    }
+   ]
+  },
+  {
+   "id": "anomaly",
+   "ico": "🌀",
+   "title": "АНОМАЛИЯ",
+   "sub": "Пространство здесь искривлено",
+   "cards": [
+    {
+     "id": "enter",
+     "ico": "🎲",
+     "name": "ВОЙТИ",
+     "desc": "50% — случайный модуль корабля, 50% — −1 жизнь",
+     "rar": "rare"
+    },
+    {
+     "id": "pass",
+     "ico": "↪️",
+     "name": "ОБЛЕТЕТЬ",
+     "desc": "Не рисковать",
+     "rar": "common"
+    }
+   ]
+  },
+  {
+   "id": "distress",
+   "ico": "🆘",
+   "title": "СИГНАЛ БЕДСТВИЯ",
+   "sub": "Подбитый грузовик просит помощи",
+   "cards": [
+    {
+     "id": "help",
+     "ico": "🤝",
+     "name": "ПОМОЧЬ ЭКИПАЖУ",
+     "desc": "+100 монет за спасение",
+     "rar": "common"
+    },
+    {
+     "id": "loot",
+     "ico": "📦",
+     "name": "ЗАБРАТЬ ГРУЗ",
+     "desc": "Серебряный сундук, но следующая волна элитная",
+     "rar": "rare"
+    }
+   ]
+  },
+  {
+   "id": "station",
+   "ico": "🏚️",
+   "title": "ЗАБРОШЕННАЯ СТАНЦИЯ",
+   "sub": "Кто-то оставил запасы",
+   "cards": [
+    {
+     "id": "fix",
+     "ico": "❤️",
+     "name": "РЕМОНТ",
+     "desc": "+1 жизнь",
+     "rar": "common"
+    },
+    {
+     "id": "stock",
+     "ico": "💣",
+     "name": "СКЛАД",
+     "desc": "+1 бомба и 50 монет",
+     "rar": "common"
+    }
+   ]
+  },
+  {
+   "id": "slot",
+   "ico": "🎰",
+   "title": "ИГРАЛЬНЫЙ АВТОМАТ",
+   "sub": "Мигает и зовёт сыграть",
+   "cards": [
+    {
+     "id": "play",
+     "ico": "🎰",
+     "name": "СЫГРАТЬ",
+     "desc": "Ставка 100 монет: 50% — выигрыш 250",
+     "rar": "rare",
+     "price": 100
+    },
+    {
+     "id": "pass",
+     "ico": "👋",
+     "name": "УЙТИ",
+     "desc": "Сберечь монеты",
+     "rar": "common"
+    }
+   ]
+  }
+ ],
+ "GENERAL": [
+  {
+   "id": "power",
+   "name": "Мощь орудий",
+   "ico": "💥",
+   "max": 10,
+   "step": 0.07,
+   "unit": "% урона",
+   "costs": [
+    100,
+    160,
+    240,
+    350,
+    500,
+    700,
+    950,
+    1300,
+    1750,
+    2300
+   ]
+  },
+  {
+   "id": "rate",
+   "name": "Охлаждение",
+   "ico": "⚡",
+   "max": 8,
+   "step": 0.05,
+   "unit": "% темпа",
+   "costs": [
+    120,
+    200,
+    300,
+    450,
+    650,
+    900,
+    1250,
+    1700
+   ]
+  },
+  {
+   "id": "crit",
+   "name": "Прицел",
+   "ico": "🎯",
+   "max": 6,
+   "step": 0.04,
+   "unit": "% шанс крита",
+   "costs": [
+    150,
+    250,
+    400,
+    600,
+    900,
+    1300
+   ]
+  },
+  {
+   "id": "hull",
+   "name": "Броня корпуса",
+   "ico": "❤️",
+   "max": 3,
+   "step": 1,
+   "unit": " жизнь",
+   "units": [
+    " жизнь",
+    " жизни",
+    " жизней"
+   ],
+   "abs": true,
+   "costs": [
+    900,
+    2200,
+    4500
+   ]
+  },
+  {
+   "id": "shield",
+   "name": "Генератор щита",
+   "ico": "🛡️",
+   "max": 3,
+   "step": 1,
+   "unit": "",
+   "abs": true,
+   "costs": [
+    600,
+    1400,
+    2800
+   ],
+   "levelText": [
+    "Щит на старте",
+    "Щит восстанавливается каждые 40 с",
+    "Восстановление каждые 25 с"
+   ]
+  },
+  {
+   "id": "magnet",
+   "name": "Магнит",
+   "ico": "🧲",
+   "max": 6,
+   "step": 0.2,
+   "unit": "% радиус сбора",
+   "costs": [
+    100,
+    170,
+    260,
+    380,
+    550,
+    800
+   ]
+  },
+  {
+   "id": "engine",
+   "name": "Двигатели",
+   "ico": "🚀",
+   "max": 5,
+   "step": 0.04,
+   "unit": "% скорости",
+   "costs": [
+    150,
+    260,
+    420,
+    650,
+    950
+   ]
+  },
+  {
+   "id": "greed",
+   "name": "Сборщик",
+   "ico": "💰",
+   "max": 8,
+   "step": 0.06,
+   "unit": "% монет",
+   "costs": [
+    150,
+    240,
+    360,
+    520,
+    750,
+    1050,
+    1450,
+    2000
+   ]
+  },
+  {
+   "id": "bombs",
+   "name": "Бомбовый отсек",
+   "ico": "💣",
+   "max": 3,
+   "step": 1,
+   "unit": " бомба на старте",
+   "units": [
+    " бомба на старте",
+    " бомбы на старте",
+    " бомб на старте"
+   ],
+   "abs": true,
+   "costs": [
+    300,
+    800,
+    1800
+   ]
+  },
+  {
+   "id": "bombdmg",
+   "name": "Мощность бомбы",
+   "ico": "☢️",
+   "max": 5,
+   "step": 0.25,
+   "unit": "% урона бомбы",
+   "costs": [
+    200,
+    350,
+    550,
+    800,
+    1150
+   ]
+  },
+  {
+   "id": "luck",
+   "name": "Удача",
+   "ico": "🍀",
+   "max": 5,
+   "step": 0.12,
+   "unit": "% шанс бонусов",
+   "costs": [
+    200,
+    340,
+    520,
+    760,
+    1100
+   ]
+  }
+ ],
+ "ENEMIES": {
+  "scout": {
+   "name": "Разведчик",
+   "sprite": "scout",
+   "w": 46,
+   "hp": 22,
+   "spd": 125,
+   "score": 100,
+   "coins": 1,
+   "xp": 1,
+   "ai": "dive",
+   "wave": 1,
+   "weight": 30,
+   "fire": {
+    "kind": "aimed",
+    "cd": 2.8,
+    "bullet": "orb",
+    "spd": 190,
+    "from": 3
+   }
+  },
+  "drone": {
+   "name": "Дрон",
+   "sprite": "drone",
+   "alt": "e_drone2",
+   "w": 34,
+   "hp": 12,
+   "spd": 150,
+   "score": 60,
+   "coins": 1,
+   "xp": 1,
+   "ai": "formation",
+   "wave": 2,
+   "weight": 16
+  },
+  "shooter": {
+   "name": "Стрелок",
+   "sprite": "shooter",
+   "w": 50,
+   "hp": 42,
+   "spd": 95,
+   "score": 220,
+   "coins": 2,
+   "xp": 2,
+   "ai": "hover",
+   "wave": 2,
+   "weight": 15,
+   "fire": {
+    "kind": "aimed3",
+    "cd": 2.3,
+    "bullet": "bolt",
+    "spd": 220
+   },
+   "fire2": {
+    "kind": "sine",
+    "cd": 3.4,
+    "bullet": "blue",
+    "spd": 190,
+    "from": 12
+   }
+  },
+  "bug": {
+   "name": "Жук-дрон",
+   "sprite": "e_bug",
+   "w": 30,
+   "hp": 10,
+   "spd": 165,
+   "score": 70,
+   "coins": 1,
+   "xp": 1,
+   "ai": "swarm",
+   "wave": 3,
+   "weight": 9
+  },
+  "assault": {
+   "name": "Штурмовик",
+   "sprite": "assault",
+   "alt": "e_assault2",
+   "w": 48,
+   "hp": 46,
+   "spd": 95,
+   "score": 240,
+   "coins": 2,
+   "xp": 2,
+   "ai": "zigzag",
+   "wave": 4,
+   "weight": 14,
+   "fire": {
+    "kind": "burst",
+    "cd": 2.4,
+    "count": 3,
+    "bullet": "bolt",
+    "spd": 260
+   }
+  },
+  "kamikaze": {
+   "name": "Камикадзе",
+   "sprite": "kamikaze",
+   "alt": "e_kamikaze2",
+   "w": 32,
+   "hp": 18,
+   "spd": 110,
+   "score": 160,
+   "coins": 1,
+   "xp": 1,
+   "ai": "kamikaze",
+   "wave": 5,
+   "weight": 11
+  },
+  "interceptor": {
+   "name": "Перехватчик",
+   "sprite": "interceptor",
+   "alt": "e_interceptor2",
+   "w": 52,
+   "hp": 55,
+   "spd": 110,
+   "score": 280,
+   "coins": 2,
+   "xp": 2,
+   "ai": "dasher",
+   "wave": 6,
+   "weight": 10,
+   "fire": {
+    "kind": "aimed",
+    "cd": 1.9,
+    "bullet": "orb",
+    "spd": 230
+   }
+  },
+  "heavy": {
+   "name": "Тяжёлый",
+   "sprite": "heavy",
+   "w": 62,
+   "hp": 150,
+   "spd": 48,
+   "score": 520,
+   "coins": 5,
+   "xp": 4,
+   "ai": "tank",
+   "wave": 7,
+   "weight": 8,
+   "fire": {
+    "kind": "fan",
+    "cd": 2.7,
+    "count": 5,
+    "spread": 0.9,
+    "bullet": "orb",
+    "spd": 170
+   },
+   "fire2": {
+    "kind": "wall",
+    "cd": 6.5,
+    "bullet": "orb",
+    "spd": 120,
+    "from": 15
+   }
+  },
+  "ram": {
+   "name": "Таран",
+   "sprite": "e_ram",
+   "w": 54,
+   "hp": 75,
+   "spd": 70,
+   "score": 320,
+   "coins": 3,
+   "xp": 2,
+   "ai": "ram",
+   "wave": 7,
+   "weight": 6
+  },
+  "splitter": {
+   "name": "Делитель",
+   "sprite": "scout",
+   "tint": 120,
+   "w": 50,
+   "hp": 40,
+   "spd": 95,
+   "score": 260,
+   "coins": 2,
+   "xp": 2,
+   "ai": "dive",
+   "wave": 8,
+   "weight": 6,
+   "split": true
+  },
+  "bomber": {
+   "name": "Бомбардировщик",
+   "sprite": "bomber",
+   "w": 74,
+   "hp": 120,
+   "spd": 70,
+   "score": 480,
+   "coins": 4,
+   "xp": 3,
+   "ai": "bomber",
+   "wave": 8,
+   "weight": 7,
+   "fire": {
+    "kind": "mine",
+    "cd": 1.5
+   }
+  },
+  "sniper": {
+   "name": "Снайпер",
+   "sprite": "sniper",
+   "alt": "e_sniper2",
+   "w": 46,
+   "hp": 60,
+   "spd": 75,
+   "score": 380,
+   "coins": 3,
+   "xp": 3,
+   "ai": "sniper",
+   "wave": 9,
+   "weight": 7,
+   "fire": {
+    "kind": "snipe",
+    "cd": 3.4,
+    "bullet": "long",
+    "spd": 520
+   }
+  },
+  "swarm": {
+   "name": "Рой",
+   "sprite": "e_swarm",
+   "w": 46,
+   "hp": 90,
+   "spd": 60,
+   "score": 420,
+   "coins": 4,
+   "xp": 3,
+   "ai": "carrier",
+   "wave": 9,
+   "weight": 4,
+   "brood": 4
+  },
+  "shielder": {
+   "name": "Щитоносец",
+   "sprite": "shielder",
+   "w": 58,
+   "hp": 90,
+   "shield": 80,
+   "spd": 55,
+   "score": 480,
+   "coins": 4,
+   "xp": 3,
+   "ai": "hover",
+   "wave": 10,
+   "weight": 6,
+   "fire": {
+    "kind": "ring",
+    "cd": 3.6,
+    "count": 8,
+    "bullet": "orb",
+    "spd": 140
+   },
+   "fire2": {
+    "kind": "spiral",
+    "cd": 5.5,
+    "count": 14,
+    "bullet": "violet",
+    "spd": 150,
+    "from": 18
+   }
+  },
+  "crystal": {
+   "name": "Кристалл",
+   "sprite": "e_crystal",
+   "w": 50,
+   "hp": 65,
+   "spd": 55,
+   "score": 380,
+   "coins": 3,
+   "xp": 3,
+   "ai": "drift",
+   "wave": 10,
+   "weight": 5,
+   "fire": {
+    "kind": "fan",
+    "cd": 2.6,
+    "count": 3,
+    "spread": 0.5,
+    "bullet": "shard",
+    "spd": 200
+   },
+   "fire2": {
+    "kind": "split",
+    "cd": 4.2,
+    "bullet": "egg",
+    "spd": 130,
+    "count": 7,
+    "from": 14
+   },
+   "death": {
+    "n": 8,
+    "bullet": "shard",
+    "spd": 165
+   }
+  },
+  "techno": {
+   "name": "Технодрон",
+   "sprite": "techno",
+   "w": 58,
+   "hp": 75,
+   "spd": 60,
+   "score": 420,
+   "coins": 3,
+   "xp": 3,
+   "ai": "teleport",
+   "wave": 11,
+   "weight": 6,
+   "fire": {
+    "kind": "ring",
+    "cd": 0,
+    "count": 10,
+    "bullet": "dot",
+    "spd": 160
+   }
+  },
+  "heavyfighter": {
+   "name": "Тяжёлый истребитель",
+   "sprite": "e_heavyfighter",
+   "w": 62,
+   "hp": 120,
+   "spd": 62,
+   "score": 560,
+   "coins": 5,
+   "xp": 4,
+   "ai": "tank",
+   "wave": 11,
+   "weight": 7,
+   "fire": {
+    "kind": "aimed3",
+    "cd": 2,
+    "bullet": "bolt",
+    "spd": 240
+   }
+  },
+  "minelayer": {
+   "name": "Миноукладчик",
+   "sprite": "e_minelayer",
+   "w": 80,
+   "hp": 120,
+   "spd": 72,
+   "score": 520,
+   "coins": 4,
+   "xp": 3,
+   "ai": "bomber",
+   "wave": 17,
+   "weight": 4,
+   "horizontal": true,
+   "fire": {
+    "kind": "mine",
+    "cd": 1.5
+   }
+  },
+  "hunter": {
+   "name": "Охотник",
+   "sprite": "hunter",
+   "w": 54,
+   "hp": 80,
+   "spd": 85,
+   "score": 420,
+   "coins": 3,
+   "xp": 3,
+   "ai": "hunter",
+   "wave": 12,
+   "weight": 6
+  },
+  "bombardier": {
+   "name": "Бомбардир",
+   "sprite": "e_bombardier",
+   "w": 62,
+   "hp": 170,
+   "spd": 45,
+   "score": 640,
+   "coins": 6,
+   "xp": 4,
+   "ai": "tank",
+   "wave": 12,
+   "weight": 5,
+   "fire": {
+    "kind": "mine",
+    "cd": 2.4
+   },
+   "fire2": {
+    "kind": "fan",
+    "cd": 3.2,
+    "count": 6,
+    "spread": 1.1,
+    "bullet": "orb",
+    "spd": 160
+   }
+  },
+  "armored": {
+   "name": "Броненосец",
+   "sprite": "armored",
+   "w": 64,
+   "hp": 280,
+   "spd": 36,
+   "score": 750,
+   "coins": 7,
+   "xp": 5,
+   "ai": "tank",
+   "wave": 13,
+   "weight": 5,
+   "fire": {
+    "kind": "twin",
+    "cd": 1.7,
+    "bullet": "bolt",
+    "spd": 250
+   }
+  },
+  "platform": {
+   "name": "Платформа",
+   "sprite": "e_platform",
+   "w": 64,
+   "hp": 200,
+   "spd": 45,
+   "score": 680,
+   "coins": 6,
+   "xp": 4,
+   "ai": "turret",
+   "wave": 13,
+   "weight": 4
+  },
+  "redoubt": {
+   "name": "Редут",
+   "sprite": "e_redoubt",
+   "w": 66,
+   "hp": 160,
+   "spd": 50,
+   "score": 700,
+   "coins": 6,
+   "xp": 5,
+   "ai": "redoubt",
+   "wave": 14,
+   "weight": 5,
+   "fire": {
+    "kind": "ring",
+    "cd": 0,
+    "count": 12,
+    "bullet": "violet",
+    "spd": 140
+   }
+  },
+  "ghost": {
+   "name": "Призрак",
+   "sprite": "e_ghost",
+   "w": 54,
+   "hp": 70,
+   "spd": 90,
+   "score": 460,
+   "coins": 4,
+   "xp": 3,
+   "ai": "phase",
+   "wave": 14,
+   "weight": 5,
+   "rot": 1.5707963267948966,
+   "fire": {
+    "kind": "burst",
+    "cd": 0,
+    "count": 3,
+    "bullet": "needle",
+    "spd": 280
+   }
+  },
+  "orbit": {
+   "name": "Орбита",
+   "sprite": "e_orbit",
+   "w": 52,
+   "hp": 130,
+   "spd": 60,
+   "score": 560,
+   "coins": 5,
+   "xp": 4,
+   "ai": "orbit",
+   "wave": 16,
+   "weight": 4,
+   "fire": {
+    "kind": "aimed",
+    "cd": 1.5,
+    "bullet": "orb",
+    "spd": 220
+   },
+   "fire2": {
+    "kind": "spiral",
+    "cd": 6,
+    "count": 16,
+    "bullet": "dot",
+    "spd": 150,
+    "from": 20
+   },
+   "death": {
+    "n": 12,
+    "bullet": "orb",
+    "spd": 145
+   }
+  },
+  "cruiser": {
+   "name": "Крейсер",
+   "sprite": "e_cruiser",
+   "w": 78,
+   "hp": 380,
+   "spd": 32,
+   "score": 1100,
+   "coins": 10,
+   "xp": 7,
+   "ai": "tank",
+   "wave": 16,
+   "weight": 3,
+   "fire": {
+    "kind": "twin",
+    "cd": 1.5,
+    "bullet": "bolt",
+    "spd": 250
+   },
+   "fire2": {
+    "kind": "ring",
+    "cd": 3.6,
+    "count": 10,
+    "bullet": "orb",
+    "spd": 140
+   }
+  },
+  "parasite": {
+   "name": "Паразит",
+   "sprite": "e_parasite",
+   "w": 56,
+   "hp": 110,
+   "spd": 55,
+   "score": 540,
+   "coins": 5,
+   "xp": 4,
+   "ai": "hover",
+   "wave": 16,
+   "weight": 4,
+   "brood": 3,
+   "larva": true,
+   "fire": {
+    "kind": "fan",
+    "cd": 2.6,
+    "count": 4,
+    "spread": 0.7,
+    "bullet": "green",
+    "spd": 170
+   }
+  },
+  "ion": {
+   "name": "Ионный",
+   "sprite": "e_ion",
+   "w": 52,
+   "hp": 120,
+   "spd": 75,
+   "score": 600,
+   "coins": 5,
+   "xp": 4,
+   "ai": "ion",
+   "wave": 18,
+   "weight": 4,
+   "resist": {
+    "lightning": 0
+   },
+   "guard": "lightning",
+   "ico": "⚡",
+   "hint": "Поглощает молнию — бейте другим оружием"
+  },
+  "crab": {
+   "name": "Крабоход",
+   "sprite": "e_crab",
+   "w": 66,
+   "hp": 280,
+   "spd": 55,
+   "score": 820,
+   "coins": 7,
+   "xp": 5,
+   "ai": "crab",
+   "wave": 21,
+   "weight": 4,
+   "fire": {
+    "kind": "pincer",
+    "cd": 1.8,
+    "bullet": "bolt",
+    "spd": 240
+   }
+  },
+  "lancer": {
+   "name": "Лансер",
+   "sprite": "interceptor",
+   "tint": 285,
+   "w": 52,
+   "hp": 95,
+   "spd": 80,
+   "score": 500,
+   "coins": 4,
+   "xp": 3,
+   "ai": "hover",
+   "wave": 15,
+   "weight": 5,
+   "fire": {
+    "kind": "twin",
+    "cd": 2.1,
+    "bullet": "plaser",
+    "spd": 330
+   }
+  },
+  "debris": {
+   "name": "Обломок",
+   "sprite": "fx_rock1",
+   "w": 40,
+   "hp": 26,
+   "spd": 120,
+   "score": 40,
+   "coins": 3,
+   "xp": 0,
+   "ai": "drift",
+   "wave": 99,
+   "weight": 0
+  },
+  "asteroid": {
+   "name": "Астероид",
+   "sprite": "ast_m1",
+   "w": 48,
+   "hp": 34,
+   "spd": 85,
+   "score": 30,
+   "coins": 0,
+   "xp": 0,
+   "ai": "drift",
+   "wave": 99,
+   "weight": 0,
+   "prop": true,
+   "cover": true
+  },
+  "biomech": {
+   "name": "Био-мех",
+   "sprite": "e_biomech",
+   "w": 86,
+   "hp": 230,
+   "spd": 58,
+   "score": 900,
+   "coins": 8,
+   "xp": 5,
+   "ai": "bomber",
+   "wave": 23,
+   "weight": 3,
+   "horizontal": true,
+   "weave": 38,
+   "fire": {
+    "kind": "fan",
+    "cd": 1.3,
+    "count": 5,
+    "spread": 0.9,
+    "bullet": "green",
+    "spd": 160,
+    "down": true
+   }
+  },
+  "thief": {
+   "name": "Вор",
+   "sprite": "e_thief",
+   "w": 40,
+   "hp": 38,
+   "spd": 150,
+   "score": 300,
+   "coins": 2,
+   "xp": 2,
+   "ai": "thief",
+   "wave": 6,
+   "weight": 4,
+   "ico": "🦝",
+   "hint": "Крадёт бонусы и монеты. Собьёте — вернёт всё, монеты вдвойне"
+  },
+  "medic": {
+   "name": "Медик",
+   "sprite": "e_medic",
+   "w": 52,
+   "hp": 70,
+   "spd": 60,
+   "score": 450,
+   "coins": 4,
+   "xp": 3,
+   "ai": "hover",
+   "wave": 9,
+   "weight": 4,
+   "heal": 0.18,
+   "ico": "💚",
+   "hint": "Лечит соседей — сбивайте его первым",
+   "fire": {
+    "kind": "aimed",
+    "cd": 3.2,
+    "bullet": "green",
+    "spd": 180
+   }
+  },
+  "link": {
+   "name": "Связка",
+   "sprite": "e_link",
+   "w": 34,
+   "hp": 55,
+   "spd": 60,
+   "score": 320,
+   "coins": 3,
+   "xp": 2,
+   "ai": "link",
+   "wave": 10,
+   "weight": 4,
+   "guard": "arc",
+   "ico": "🔗",
+   "hint": "Луч между кораблями обжигает и гасит волны Серпа",
+   "fire": {
+    "kind": "aimed",
+    "cd": 3,
+    "bullet": "bolt",
+    "spd": 220
+   }
+  },
+  "mortar": {
+   "name": "Мортира",
+   "sprite": "e_mortar",
+   "w": 60,
+   "hp": 160,
+   "spd": 40,
+   "score": 600,
+   "coins": 5,
+   "xp": 4,
+   "ai": "tank",
+   "wave": 11,
+   "weight": 4,
+   "ico": "🎯",
+   "hint": "Бьёт навесом — уходите из красных кругов",
+   "fire": {
+    "kind": "lob",
+    "cd": 2.9
+   }
+  },
+  "mirror": {
+   "name": "Зеркало",
+   "sprite": "e_mirror",
+   "w": 50,
+   "hp": 90,
+   "spd": 70,
+   "score": 460,
+   "coins": 4,
+   "xp": 3,
+   "ai": "hover",
+   "wave": 12,
+   "weight": 5,
+   "resist": {
+    "laser": 0
+   },
+   "reflect": "laser",
+   "guard": "laser",
+   "ico": "🪞",
+   "hint": "Отражает лазер обратно — бейте другим оружием",
+   "fire": {
+    "kind": "fan",
+    "cd": 2.6,
+    "count": 3,
+    "spread": 0.5,
+    "bullet": "shard",
+    "spd": 200
+   }
+  },
+  "projector": {
+   "name": "Проектор",
+   "sprite": "e_projector",
+   "w": 54,
+   "hp": 100,
+   "spd": 55,
+   "score": 520,
+   "coins": 4,
+   "xp": 3,
+   "ai": "hover",
+   "wave": 13,
+   "weight": 4,
+   "dome": 80,
+   "guard": "plasma",
+   "ico": "🛡️",
+   "hint": "Купол гасит плазму — выманите врагов из-под него",
+   "fire": {
+    "kind": "sine",
+    "cd": 3,
+    "bullet": "blue",
+    "spd": 190
+   }
+  },
+  "icebreaker": {
+   "name": "Ледокол",
+   "sprite": "e_icebreaker",
+   "w": 64,
+   "hp": 260,
+   "spd": 40,
+   "score": 820,
+   "coins": 7,
+   "xp": 5,
+   "ai": "tank",
+   "wave": 15,
+   "weight": 4,
+   "resist": {
+    "shotgun": 0.2,
+    "plasma": 1.5,
+    "rocket": 1.5
+   },
+   "guard": "shotgun",
+   "ico": "🧊",
+   "hint": "Дробь отскакивает ото льда, плазма и ракеты его колют",
+   "fire": {
+    "kind": "fan",
+    "cd": 3,
+    "count": 5,
+    "spread": 0.8,
+    "bullet": "shard",
+    "spd": 170,
+    "down": true
+   },
+   "death": {
+    "n": 10,
+    "bullet": "shard",
+    "spd": 160
+   }
+  },
+  "stealth": {
+   "name": "Невидимка",
+   "sprite": "e_stealth",
+   "w": 48,
+   "hp": 75,
+   "spd": 85,
+   "score": 520,
+   "coins": 4,
+   "xp": 3,
+   "ai": "hover",
+   "wave": 16,
+   "weight": 4,
+   "cloak": true,
+   "resist": {
+    "lightning": 0
+   },
+   "guard": "lightning",
+   "ico": "👻",
+   "hint": "Молния и ракеты его не видят — цельтесь сами",
+   "fire": {
+    "kind": "burst",
+    "cd": 0,
+    "count": 3,
+    "bullet": "needle",
+    "spd": 270
+   }
+  },
+  "graviton": {
+   "name": "Гравитон",
+   "sprite": "e_graviton",
+   "w": 56,
+   "hp": 140,
+   "spd": 55,
+   "score": 640,
+   "coins": 5,
+   "xp": 4,
+   "ai": "hover",
+   "wave": 17,
+   "weight": 4,
+   "gravity": true,
+   "resist": {
+    "rocket": 0,
+    "dark": 0
+   },
+   "guard": "rocket",
+   "ico": "🌀",
+   "hint": "Разворачивает ракеты в вас, тёмная материя его не берёт",
+   "fire": {
+    "kind": "ring",
+    "cd": 3.4,
+    "count": 10,
+    "bullet": "violet",
+    "spd": 135
+   }
+  },
+  "mimic": {
+   "name": "Мимик",
+   "sprite": "e_mimic",
+   "w": 52,
+   "hp": 160,
+   "spd": 60,
+   "score": 700,
+   "coins": 6,
+   "xp": 4,
+   "ai": "hover",
+   "wave": 19,
+   "weight": 4,
+   "adapt": true,
+   "ico": "🧬",
+   "hint": "Привыкает к оружию, которым его бьют, — меняйте оружие",
+   "fire": {
+    "kind": "aimed3",
+    "cd": 2.4,
+    "bullet": "bolt",
+    "spd": 230
+   }
+  },
+  "hive_egg": {
+   "name": "Яйцо улья",
+   "sprite": "hive_egg1",
+   "w": 58,
+   "hp": 55,
+   "spd": 0,
+   "score": 150,
+   "coins": 1,
+   "xp": 2,
+   "ai": "egg",
+   "wave": 99,
+   "weight": 0,
+   "prop": true,
+   "rot": 0
+  },
+  "lava_rock": {
+   "name": "Лавовый астероид",
+   "sprite": "astl_1",
+   "w": 46,
+   "hp": 40,
+   "spd": 90,
+   "score": 60,
+   "coins": 1,
+   "xp": 1,
+   "ai": "drift",
+   "wave": 99,
+   "weight": 0,
+   "prop": true,
+   "death": {
+    "n": 6,
+    "bullet": "junk",
+    "spd": 150
+   }
+  },
+  "cargo": {
+   "name": "Грузовик",
+   "sprite": "e_cargo",
+   "w": 74,
+   "hp": 240,
+   "spd": 45,
+   "score": 900,
+   "coins": 4,
+   "xp": 4,
+   "ai": "cargo",
+   "wave": 99,
+   "weight": 0
+  },
+  "satellite": {
+   "name": "Спутник связи",
+   "sprite": "sp_radar",
+   "w": 40,
+   "hp": 30,
+   "spd": 70,
+   "score": 120,
+   "coins": 0,
+   "xp": 1,
+   "ai": "satfly",
+   "wave": 99,
+   "weight": 0,
+   "prop": true
+  },
+  "ice_rock": {
+   "name": "Ледяная глыба",
+   "sprite": "asti_l",
+   "w": 48,
+   "hp": 36,
+   "spd": 80,
+   "score": 50,
+   "coins": 1,
+   "xp": 1,
+   "ai": "drift",
+   "wave": 99,
+   "weight": 0,
+   "prop": true,
+   "cover": true
+  },
+  "toxic_rock": {
+   "name": "Ядовитая глыба",
+   "sprite": "astp_l1",
+   "w": 48,
+   "hp": 34,
+   "spd": 85,
+   "score": 50,
+   "coins": 1,
+   "xp": 1,
+   "ai": "drift",
+   "wave": 99,
+   "weight": 0,
+   "prop": true
+  },
+  "prism_rock": {
+   "name": "Кристалл-призма",
+   "sprite": "astc_l",
+   "w": 48,
+   "hp": 40,
+   "spd": 70,
+   "score": 50,
+   "coins": 1,
+   "xp": 2,
+   "ai": "drift",
+   "wave": 99,
+   "weight": 0,
+   "prop": true,
+   "cover": true,
+   "prism": true
+  },
+  "gunship": {
+   "name": "Ганшип",
+   "sprite": "gunship",
+   "w": 104,
+   "hp": 850,
+   "spd": 45,
+   "score": 3000,
+   "coins": 30,
+   "xp": 14,
+   "ai": "gunship",
+   "wave": 8,
+   "weight": 0,
+   "mini": true
+  },
+  "destroyer": {
+   "name": "Эсминец",
+   "sprite": "e_destroyer",
+   "w": 88,
+   "hp": 1200,
+   "spd": 40,
+   "score": 4000,
+   "coins": 40,
+   "xp": 18,
+   "ai": "destroyer",
+   "wave": 13,
+   "weight": 0,
+   "mini": true
+  },
+  "cruiser_h": {
+   "name": "Рейдер",
+   "sprite": "e_cruiser_h",
+   "w": 210,
+   "hp": 1000,
+   "spd": 75,
+   "score": 3600,
+   "coins": 36,
+   "xp": 16,
+   "ai": "flyby",
+   "wave": 18,
+   "weight": 0,
+   "mini": true,
+   "horizontal": true
+  },
+  "battleship": {
+   "name": "Линкор",
+   "sprite": "b_battleship",
+   "w": 92,
+   "hp": 1500,
+   "spd": 34,
+   "score": 4600,
+   "coins": 46,
+   "xp": 20,
+   "ai": "battleship",
+   "wave": 23,
+   "weight": 0,
+   "mini": true
+  },
+  "frigate": {
+   "name": "Ракетный фрегат",
+   "sprite": "b_battleship2",
+   "w": 86,
+   "hp": 1350,
+   "spd": 50,
+   "score": 4400,
+   "coins": 44,
+   "xp": 19,
+   "ai": "frigate",
+   "wave": 28,
+   "weight": 0,
+   "mini": true
+  }
+ },
+ "MINI_ORDER": [
+  "gunship",
+  "destroyer",
+  "cruiser_h",
+  "battleship",
+  "frigate"
+ ],
+ "BOSS_HP": 1.7,
+ "BOSS_HP_FIRST": 1.6,
+ "BOSS_PHASE_MIN": [
+  3,
+  5,
+  6,
+  7
+ ],
+ "BOSS_ADAPT": {
+  "step": 4,
+  "max": 25,
+  "start": 2.5
+ },
+ "BOSSES": [
+  {
+   "id": "guardian",
+   "name": "СТРАЖ",
+   "sprite": "boss",
+   "hue": null,
+   "color": "#ff3d5a",
+   "wf": 0.46,
+   "wmax": 176,
+   "hp": 1,
+   "title": "Хранитель первого рубежа"
+  },
+  {
+   "id": "sniper",
+   "name": "СНАЙПЕР",
+   "sprite": "b_sniper",
+   "rot": 3.141592653589793,
+   "color": "#ff9f3d",
+   "wf": 0.36,
+   "wmax": 150,
+   "hp": 1,
+   "title": "Видит каждый ваш манёвр"
+  },
+  {
+   "id": "kraken",
+   "name": "КРАКЕН",
+   "sprite": "b_kraken",
+   "color": "#3dffd2",
+   "wf": 0.62,
+   "wmax": 260,
+   "hp": 1.05,
+   "title": "Щупальца из глубин туманности"
+  },
+  {
+   "id": "phoenix",
+   "name": "ФЕНИКС",
+   "sprite": "b_phoenix",
+   "rot": 3.141592653589793,
+   "color": "#ff6a2a",
+   "wf": 0.72,
+   "wmax": 300,
+   "hp": 1,
+   "title": "Возрождается из пепла"
+  },
+  {
+   "id": "spider",
+   "name": "ПАУК-РЕАКТОР",
+   "sprite": "b_spider",
+   "rot": 3.141592653589793,
+   "color": "#c06bff",
+   "wf": 0.74,
+   "wmax": 300,
+   "hp": 1.1,
+   "title": "Реактор в сердце стальной паутины"
+  },
+  {
+   "id": "dreadnought",
+   "name": "ДРЕДНОУТ",
+   "sprite": "b_dread",
+   "rot": 3.141592653589793,
+   "color": "#3db8ff",
+   "wf": 0.52,
+   "wmax": 216,
+   "hp": 1.1,
+   "title": "Энергощит — ракеты и рельса бьют сильнее",
+   "shield": 0.6
+  },
+  {
+   "id": "inquisitor",
+   "name": "ИНКВИЗИТОР",
+   "sprite": "b_inquisitor",
+   "color": "#ffd23d",
+   "wf": 0.72,
+   "wmax": 300,
+   "hp": 1.15,
+   "title": "Перекрестье лазеров и огонь гатлингов"
+  },
+  {
+   "id": "queen",
+   "name": "КОРОЛЕВА РОЯ",
+   "sprite": "b_queen",
+   "color": "#a6ff3d",
+   "wf": 0.58,
+   "wmax": 240,
+   "hp": 1.15,
+   "title": "Её дети повсюду"
+  },
+  {
+   "id": "necro",
+   "name": "НЕКРОМАНТ",
+   "sprite": "b_necro",
+   "color": "#7dff6b",
+   "wf": 0.6,
+   "wmax": 250,
+   "hp": 1.2,
+   "title": "Повелитель павших"
+  },
+  {
+   "id": "mothership",
+   "name": "МАТЕРИНСКИЙ КОРАБЛЬ",
+   "sprite": "b_mothership",
+   "color": "#3dff7a",
+   "wf": 0.94,
+   "wmax": 520,
+   "hp": 1.25,
+   "title": "Флот внутри одного корабля"
+  },
+  {
+   "id": "chaos",
+   "name": "ХАОС",
+   "sprite": "b_chaos",
+   "color": "#ff7a2a",
+   "wf": 0.72,
+   "wmax": 300,
+   "hp": 1.25,
+   "title": "Непредсказуем. Иногда перегревается"
+  },
+  {
+   "id": "cruiser",
+   "name": "ТЯЖЁЛЫЙ КРЕЙСЕР",
+   "sprite": "b_heavycruiser",
+   "color": "#ff9f3d",
+   "wf": 0.72,
+   "wmax": 340,
+   "hp": 1.3,
+   "title": "Бортовые залпы и рой ракет"
+  },
+  {
+   "id": "overlord",
+   "name": "ОВЕРЛОРД",
+   "sprite": "b_overlord",
+   "color": "#c03dff",
+   "wf": 0.78,
+   "wmax": 330,
+   "hp": 1.4,
+   "title": "Глаз, что видит всё. Последний рубеж"
+  }
+ ],
+ "POWERUPS": {
+  "heal": {
+   "name": "+1 ЖИЗНЬ",
+   "sprite": "pu_heal",
+   "color": "#ff4d6d",
+   "weight": 9
+  },
+  "shield": {
+   "name": "ЩИТ",
+   "sprite": "pu_shield",
+   "color": "#3de0ff",
+   "weight": 13
+  },
+  "power": {
+   "name": "УСИЛЕНИЕ ×1.6",
+   "sprite": "pu_power",
+   "color": "#ffc83d",
+   "weight": 12,
+   "dur": 10
+  },
+  "spread": {
+   "name": "ШИРОКИЙ ВЫСТРЕЛ",
+   "sprite": "pu_spread",
+   "color": "#4c9dff",
+   "weight": 12,
+   "dur": 12
+  },
+  "multi": {
+   "name": "МУЛЬТИВЫСТРЕЛ",
+   "sprite": "pu_multi",
+   "color": "#3dffa2",
+   "weight": 11,
+   "dur": 12
+  },
+  "rapid": {
+   "name": "СКОРОСТРЕЛЬНОСТЬ",
+   "sprite": "pu_speed",
+   "color": "#b06bff",
+   "weight": 11,
+   "dur": 10
+  },
+  "star": {
+   "name": "ЗВЕЗДА",
+   "sprite": "pu_star",
+   "color": "#ffc83d",
+   "weight": 8
+  },
+  "bomb": {
+   "name": "+1 БОМБА",
+   "sprite": null,
+   "ico": "bomb",
+   "color": "#ff8a3d",
+   "weight": 8
+  },
+  "magnet": {
+   "name": "МАГНИТ",
+   "sprite": null,
+   "ico": "magnet",
+   "color": "#ff5cb3",
+   "weight": 7,
+   "dur": 10
+  },
+  "freeze": {
+   "name": "ЗАМОРОЗКА",
+   "sprite": null,
+   "ico": "snow",
+   "color": "#9be8ff",
+   "weight": 5,
+   "dur": 5
+  }
+ },
+ "RARITY": {
+  "common": {
+   "name": "ОБЫЧНОЕ",
+   "color": "#9fb4ff",
+   "w": 10
+  },
+  "rare": {
+   "name": "РЕДКОЕ",
+   "color": "#3dd2ff",
+   "w": 5.5
+  },
+  "epic": {
+   "name": "ЭПИЧЕСКОЕ",
+   "color": "#c48bff",
+   "w": 2.4
+  },
+  "legendary": {
+   "name": "ЛЕГЕНДАРНОЕ",
+   "color": "#ffc83d",
+   "w": 1
+  }
+ },
+ "PERKS": [
+  {
+   "id": "dmg",
+   "ico": "🔥",
+   "name": "МОЩЬ",
+   "rar": "common",
+   "max": 6,
+   "desc": "+15% урона всем оружием"
+  },
+  {
+   "id": "rate",
+   "ico": "⚡",
+   "name": "СКОРОСТРЕЛЬНОСТЬ",
+   "rar": "common",
+   "max": 5,
+   "desc": "+12% темп стрельбы"
+  },
+  {
+   "id": "multi",
+   "ico": "🔱",
+   "name": "МУЛЬТИВЫСТРЕЛ",
+   "rar": "rare",
+   "max": 3,
+   "desc": "Ещё один снаряд в залпе с 60% урона. Серп: волна шире и +12% урона. Молния: +1 прыжок и +15% урона"
+  },
+  {
+   "id": "crit",
+   "ico": "🎯",
+   "name": "КРИТ",
+   "rar": "common",
+   "max": 4,
+   "desc": "+8% шанс критического удара (×2 урон)"
+  },
+  {
+   "id": "pierce",
+   "ico": "🔩",
+   "name": "БРОНЕБОЙ",
+   "rar": "rare",
+   "max": 3,
+   "desc": "Снаряды пробивают ещё одного врага"
+  },
+  {
+   "id": "magnet",
+   "ico": "🧲",
+   "name": "ГРАВИЗАХВАТ",
+   "rar": "common",
+   "max": 3,
+   "desc": "+50% радиус сбора монет и кристаллов"
+  },
+  {
+   "id": "heal",
+   "ico": "💚",
+   "name": "РЕМОНТ",
+   "rar": "common",
+   "max": 99,
+   "filler": true,
+   "desc": "Восстановить 1 жизнь сейчас"
+  },
+  {
+   "id": "maxhp",
+   "ico": "❤️",
+   "name": "БРОНЯ",
+   "rar": "epic",
+   "max": 2,
+   "desc": "+1 к максимуму жизней и +1 жизнь"
+  },
+  {
+   "id": "shieldgen",
+   "ico": "🛡️",
+   "name": "ЩИТ-ГЕНЕРАТОР",
+   "rar": "rare",
+   "max": 3,
+   "desc": "Щит восстанавливается сам (30 → 22 → 15 с)"
+  },
+  {
+   "id": "drone",
+   "ico": "🛰️",
+   "name": "ДРОН-НАПАРНИК",
+   "rar": "epic",
+   "max": 2,
+   "desc": "Дрон летит рядом и стреляет по врагам"
+  },
+  {
+   "id": "nova",
+   "ico": "💥",
+   "name": "ДЕТОНАЦИЯ",
+   "rar": "rare",
+   "max": 3,
+   "desc": "Враги взрываются при гибели и ранят соседей"
+  },
+  {
+   "id": "cryo",
+   "ico": "❄️",
+   "name": "КРИО-СНАРЯДЫ",
+   "rar": "rare",
+   "max": 2,
+   "desc": "Шанс 12% заморозить врага на 2 с"
+  },
+  {
+   "id": "greed",
+   "ico": "💰",
+   "name": "ЖАДНОСТЬ",
+   "rar": "common",
+   "max": 3,
+   "desc": "+30% монет до конца забега"
+  },
+  {
+   "id": "bomb",
+   "ico": "💣",
+   "name": "БОЕЗАПАС",
+   "rar": "common",
+   "max": 99,
+   "filler": true,
+   "desc": "+1 бомба"
+  },
+  {
+   "id": "cooldown",
+   "ico": "⏱️",
+   "name": "ПЕРЕЗАРЯДКА",
+   "rar": "rare",
+   "max": 3,
+   "desc": "−15% перезарядка навыков и бомб"
+  },
+  {
+   "id": "speed",
+   "ico": "🚀",
+   "name": "ФОРСАЖ",
+   "rar": "common",
+   "max": 2,
+   "desc": "+15% скорость корабля и +5% уклонение"
+  },
+  {
+   "id": "vamp",
+   "ico": "🩸",
+   "name": "КРОВОПИЙЦА",
+   "rar": "epic",
+   "max": 1,
+   "desc": "Каждые 30 критических попаданий — +1 жизнь"
+  },
+  {
+   "id": "luck",
+   "ico": "🍀",
+   "name": "УДАЧА",
+   "rar": "common",
+   "max": 2,
+   "desc": "+40% шанс выпадения бонусов"
+  },
+  {
+   "id": "titan",
+   "ico": "🏹",
+   "name": "ОХОТНИК НА ТИТАНОВ",
+   "rar": "rare",
+   "max": 2,
+   "desc": "+25% урона по боссам и мини-боссам"
+  },
+  {
+   "id": "critdmg",
+   "ico": "💢",
+   "name": "СМЕРТЕЛЬНЫЙ УДАР",
+   "rar": "rare",
+   "max": 2,
+   "desc": "Критический удар наносит ещё +50% урона"
+  },
+  {
+   "id": "finisher",
+   "ico": "🗡️",
+   "name": "ДОБИВАНИЕ",
+   "rar": "common",
+   "max": 3,
+   "desc": "+25% урона по врагам, у которых меньше 35% прочности"
+  },
+  {
+   "id": "overclock",
+   "ico": "🔋",
+   "name": "ОВЕРКЛОК",
+   "rar": "rare",
+   "max": 2,
+   "desc": "При комбо 10 и выше темп стрельбы +20%"
+  },
+  {
+   "id": "burn",
+   "ico": "🌋",
+   "name": "ПОДЖОГ",
+   "rar": "rare",
+   "max": 3,
+   "desc": "Попадание поджигает врага: за 3 с он получает ещё 15% урона попадания"
+  },
+  {
+   "id": "sniper",
+   "ico": "🦅",
+   "name": "СНАЙПЕР",
+   "rar": "rare",
+   "max": 2,
+   "desc": "Чем дальше враг, тем больнее: до +20% урона на другом конце экрана"
+  },
+  {
+   "id": "demo",
+   "ico": "🧨",
+   "name": "ПОДРЫВНИК",
+   "rar": "common",
+   "max": 1,
+   "desc": "Каждые 30 комбо — +1 бомба"
+  },
+  {
+   "id": "investor",
+   "ico": "📈",
+   "name": "ИНВЕСТОР",
+   "rar": "rare",
+   "max": 1,
+   "desc": "+1% урона за каждые 50 монет, собранных в забеге (до +40%)"
+  },
+  {
+   "id": "nimble",
+   "ico": "🤸",
+   "name": "ЛОВКАЧ",
+   "rar": "rare",
+   "max": 1,
+   "desc": "+8% уклонение; после уклонения следующее попадание — критическое"
+  },
+  {
+   "id": "glass",
+   "ico": "💎",
+   "name": "СТЕКЛЯННАЯ ПУШКА",
+   "rar": "epic",
+   "max": 1,
+   "desc": "+50% урона, но максимум жизней — 1"
+  },
+  {
+   "id": "ricochet",
+   "ico": "🎱",
+   "name": "РИКОШЕТ",
+   "rar": "rare",
+   "max": 1,
+   "desc": "Снаряды отскакивают от краёв экрана, урон −20%"
+  },
+  {
+   "id": "heavy",
+   "ico": "🪨",
+   "name": "ТЯЖЁЛЫЕ СНАРЯДЫ",
+   "rar": "rare",
+   "max": 1,
+   "desc": "+40% урона, но темп стрельбы −20%"
+  }
+ ],
+ "EVOLUTIONS": [
+  {
+   "weapon": "laser",
+   "perk": "pierce",
+   "lvl": 3,
+   "name": "ЛУЧ",
+   "desc": "Лазер пробивает всех врагов на пути, урон +25%"
+  },
+  {
+   "weapon": "rocket",
+   "perk": "nova",
+   "lvl": 3,
+   "name": "КАССЕТНЫЕ БОЕГОЛОВКИ",
+   "desc": "Каждый взрыв ракеты разбрасывает 4 малых заряда"
+  },
+  {
+   "weapon": "lightning",
+   "perk": "cryo",
+   "lvl": 2,
+   "name": "ЛЕДЯНАЯ ЦЕПЬ",
+   "desc": "Молния замораживает каждую цель в цепи"
+  },
+  {
+   "weapon": "shotgun",
+   "perk": "finisher",
+   "lvl": 3,
+   "name": "КАРАТЕЛЬ",
+   "desc": "Дробь в упор сразу добивает врагов, у которых меньше 20% прочности (кроме боссов)"
+  },
+  {
+   "weapon": "plasma",
+   "perk": "burn",
+   "lvl": 3,
+   "name": "СОЛНЕЧНАЯ ПЛАЗМА",
+   "desc": "Шар плазмы оставляет горящий след, который поджигает врагов"
+  },
+  {
+   "weapon": "darkmatter",
+   "perk": "magnet",
+   "lvl": 3,
+   "name": "ГОРИЗОНТ СОБЫТИЙ",
+   "desc": "Сфера стирает вражеские пули вокруг себя, а схлопываясь, взрывается вдвое сильнее"
+  }
+ ],
+ "SKILL_BRANCHES": [
+  {
+   "id": "combat",
+   "name": "АТАКА",
+   "color": "#ff4d6d"
+  },
+  {
+   "id": "survival",
+   "name": "ЗАЩИТА",
+   "color": "#3dffa2"
+  },
+  {
+   "id": "tech",
+   "name": "ТЕХНИКА",
+   "color": "#b06bff"
+  },
+  {
+   "id": "special",
+   "name": "УДАЧА",
+   "color": "#ffc83d"
+  }
+ ],
+ "SKILLS": {
+  "sk_caliber": {
+   "type": "passive",
+   "branch": "combat",
+   "tier": 1,
+   "col": 0,
+   "ico": "🔩",
+   "name": "КАЛИБР",
+   "cost": 1,
+   "max": 3,
+   "desc": "+5% урона за ранг"
+  },
+  "sk_rapid": {
+   "type": "passive",
+   "branch": "combat",
+   "tier": 1,
+   "col": 1,
+   "ico": "⚙️",
+   "name": "СКОРОСТРЕЛ",
+   "cost": 1,
+   "max": 3,
+   "desc": "+5% темпа стрельбы за ранг"
+  },
+  "sk_precision": {
+   "type": "passive",
+   "branch": "combat",
+   "tier": 2,
+   "col": 0,
+   "ico": "🎯",
+   "name": "МЕТКОСТЬ",
+   "cost": 1,
+   "max": 3,
+   "req": [
+    "sk_caliber"
+   ],
+   "desc": "+4% шанс крита за ранг"
+  },
+  "sk_rail": {
+   "type": "active",
+   "branch": "combat",
+   "tier": 2,
+   "col": 1,
+   "ico": "🔮",
+   "name": "РЕЛЬСА",
+   "cost": 2,
+   "cd": 30,
+   "dur": 2.5,
+   "req": [
+    "sk_rapid"
+   ],
+   "desc": "Сквозной луч: огромный урон всему на линии, мгновенно ломает щиты"
+  },
+  "sk_executioner": {
+   "type": "passive",
+   "branch": "combat",
+   "tier": 3,
+   "col": 0,
+   "ico": "⚔️",
+   "name": "ПАЛАЧ",
+   "cost": 2,
+   "req": [
+    "sk_precision"
+   ],
+   "desc": "Двойной урон по врагам с прочностью ниже 25%"
+  },
+  "sk_berserker": {
+   "type": "passive",
+   "branch": "combat",
+   "tier": 3,
+   "col": 1,
+   "ico": "😤",
+   "name": "БЕРСЕРК",
+   "cost": 2,
+   "req": [
+    "sk_precision"
+   ],
+   "desc": "Урон растёт с потерей жизней: до +60% на последней"
+  },
+  "sk_orbital": {
+   "type": "active",
+   "branch": "combat",
+   "tier": 4,
+   "col": 0.5,
+   "ico": "🛰️",
+   "name": "ОРБИТАЛЬНЫЙ УДАР",
+   "cost": 3,
+   "cd": 26,
+   "req": [
+    "sk_executioner",
+    "sk_berserker"
+   ],
+   "desc": "Спутник берёт на прицел 6 самых крепких врагов и бьёт по ним лучами с орбиты"
+  },
+  "sk_coolhead": {
+   "type": "passive",
+   "branch": "combat",
+   "tier": 5,
+   "col": 0.5,
+   "ico": "❄️",
+   "name": "ХЛАДНОКРОВИЕ",
+   "cost": 3,
+   "req": [
+    "sk_executioner",
+    "sk_berserker"
+   ],
+   "desc": "Пока по вам не попадают, урон растёт на 10% каждые 4 с, до +30%"
+  },
+  "sk_armor": {
+   "type": "passive",
+   "branch": "survival",
+   "tier": 1,
+   "col": 0,
+   "ico": "🛡️",
+   "name": "БРОНЯ",
+   "cost": 2,
+   "max": 2,
+   "desc": "+1 к максимуму жизней за ранг"
+  },
+  "sk_regen": {
+   "type": "passive",
+   "branch": "survival",
+   "tier": 1,
+   "col": 1,
+   "ico": "💚",
+   "name": "РЕГЕНЕРАЦИЯ",
+   "cost": 2,
+   "max": 2,
+   "desc": "+1 жизнь каждые 45 с (2 ранг — 35 с); на последней жизни вдвое чаще"
+  },
+  "sk_ghost": {
+   "type": "passive",
+   "branch": "survival",
+   "tier": 2,
+   "col": 0,
+   "ico": "👻",
+   "name": "ПРИЗРАК",
+   "cost": 1,
+   "max": 3,
+   "req": [
+    "sk_armor"
+   ],
+   "desc": "+7% шанс уклониться от попадания за ранг"
+  },
+  "sk_barrier": {
+   "type": "active",
+   "branch": "survival",
+   "tier": 2,
+   "col": 1,
+   "ico": "🔵",
+   "name": "БАРЬЕР",
+   "cost": 2,
+   "cd": 24,
+   "dur": 4,
+   "req": [
+    "sk_regen"
+   ],
+   "desc": "Неуязвимость на 4 с; пули, задевшие барьер, летят обратно во врагов"
+  },
+  "sk_capacitor": {
+   "type": "passive",
+   "branch": "survival",
+   "tier": 3,
+   "col": 0,
+   "ico": "🔋",
+   "name": "КОНДЕНСАТОР",
+   "cost": 2,
+   "req": [
+    "sk_ghost"
+   ],
+   "desc": "Щит восстанавливается каждые 30 с"
+  },
+  "sk_phoenix": {
+   "type": "passive",
+   "branch": "survival",
+   "tier": 3,
+   "col": 1,
+   "ico": "🔥",
+   "name": "ФЕНИКС",
+   "cost": 3,
+   "req": [
+    "sk_ghost"
+   ],
+   "desc": "Один раз за забег воскрешает с 2 жизнями"
+  },
+  "sk_timewarp": {
+   "type": "active",
+   "branch": "survival",
+   "tier": 4,
+   "col": 0.5,
+   "ico": "⏳",
+   "name": "ЗАМЕДЛЕНИЕ",
+   "cost": 3,
+   "cd": 30,
+   "dur": 5,
+   "req": [
+    "sk_capacitor",
+    "sk_phoenix"
+   ],
+   "desc": "Враги и их снаряды замедляются втрое на 5 секунд"
+  },
+  "sk_secondwind": {
+   "type": "passive",
+   "branch": "survival",
+   "tier": 5,
+   "col": 0.5,
+   "ico": "🌬️",
+   "name": "ВТОРОЕ ДЫХАНИЕ",
+   "cost": 3,
+   "req": [
+    "sk_capacitor",
+    "sk_phoenix"
+   ],
+   "desc": "После попадания неуязвимость вдвое дольше, а пули вокруг гаснут"
+  },
+  "sk_detonator": {
+   "type": "passive",
+   "branch": "tech",
+   "tier": 1,
+   "col": 0,
+   "ico": "💥",
+   "name": "ДЕТОНАТОР",
+   "cost": 2,
+   "desc": "Каждое 5-е уничтожение вызывает взрыв"
+  },
+  "sk_magnet": {
+   "type": "passive",
+   "branch": "tech",
+   "tier": 1,
+   "col": 1,
+   "ico": "🧲",
+   "name": "МАГНИТ",
+   "cost": 1,
+   "max": 2,
+   "desc": "Радиус сбора ×1,5; 2 ранг — монеты и кристаллы летят со всего экрана"
+  },
+  "sk_ricochet": {
+   "type": "passive",
+   "branch": "tech",
+   "tier": 2,
+   "col": 0,
+   "ico": "🎱",
+   "name": "РИКОШЕТ",
+   "cost": 2,
+   "req": [
+    "sk_detonator"
+   ],
+   "desc": "Снаряды один раз отскакивают от краёв экрана"
+  },
+  "sk_turret": {
+   "type": "active",
+   "branch": "tech",
+   "tier": 2,
+   "col": 1,
+   "ico": "🛸",
+   "name": "ТУРЕЛЬ",
+   "cost": 2,
+   "cd": 25,
+   "dur": 8,
+   "req": [
+    "sk_magnet"
+   ],
+   "desc": "Над кораблём на 8 с встаёт боевой дрон и бьёт ближайших врагов"
+  },
+  "sk_conductor": {
+   "type": "passive",
+   "branch": "tech",
+   "tier": 3,
+   "col": 0,
+   "ico": "🌩️",
+   "name": "ПРОВОДНИК",
+   "cost": 2,
+   "req": [
+    "sk_ricochet"
+   ],
+   "desc": "Молния +2 прыжка; любое попадание с шансом 8% бьёт разрядом"
+  },
+  "sk_overload": {
+   "type": "passive",
+   "branch": "tech",
+   "tier": 3,
+   "col": 1,
+   "ico": "💡",
+   "name": "ПЕРЕГРУЗКА",
+   "cost": 2,
+   "req": [
+    "sk_ricochet"
+   ],
+   "desc": "После активного навыка — темп стрельбы ×2 на 4 с"
+  },
+  "sk_blackhole": {
+   "type": "active",
+   "branch": "tech",
+   "tier": 4,
+   "col": 0.5,
+   "ico": "🌀",
+   "name": "ЧЁРНАЯ ДЫРА",
+   "cost": 3,
+   "cd": 40,
+   "dur": 3,
+   "req": [
+    "sk_conductor",
+    "sk_overload"
+   ],
+   "desc": "Затягивает врагов и пули, затем взрывается"
+  },
+  "sk_chrono": {
+   "type": "passive",
+   "branch": "tech",
+   "tier": 5,
+   "col": 0.5,
+   "ico": "⏱️",
+   "name": "ХРОНОМЕТР",
+   "cost": 2,
+   "max": 2,
+   "req": [
+    "sk_conductor",
+    "sk_overload"
+   ],
+   "desc": "Навыки и бомба перезаряжаются на 15% быстрее за ранг"
+  },
+  "sk_greed": {
+   "type": "passive",
+   "branch": "special",
+   "tier": 1,
+   "col": 0,
+   "ico": "💎",
+   "name": "АЛЧНОСТЬ",
+   "cost": 1,
+   "max": 3,
+   "desc": "+10% монет за ранг"
+  },
+  "sk_scavenger": {
+   "type": "passive",
+   "branch": "special",
+   "tier": 1,
+   "col": 1,
+   "ico": "🧰",
+   "name": "МАРОДЁР",
+   "cost": 2,
+   "desc": "На станции на 1 модуль больше, у Торговца всё на 30% дешевле"
+  },
+  "sk_lucky": {
+   "type": "passive",
+   "branch": "special",
+   "tier": 2,
+   "col": 0,
+   "ico": "🍀",
+   "name": "ВЕЗУНЧИК",
+   "cost": 1,
+   "max": 2,
+   "req": [
+    "sk_greed"
+   ],
+   "desc": "Бонусы выпадают на 25% чаще за ранг"
+  },
+  "sk_emp": {
+   "type": "active",
+   "branch": "special",
+   "tier": 2,
+   "col": 1,
+   "ico": "📡",
+   "name": "ЭМИ",
+   "cost": 2,
+   "cd": 24,
+   "req": [
+    "sk_scavenger"
+   ],
+   "desc": "Импульс глушит врагов: 3 с не двигаются и не стреляют, щиты ломаются (босса — на 1,5 с)"
+  },
+  "sk_daredevil": {
+   "type": "passive",
+   "branch": "special",
+   "tier": 3,
+   "col": 0,
+   "ico": "☠️",
+   "name": "СОРВИГОЛОВА",
+   "cost": 2,
+   "req": [
+    "sk_lucky"
+   ],
+   "desc": "На опасном пути Развилки монеты ×3 и урон +25%"
+  },
+  "sk_vamp": {
+   "type": "passive",
+   "branch": "special",
+   "tier": 3,
+   "col": 1,
+   "ico": "🧛",
+   "name": "ВАМПИР",
+   "cost": 2,
+   "req": [
+    "sk_lucky"
+   ],
+   "desc": "Каждые 25 уничтоженных врагов — +1 жизнь"
+  },
+  "sk_clone": {
+   "type": "active",
+   "branch": "special",
+   "tier": 4,
+   "col": 0.5,
+   "ico": "👥",
+   "name": "ДВОЙНИК",
+   "cost": 3,
+   "cd": 30,
+   "dur": 7,
+   "req": [
+    "sk_daredevil",
+    "sk_vamp"
+   ],
+   "desc": "Голограмма корабля 7 с летит рядом и повторяет все ваши выстрелы"
+  },
+  "sk_jackpot": {
+   "type": "passive",
+   "branch": "special",
+   "tier": 5,
+   "col": 0.5,
+   "ico": "🎰",
+   "name": "ДЖЕКПОТ",
+   "cost": 3,
+   "req": [
+    "sk_daredevil",
+    "sk_vamp"
+   ],
+   "desc": "Элита и мини-боссы роняют ящик с монетами и бонусом"
+  }
+ },
+ "MAX_PASSIVE": 99,
+ "MAX_ACTIVE": 2,
+ "SHIPS": {
+  "ship1": {
+   "name": "СОКОЛ",
+   "sprite": "ship1",
+   "price": 0,
+   "lvl": 1,
+   "desc": "Надёжный перехватчик",
+   "stats": {},
+   "perks": [
+    "Базовые характеристики"
+   ]
+  },
+  "ship7": {
+   "name": "СТРИЖ",
+   "sprite": "ship7",
+   "price": 1500,
+   "lvl": 3,
+   "scale": 0.95,
+   "desc": "Лёгкий и точный перехватчик",
+   "stats": {
+    "speed": 0.12,
+    "crit": 0.05,
+    "rate": 0.04
+   },
+   "perks": [
+    "+12% скорость",
+    "+5% шанс крита",
+    "+4% темп"
+   ]
+  },
+  "ship2": {
+   "name": "ЯСТРЕБ",
+   "sprite": "ship2",
+   "price": 2500,
+   "lvl": 5,
+   "desc": "Форсированные двигатели и орудия",
+   "stats": {
+    "rate": 0.1,
+    "speed": 0.08
+   },
+   "perks": [
+    "+10% темп стрельбы",
+    "+8% скорость"
+   ]
+  },
+  "ship8": {
+   "name": "ОСА",
+   "sprite": "ship8",
+   "price": 4500,
+   "lvl": 8,
+   "desc": "Вёрткий разведчик: уклоняется и собирает всё вокруг",
+   "stats": {
+    "speed": 0.16,
+    "dodge": 0.08,
+    "magnet": 0.5,
+    "rate": 0.05
+   },
+   "perks": [
+    "+16% скорость",
+    "8% шанс уклонения",
+    "+50% радиус сбора",
+    "+5% темп"
+   ]
+  },
+  "ship3": {
+   "name": "ФЕНИКС",
+   "sprite": "ship3",
+   "price": 7000,
+   "lvl": 11,
+   "desc": "Флагман с усиленной бронёй",
+   "stats": {
+    "dmg": 0.12,
+    "rate": 0.05,
+    "lives": 1
+   },
+   "perks": [
+    "+12% урон",
+    "+5% темп",
+    "+1 жизнь"
+   ]
+  },
+  "ship9": {
+   "name": "МОЛОТ",
+   "sprite": "ship9",
+   "price": 10000,
+   "lvl": 14,
+   "scale": 1.15,
+   "desc": "Тяжёлый бомбардировщик",
+   "stats": {
+    "dmg": 0.12,
+    "bombs": 2,
+    "bombdmg": 0.5,
+    "speed": -0.06
+   },
+   "perks": [
+    "+12% урон",
+    "+2 бомбы на старте",
+    "+50% урон бомб",
+    "−6% скорость"
+   ]
+  },
+  "ship4": {
+   "name": "КОНДОР",
+   "sprite": "ship4",
+   "price": 12000,
+   "lvl": 16,
+   "scale": 1.08,
+   "desc": "Модернизированный перехватчик",
+   "stats": {
+    "dmg": 0.1,
+    "rate": 0.15,
+    "speed": 0.05
+   },
+   "perks": [
+    "+10% урон",
+    "+15% темп",
+    "+5% скорость"
+   ]
+  },
+  "ship10": {
+   "name": "ТЕНЬ",
+   "sprite": "ship10",
+   "price": 15000,
+   "lvl": 19,
+   "scale": 1.05,
+   "desc": "Стелс-истребитель: бьёт из засады",
+   "stats": {
+    "crit": 0.12,
+    "critMul": 0.5,
+    "dodge": 0.12,
+    "rate": 0.05
+   },
+   "perks": [
+    "+12% шанс крита",
+    "Криты +50% урона",
+    "12% шанс уклонения",
+    "+5% темп"
+   ]
+  },
+  "ship5": {
+   "name": "ГРИФОН",
+   "sprite": "ship5",
+   "price": 18000,
+   "lvl": 22,
+   "scale": 1.1,
+   "desc": "Тяжёлый штурмовик с бронёй",
+   "stats": {
+    "dmg": 0.18,
+    "rate": 0.05,
+    "lives": 2,
+    "speed": -0.05
+   },
+   "perks": [
+    "+18% урон",
+    "+5% темп",
+    "+2 жизни",
+    "−5% скорость"
+   ]
+  },
+  "ship11": {
+   "name": "ВИХРЬ",
+   "sprite": "ship11",
+   "price": 22000,
+   "lvl": 25,
+   "scale": 1.1,
+   "desc": "Крылатый штурмовик с бортовыми пушками",
+   "stats": {
+    "wings": 1,
+    "rate": 0.12,
+    "dmg": 0.06
+   },
+   "perks": [
+    "Две бортовые пушки",
+    "+12% темп",
+    "+6% урон"
+   ]
+  },
+  "ship12": {
+   "name": "БЛИЗНЕЦЫ",
+   "sprite": "ship12",
+   "price": 27000,
+   "lvl": 28,
+   "scale": 1.15,
+   "desc": "Два корпуса — двойной залп",
+   "stats": {
+    "multi": 1,
+    "dmg": -0.12,
+    "lives": 1,
+    "speed": -0.04
+   },
+   "perks": [
+    "+1 снаряд в залпе",
+    "−12% урон снаряда",
+    "+1 жизнь",
+    "−4% скорость"
+   ]
+  },
+  "ship6": {
+   "name": "АБСОЛЮТ",
+   "sprite": "ship6",
+   "price": 33000,
+   "lvl": 31,
+   "scale": 1.22,
+   "desc": "Абсолютный флагман галактики",
+   "stats": {
+    "dmg": 0.3,
+    "rate": 0.15,
+    "lives": 1,
+    "speed": 0.1
+   },
+   "perks": [
+    "+30% урон",
+    "+15% темп",
+    "+1 жизнь",
+    "+10% скорость"
+   ]
+  },
+  "ship13": {
+   "name": "ТИТАН",
+   "sprite": "ship13",
+   "price": 42000,
+   "lvl": 35,
+   "desc": "Линейный крейсер: живучий и смертоносный",
+   "stats": {
+    "dmg": 0.3,
+    "lives": 3,
+    "shieldRegen": 18,
+    "speed": -0.1
+   },
+   "perks": [
+    "+30% урон",
+    "+3 жизни",
+    "Щит каждые 18 с",
+    "−10% скорость"
+   ]
+  }
+ },
+ "SHIP_ORDER": [
+  "ship1",
+  "ship7",
+  "ship2",
+  "ship8",
+  "ship3",
+  "ship9",
+  "ship4",
+  "ship10",
+  "ship5",
+  "ship11",
+  "ship12",
+  "ship6",
+  "ship13"
+ ],
+ "SKINS": [
+  {
+   "id": "default",
+   "name": "СТАНДАРТ",
+   "rar": "common",
+   "hue": null,
+   "req": "Доступна сразу"
+  },
+  {
+   "id": "fire",
+   "name": "ОГНЕННЫЙ",
+   "rar": "common",
+   "hue": 12,
+   "req": "50 уничтоженных врагов"
+  },
+  {
+   "id": "ice",
+   "name": "ЛЕДЯНОЙ",
+   "rar": "common",
+   "hue": 186,
+   "req": "Корабль 5 уровня"
+  },
+  {
+   "id": "ghost",
+   "name": "ПРИЗРАК",
+   "rar": "uncommon",
+   "hue": 225,
+   "sat": 0.12,
+   "bright": 0.18,
+   "req": "Победить 3 боссов"
+  },
+  {
+   "id": "alien",
+   "name": "ПРИШЕЛЕЦ",
+   "rar": "uncommon",
+   "hue": 118,
+   "req": "Победить 5 боссов"
+  },
+  {
+   "id": "gold",
+   "name": "ЗОЛОТОЙ",
+   "rar": "uncommon",
+   "hue": 44,
+   "req": "Заработать 5 000 монет"
+  },
+  {
+   "id": "dragon",
+   "name": "ДРАКОН",
+   "rar": "rare",
+   "hue": 285,
+   "req": "Комбо ×40"
+  },
+  {
+   "id": "neon",
+   "name": "НЕОН",
+   "rar": "rare",
+   "hue": 318,
+   "req": "Рекорд 50 000 очков"
+  },
+  {
+   "id": "toxic",
+   "name": "ТОКСИН",
+   "rar": "rare",
+   "hue": 88,
+   "req": "1 000 уничтоженных врагов"
+  },
+  {
+   "id": "void",
+   "name": "ПУСТОТА",
+   "rar": "rare",
+   "hue": 262,
+   "dark": 0.45,
+   "req": "Волна 10 на «Кошмаре»"
+  },
+  {
+   "id": "storm",
+   "name": "ШТОРМ",
+   "rar": "epic",
+   "hue": 200,
+   "bright": 0.22,
+   "req": "Дойти до волны 30"
+  },
+  {
+   "id": "phoenix2",
+   "name": "ФЕНИКС",
+   "rar": "epic",
+   "hue": 26,
+   "req": "Победить 25 боссов"
+  },
+  {
+   "id": "crystal",
+   "name": "КРИСТАЛЛ",
+   "rar": "epic",
+   "hue": 176,
+   "sat": 0.55,
+   "bright": 0.25,
+   "req": "Корабль 20 уровня"
+  },
+  {
+   "id": "rainbow",
+   "name": "РАДУГА",
+   "rar": "legendary",
+   "hue": "rainbow",
+   "req": "25 достижений"
+  },
+  {
+   "id": "darkmatter",
+   "name": "ТЁМНАЯ МАТЕРИЯ",
+   "rar": "legendary",
+   "hue": 272,
+   "dark": 0.62,
+   "req": "Рекорд 250 000 очков"
+  }
+ ],
+ "SHIP_VARIANTS": {
+  "ship1": {
+   "fire": "c_red",
+   "alien": "c_green",
+   "gold": "c_gold",
+   "dragon": "c_purple",
+   "ghost": "c_white",
+   "phoenix2": "c_orange"
+  }
+ },
+ "RARITY_NAMES": {
+  "common": "ОБЫЧНАЯ",
+  "uncommon": "НЕОБЫЧНАЯ",
+  "rare": "РЕДКАЯ",
+  "epic": "ЭПИЧЕСКАЯ",
+  "legendary": "ЛЕГЕНДАРНАЯ"
+ },
+ "TRAILS": [
+  {
+   "id": "ice",
+   "name": "ЛЁД",
+   "price": 0,
+   "colors": [
+    "#ffffff",
+    "#7fe7ff",
+    "#2a7bff"
+   ]
+  },
+  {
+   "id": "fire",
+   "name": "ОГОНЬ",
+   "price": 0,
+   "colors": [
+    "#fff3b0",
+    "#ffb03d",
+    "#ff4d1a"
+   ]
+  },
+  {
+   "id": "plasma",
+   "name": "ПЛАЗМА",
+   "price": 300,
+   "colors": [
+    "#ffe1ff",
+    "#ff6bf0",
+    "#8a3dff"
+   ]
+  },
+  {
+   "id": "green",
+   "name": "ЯДЕРНЫЙ",
+   "price": 300,
+   "colors": [
+    "#f0fff0",
+    "#7dff6b",
+    "#16b34a"
+   ]
+  },
+  {
+   "id": "gold",
+   "name": "ЗОЛОТО",
+   "price": 500,
+   "colors": [
+    "#fffbe0",
+    "#ffd23d",
+    "#ff8f1a"
+   ]
+  },
+  {
+   "id": "red",
+   "name": "КРОВЬ",
+   "price": 500,
+   "colors": [
+    "#ffe0e0",
+    "#ff3d5a",
+    "#990022"
+   ]
+  },
+  {
+   "id": "acid",
+   "name": "КИСЛОТА",
+   "price": 700,
+   "colors": [
+    "#faffd0",
+    "#c8ff3d",
+    "#3dbb6b"
+   ]
+  },
+  {
+   "id": "dark",
+   "name": "ТЬМА",
+   "price": 900,
+   "colors": [
+    "#e6d9ff",
+    "#8a4dff",
+    "#2a0d66"
+   ]
+  },
+  {
+   "id": "lightsaber",
+   "name": "ЛАЙТСАБЕР",
+   "price": 1200,
+   "colors": [
+    "#ffffff",
+    "#d2f8ff",
+    "#3de0ff"
+   ]
+  },
+  {
+   "id": "rainbow",
+   "name": "РАДУГА",
+   "price": 2000,
+   "colors": "rainbow"
+  },
+  {
+   "id": "twin",
+   "name": "ДВОЙНОЙ",
+   "price": 1500,
+   "colors": [
+    "#ffffff",
+    "#7fe7ff",
+    "#2a7bff"
+   ],
+   "fx": "fx_tr_double"
+  },
+  {
+   "id": "boost",
+   "name": "ФОРСАЖ",
+   "price": 1800,
+   "colors": [
+    "#ffffff",
+    "#6bd8ff",
+    "#1a5cff"
+   ],
+   "fx": "fx_tr_boost"
+  },
+  {
+   "id": "plume",
+   "name": "ШЛЕЙФ",
+   "price": 2400,
+   "colors": [
+    "#ffe1ff",
+    "#e06bff",
+    "#7a3dff"
+   ],
+   "fx": "fx_tr_plasma"
+  },
+  {
+   "id": "spiral",
+   "name": "СПИРАЛЬ",
+   "price": 3000,
+   "colors": [
+    "#e6e0ff",
+    "#9b6bff",
+    "#3d2aff"
+   ],
+   "fx": "fx_tr_spiral",
+   "spin": true
+  }
+ ],
+ "ACHIEVEMENTS": [
+  {
+   "id": "first_kill",
+   "ico": "🔫",
+   "name": "Первая кровь",
+   "desc": "Уничтожьте первого врага",
+   "reward": 20,
+   "stat": "kills",
+   "goal": 1
+  },
+  {
+   "id": "kill200_total",
+   "ico": "💀",
+   "name": "Охотник",
+   "desc": "Уничтожьте 200 врагов",
+   "reward": 100,
+   "stat": "kills",
+   "goal": 200
+  },
+  {
+   "id": "kill1000_total",
+   "ico": "🗡️",
+   "name": "Жнец",
+   "desc": "Уничтожьте 1 000 врагов",
+   "reward": 300,
+   "stat": "kills",
+   "goal": 1000
+  },
+  {
+   "id": "kill5000",
+   "ico": "☄️",
+   "name": "Гроза галактики",
+   "desc": "Уничтожьте 5 000 врагов",
+   "reward": 800,
+   "stat": "kills",
+   "goal": 5000
+  },
+  {
+   "id": "boss1",
+   "ico": "👾",
+   "name": "Убийца боссов",
+   "desc": "Победите босса",
+   "reward": 100,
+   "stat": "bosses",
+   "goal": 1
+  },
+  {
+   "id": "boss10",
+   "ico": "🏹",
+   "name": "Охотник на титанов",
+   "desc": "Победите 10 боссов",
+   "reward": 400,
+   "stat": "bosses",
+   "goal": 10
+  },
+  {
+   "id": "boss_all",
+   "ico": "🏆",
+   "name": "Коллекция трофеев",
+   "desc": "Победите всех 13 разных боссов",
+   "reward": 1200,
+   "stat": "bossTypes",
+   "goal": 13
+  },
+  {
+   "id": "overlord",
+   "ico": "👁️",
+   "name": "Конец тирании",
+   "desc": "Победите Оверлорда",
+   "reward": 1000
+  },
+  {
+   "id": "no_damage_boss",
+   "ico": "🛡️",
+   "name": "Неуязвимый охотник",
+   "desc": "Победите босса, не получив урона",
+   "reward": 250
+  },
+  {
+   "id": "combo5",
+   "ico": "⚡",
+   "name": "Комбо-мастер",
+   "desc": "Наберите комбо ×20",
+   "reward": 50,
+   "stat": "maxCombo",
+   "goal": 20
+  },
+  {
+   "id": "combo10",
+   "ico": "🌟",
+   "name": "Легенда комбо",
+   "desc": "Наберите комбо ×50",
+   "reward": 150,
+   "stat": "maxCombo",
+   "goal": 50
+  },
+  {
+   "id": "combo30",
+   "ico": "🌪️",
+   "name": "Бог скорости",
+   "desc": "Наберите комбо ×100",
+   "reward": 300,
+   "stat": "maxCombo",
+   "goal": 100
+  },
+  {
+   "id": "score1000",
+   "ico": "🎯",
+   "name": "Первые тысячи",
+   "desc": "10 000 очков за одну игру",
+   "reward": 50,
+   "stat": "bestScore",
+   "goal": 10000
+  },
+  {
+   "id": "score5000",
+   "ico": "🏅",
+   "name": "Ас",
+   "desc": "50 000 очков за одну игру",
+   "reward": 150,
+   "stat": "bestScore",
+   "goal": 50000
+  },
+  {
+   "id": "score250k",
+   "ico": "👑",
+   "name": "Легенда",
+   "desc": "250 000 очков за одну игру",
+   "reward": 400,
+   "stat": "bestScore",
+   "goal": 250000
+  },
+  {
+   "id": "score1m",
+   "ico": "💎",
+   "name": "Миллионер",
+   "desc": "1 000 000 очков за одну игру",
+   "reward": 1000,
+   "stat": "bestScore",
+   "goal": 1000000
+  },
+  {
+   "id": "survive5",
+   "ico": "💪",
+   "name": "Выживший",
+   "desc": "Дойдите до волны 10",
+   "reward": 80,
+   "stat": "bestWave",
+   "goal": 10
+  },
+  {
+   "id": "wave20",
+   "ico": "🚀",
+   "name": "Ветеран",
+   "desc": "Дойдите до волны 20",
+   "reward": 200,
+   "stat": "bestWave",
+   "goal": 20
+  },
+  {
+   "id": "wave40",
+   "ico": "🌌",
+   "name": "Покоритель галактики",
+   "desc": "Дойдите до волны 40",
+   "reward": 500,
+   "stat": "bestWave",
+   "goal": 40
+  },
+  {
+   "id": "wave65",
+   "ico": "🌠",
+   "name": "Край вселенной",
+   "desc": "Дойдите до волны 65",
+   "reward": 1200,
+   "stat": "bestWave",
+   "goal": 65
+  },
+  {
+   "id": "nightmare10",
+   "ico": "😱",
+   "name": "Кошмарный сон",
+   "desc": "Волна 10 на сложности «Кошмар»",
+   "reward": 300
+  },
+  {
+   "id": "god_mode_clear",
+   "ico": "☠️",
+   "name": "Бессмертный",
+   "desc": "Волна 15 на сложности «Бог войны»",
+   "reward": 500
+  },
+  {
+   "id": "shield",
+   "ico": "🔰",
+   "name": "Под защитой",
+   "desc": "Подберите щит",
+   "reward": 20
+  },
+  {
+   "id": "no_hit_level",
+   "ico": "👻",
+   "name": "Призрак",
+   "desc": "Пройдите волну 5+ без урона",
+   "reward": 100
+  },
+  {
+   "id": "survive_1hp",
+   "ico": "❤️",
+   "name": "Последний рубеж",
+   "desc": "Продержитесь 60 с на последней жизни",
+   "reward": 180
+  },
+  {
+   "id": "survive_10min",
+   "ico": "⏱️",
+   "name": "Долгожитель",
+   "desc": "10 минут в одной игре",
+   "reward": 200
+  },
+  {
+   "id": "bomb_chain",
+   "ico": "💣",
+   "name": "Подрывник",
+   "desc": "10 врагов одной бомбой",
+   "reward": 100
+  },
+  {
+   "id": "accuracy80",
+   "ico": "🎯",
+   "name": "Снайпер точности",
+   "desc": "Точность 80%+ (от 150 выстрелов)",
+   "reward": 120
+  },
+  {
+   "id": "perk15",
+   "ico": "🧬",
+   "name": "Эволюция",
+   "desc": "Уровень 15 в одном забеге",
+   "reward": 200
+  },
+  {
+   "id": "weapon_all",
+   "ico": "⚔️",
+   "name": "Коллекционер",
+   "desc": "Откройте всё оружие",
+   "reward": 400,
+   "stat": "weaponsOwned",
+   "goal": 7
+  },
+  {
+   "id": "max_one_upgrade",
+   "ico": "🔬",
+   "name": "Специалист",
+   "desc": "Прокачайте любую ветку до максимума",
+   "reward": 80
+  },
+  {
+   "id": "skill_tree_full",
+   "ico": "🧠",
+   "name": "Мастер навыков",
+   "desc": "Изучите 5 навыков",
+   "reward": 300,
+   "stat": "skillsLearned",
+   "goal": 5
+  },
+  {
+   "id": "ship_lvl20",
+   "ico": "🛸",
+   "name": "Ветеран космоса",
+   "desc": "Корабль 20 уровня",
+   "reward": 350,
+   "stat": "shipLvl",
+   "goal": 20
+  },
+  {
+   "id": "ship3",
+   "ico": "🦅",
+   "name": "Флагман",
+   "desc": "Получите корабль «Феникс»",
+   "reward": 300
+  },
+  {
+   "id": "ship6",
+   "ico": "👑",
+   "name": "Абсолютная власть",
+   "desc": "Получите корабль «Абсолют»",
+   "reward": 1500
+  },
+  {
+   "id": "ships_all",
+   "ico": "🛸",
+   "name": "Адмирал флота",
+   "desc": "Соберите все 13 кораблей",
+   "reward": 2500,
+   "stat": "shipsOwned",
+   "goal": 13
+  },
+  {
+   "id": "coins10k",
+   "ico": "💰",
+   "name": "Магнат",
+   "desc": "Заработайте 10 000 монет",
+   "reward": 200,
+   "stat": "coinsEarned",
+   "goal": 10000
+  },
+  {
+   "id": "games50",
+   "ico": "🎮",
+   "name": "Завсегдатай",
+   "desc": "Сыграйте 50 игр",
+   "reward": 150,
+   "stat": "games",
+   "goal": 50
+  },
+  {
+   "id": "daily3",
+   "ico": "📅",
+   "name": "Дисциплина",
+   "desc": "Выполните все 3 задания дня",
+   "reward": 100
+  },
+  {
+   "id": "daily_7",
+   "ico": "🔥",
+   "name": "Легенда дисциплины",
+   "desc": "Заходите 7 дней подряд",
+   "reward": 400
+  },
+  {
+   "id": "prestige1",
+   "ico": "🌠",
+   "name": "Легенда галактики",
+   "desc": "Совершите престиж",
+   "reward": 500
+  },
+  {
+   "id": "evo1",
+   "ico": "🧬",
+   "name": "Мутация",
+   "desc": "Получите эволюцию оружия",
+   "reward": 150
+  },
+  {
+   "id": "evo_all",
+   "ico": "🧪",
+   "name": "Генный инженер",
+   "desc": "Получите все 3 эволюции",
+   "reward": 600,
+   "stat": "evoTypes",
+   "goal": 3
+  },
+  {
+   "id": "glass10",
+   "ico": "💎",
+   "name": "Хрустальный ас",
+   "desc": "Волна 10 со «Стеклянной пушкой»",
+   "reward": 300
+  },
+  {
+   "id": "events10",
+   "ico": "🌪️",
+   "name": "Буревестник",
+   "desc": "Переживите 10 событий волны",
+   "reward": 200,
+   "stat": "events",
+   "goal": 10
+  },
+  {
+   "id": "challenge1",
+   "ico": "🎲",
+   "name": "Принял вызов",
+   "desc": "Пройдите испытание дня (волна 10)",
+   "reward": 200
+  },
+  {
+   "id": "challenge7",
+   "ico": "🏵️",
+   "name": "Чемпион испытаний",
+   "desc": "Пройдите 7 испытаний дня",
+   "reward": 700,
+   "stat": "challenges",
+   "goal": 7
+  },
+  {
+   "id": "trail_fx",
+   "ico": "🌀",
+   "name": "Стиль пилота",
+   "desc": "Купите шлейф двигателя со спецэффектом",
+   "reward": 150
+  }
+ ],
+ "MISSIONS": [
+  {
+   "id": "kills",
+   "text": "Уничтожьте {n} врагов",
+   "goals": [
+    60,
+    120,
+    200
+   ],
+   "rewards": [
+    60,
+    100,
+    160
+   ]
+  },
+  {
+   "id": "score",
+   "text": "Наберите {n} очков за день",
+   "goals": [
+    20000,
+    50000,
+    100000
+   ],
+   "rewards": [
+    60,
+    100,
+    160
+   ]
+  },
+  {
+   "id": "bosses",
+   "text": "Победите боссов: {n}",
+   "goals": [
+    1,
+    2,
+    3
+   ],
+   "rewards": [
+    80,
+    140,
+    220
+   ]
+  },
+  {
+   "id": "wave",
+   "text": "Дойдите до волны {n}",
+   "goals": [
+    7,
+    11,
+    16
+   ],
+   "rewards": [
+    60,
+    110,
+    170
+   ],
+   "max": true
+  },
+  {
+   "id": "combo",
+   "text": "Наберите комбо ×{n}",
+   "goals": [
+    20,
+    35,
+    50
+   ],
+   "rewards": [
+    50,
+    90,
+    140
+   ],
+   "max": true
+  },
+  {
+   "id": "coins",
+   "text": "Соберите {n} монет",
+   "goals": [
+    150,
+    300,
+    500
+   ],
+   "rewards": [
+    50,
+    90,
+    140
+   ]
+  },
+  {
+   "id": "games",
+   "text": "Сыграйте игр: {n}",
+   "goals": [
+    2,
+    3,
+    5
+   ],
+   "rewards": [
+    40,
+    60,
+    100
+   ]
+  },
+  {
+   "id": "perks",
+   "text": "Получите улучшений: {n}",
+   "goals": [
+    8,
+    15,
+    25
+   ],
+   "rewards": [
+    50,
+    90,
+    140
+   ]
+  },
+  {
+   "id": "pickups",
+   "text": "Подберите бонусов: {n}",
+   "goals": [
+    6,
+    12,
+    20
+   ],
+   "rewards": [
+    50,
+    80,
+    120
+   ]
+  },
+  {
+   "id": "minutes",
+   "text": "Проведите в бою {n} мин",
+   "goals": [
+    5,
+    10,
+    15
+   ],
+   "rewards": [
+    50,
+    90,
+    140
+   ]
+  },
+  {
+   "id": "events",
+   "text": "Переживите событий волны: {n}",
+   "goals": [
+    1,
+    2,
+    3
+   ],
+   "rewards": [
+    60,
+    100,
+    150
+   ]
+  },
+  {
+   "id": "debris",
+   "text": "Разбейте обломков: {n}",
+   "goals": [
+    10,
+    20,
+    35
+   ],
+   "rewards": [
+    50,
+    90,
+    140
+   ]
+  }
+ ],
+ "DAILY_BONUS": 150,
+ "LOGIN": [
+  {
+   "coins": 50
+  },
+  {
+   "coins": 80
+  },
+  {
+   "coins": 120
+  },
+  {
+   "coins": 160
+  },
+  {
+   "coins": 220
+  },
+  {
+   "coins": 300
+  },
+  {
+   "coins": 500,
+   "sp": 1
+  }
+ ],
+ "SECTORS": [
+  {
+   "name": "ОРБИТА ЗЕМЛИ",
+   "sky": [
+    "#02040d",
+    "#06103a"
+   ],
+   "neb": [
+    "#1f4dff",
+    "#3de0ff",
+    "#7a3dff"
+   ],
+   "star": "#cfe3ff",
+   "planet": 210,
+   "mech": "sats",
+   "desc": "Сбивайте спутники связи — в них бонусы и монеты"
+  },
+  {
+   "name": "ПОЯС АСТЕРОИДОВ",
+   "sky": [
+    "#070305",
+    "#21100a"
+   ],
+   "neb": [
+    "#ff6a2a",
+    "#ffb35c",
+    "#b0302a"
+   ],
+   "star": "#ffe6cc",
+   "planet": 25,
+   "mech": "asteroids",
+   "desc": "Астероиды закрывают от пуль, в обломках монеты",
+   "noEvents": [
+    "meteors",
+    "debris"
+   ]
+  },
+  {
+   "name": "ТУМАННОСТЬ ОРИОНА",
+   "sky": [
+    "#06020c",
+    "#260a33"
+   ],
+   "neb": [
+    "#ff3dd2",
+    "#8a3dff",
+    "#3d5cff"
+   ],
+   "star": "#ffd9fb",
+   "planet": 300,
+   "mech": "nebula",
+   "desc": "Облака туманности прячут врагов — наведение их не видит"
+  },
+  {
+   "name": "ЛЕДЯНЫЕ ЛУНЫ",
+   "sky": [
+    "#010810",
+    "#06283a"
+   ],
+   "neb": [
+    "#3dfff0",
+    "#7fb8ff",
+    "#2a6bff"
+   ],
+   "star": "#e0fdff",
+   "planet": 190,
+   "mech": "ice",
+   "desc": "Разбитая ледяная глыба замораживает врагов рядом"
+  },
+  {
+   "name": "КРАСНЫЙ ГИГАНТ",
+   "sky": [
+    "#0a0204",
+    "#2e070d"
+   ],
+   "neb": [
+    "#ff2d4d",
+    "#ff8a3d",
+    "#8a1a3d"
+   ],
+   "star": "#ffd6d6",
+   "planet": 5,
+   "mech": "lava",
+   "desc": "Лавовые астероиды брызжут огнём — сбивайте издалека",
+   "noEvents": [
+    "meteors"
+   ]
+  },
+  {
+   "name": "ИЗУМРУДНЫЕ ПОЛЯ",
+   "sky": [
+    "#010805",
+    "#06301f"
+   ],
+   "neb": [
+    "#2dff8a",
+    "#3dd2ff",
+    "#1a8a5c"
+   ],
+   "star": "#dcffe9",
+   "planet": 145,
+   "mech": "toxic",
+   "desc": "Ядовитое облако жжёт врагов — и вас, если задержаться"
+  },
+  {
+   "name": "ГОРИЗОНТ СОБЫТИЙ",
+   "sky": [
+    "#030108",
+    "#16082e"
+   ],
+   "neb": [
+    "#7a3dff",
+    "#ff3d8b",
+    "#2a1a8a"
+   ],
+   "star": "#e8dcff",
+   "planet": 265,
+   "mech": "gravity",
+   "desc": "Гравитация гнёт все снаряды и тянет корабль к краю"
+  },
+  {
+   "name": "СЕРДЦЕ ГАЛАКТИКИ",
+   "sky": [
+    "#080501",
+    "#2e1a05"
+   ],
+   "neb": [
+    "#ffc83d",
+    "#ff6b3d",
+    "#ff3d8b"
+   ],
+   "star": "#fff3d6",
+   "planet": 45,
+   "mech": "wind",
+   "desc": "Порывы звёздного ветра сносят снаряды и корабль"
+  },
+  {
+   "name": "КРИСТАЛЬНЫЙ ПОЯС",
+   "sky": [
+    "#020809",
+    "#082a2e"
+   ],
+   "neb": [
+    "#3dffd2",
+    "#3d9bff",
+    "#b0fff0"
+   ],
+   "star": "#dcfffb",
+   "planet": 170,
+   "mech": "prism",
+   "desc": "Кристаллы преломляют ваши выстрелы веером из трёх"
+  },
+  {
+   "name": "УЛЕЙ",
+   "sky": [
+    "#050801",
+    "#1c2a06"
+   ],
+   "neb": [
+    "#a6ff3d",
+    "#3dff7a",
+    "#6b8a1a"
+   ],
+   "star": "#efffd6",
+   "planet": 95,
+   "mech": "hive",
+   "desc": "На стенах зреют яйца — разбейте, пока не вылупились"
+  },
+  {
+   "name": "ПУСТОШЬ ХАОСА",
+   "sky": [
+    "#0a0502",
+    "#2e1405"
+   ],
+   "neb": [
+    "#ff7a2a",
+    "#c0461a",
+    "#ffb03d"
+   ],
+   "star": "#ffe9d6",
+   "planet": 20,
+   "mech": "portals",
+   "desc": "Порталы перебрасывают любые снаряды — и ваши, и вражеские"
+  },
+  {
+   "name": "ЦИТАДЕЛЬ ИНКВИЗИЦИИ",
+   "sky": [
+    "#08070a",
+    "#2a2410"
+   ],
+   "neb": [
+    "#ffe08a",
+    "#ff3d3d",
+    "#fff3d6"
+   ],
+   "star": "#fff8e6",
+   "planet": 50,
+   "mech": "pillars",
+   "desc": "Столпы света бьют по всем — подставляйте под них врагов"
+  },
+  {
+   "name": "ТРОН ОВЕРЛОРДА",
+   "sky": [
+    "#050108",
+    "#1f0626"
+   ],
+   "neb": [
+    "#b03dff",
+    "#ff3d6b",
+    "#3d1a8a"
+   ],
+   "star": "#f0dcff",
+   "planet": 285,
+   "mech": "eye",
+   "desc": "Око следит: пока оно открыто, не стойте на месте"
+  }
+ ],
+ "EVENTS": [
+  {
+   "id": "storm",
+   "name": "ИОННАЯ БУРЯ",
+   "ico": "⚡",
+   "color": "#7fb8ff",
+   "desc": "Молнии бьют в отмеченные места — и по врагам тоже"
+  },
+  {
+   "id": "meteors",
+   "name": "МЕТЕОРИТНЫЙ ДОЖДЬ",
+   "ico": "☄️",
+   "color": "#ff8a3d",
+   "desc": "Следите за линиями — по ним летят метеоры"
+  },
+  {
+   "id": "solar",
+   "name": "СОЛНЕЧНАЯ ВСПЫШКА",
+   "ico": "☀️",
+   "color": "#ffc83d",
+   "desc": "Вспышки сжигают вражеские снаряды и ранят врагов"
+  },
+  {
+   "id": "debris",
+   "name": "КОСМИЧЕСКИЙ МУСОР",
+   "ico": "🌑",
+   "color": "#d8c3a5",
+   "desc": "Сбивайте обломки — в них монеты"
+  },
+  {
+   "id": "convoy",
+   "name": "КОНВОЙ",
+   "ico": "📦",
+   "color": "#ffc83d",
+   "desc": "Сбейте грузовики, пока не ушли, — в них ящики с добычей"
+  }
+ ],
+ "EVENT_WAVE": 6,
+ "EVENT_CHANCE": 0.3,
+ "CHALLENGE_MODS": [
+  {
+   "id": "events",
+   "name": "Буйный космос",
+   "desc": "событие на каждой волне с 3-й"
+  },
+  {
+   "id": "glass",
+   "name": "Стеклянная пушка",
+   "desc": "+50% урона, но всего 1 жизнь"
+  },
+  {
+   "id": "swift",
+   "name": "Форсаж врагов",
+   "desc": "враги на 25% быстрее, монеты +50%"
+  },
+  {
+   "id": "elite",
+   "name": "Элитный флот",
+   "desc": "элитные враги втрое чаще"
+  },
+  {
+   "id": "weapon",
+   "name": "Оружие дня",
+   "desc": "только одно оружие: {w}"
+  },
+  {
+   "id": "perks",
+   "name": "Фора",
+   "desc": "старт с тремя случайными улучшениями"
+  },
+  {
+   "id": "nodrops",
+   "name": "Без бонусов",
+   "desc": "бонусы не выпадают, но урон +30%"
+  }
+ ],
+ "CHALLENGE_TIERS": [
+  {
+   "wave": 10,
+   "coins": 400
+  },
+  {
+   "wave": 20,
+   "coins": 700
+  },
+  {
+   "wave": 30,
+   "coins": 1200
+  }
+ ],
+ "ANOMALIES": {
+  "ionwind": {
+   "name": "ИОННЫЙ ВЕТЕР",
+   "ico": "💨",
+   "color": "#7fd8ff",
+   "desc": "враги быстрее на 25%",
+   "bonus": 0.25
+  },
+  "flagship": {
+   "name": "СИГНАЛ ФЛАГМАНА",
+   "ico": "📡",
+   "color": "#ffc83d",
+   "desc": "элитные враги втрое чаще",
+   "bonus": 0.3
+  },
+  "silence": {
+   "name": "РАДИОТИШИНА",
+   "ico": "📵",
+   "color": "#b08cff",
+   "desc": "бонусы не выпадают, урон +30%",
+   "bonus": 0.25
+  },
+  "unstable": {
+   "name": "НЕСТАБИЛЬНАЯ ЗОНА",
+   "ico": "🌀",
+   "color": "#ff6bd6",
+   "desc": "особое событие на каждой волне",
+   "bonus": 0.2
+  },
+  "swarm": {
+   "name": "РОЙ",
+   "ico": "🐝",
+   "color": "#ff8a3d",
+   "desc": "врагов на 30% больше",
+   "bonus": 0.3
+  }
+ },
+ "ANOMALY": {
+  "from": 1,
+  "chance": 0.4,
+  "step": 0.05,
+  "max": 0.7
+ },
+ "TIPS": {
+  "ionwind": {
+   "how": "Враги летают и маневрируют на 25% быстрее: строй быстрее доходит до вас, камикадзе почти не дают времени.",
+   "use": "Держитесь в нижней части экрана — так больше времени увернуться. Сбивайте врагов сразу на входе, пока они не разлетелись."
+  },
+  "flagship": {
+   "how": "Элитные враги появляются втрое чаще. Они крепче обычных и стреляют злее.",
+   "use": "С элиты падают сундуки с реликвиями — лучший момент их добыть. Модуль «Бронебойные снаряды» и реликвия «Глаз охотника» бьют элиту сильнее."
+  },
+  "silence": {
+   "how": "Бонусы (ремонт, щит, усиления) не выпадают совсем. Зато ваш урон +30%.",
+   "use": "Волны падают быстрее — давите напором. Берегите жизни и бомбы: подлечиться можно только на узле «Ремонт» и навыками."
+  },
+  "unstable": {
+   "how": "Каждая волна сектора идёт с особым событием: ионная буря, метеоры, солнечная вспышка, мусор или конвой.",
+   "use": "Буря, метеоры и вспышка бьют и по врагам — пусть они делают часть работы. Мусор и конвой — лишние монеты."
+  },
+  "swarm": {
+   "how": "В каждой волне на 30% больше врагов.",
+   "use": "Больше врагов — больше монет и опыта, уровень растёт быстрее. Пробитие, плазма, ракеты и цепная молния бьют сразу многих — здесь им раздолье."
+  },
+  "storm": {
+   "how": "На поле вспыхивают круги, через секунду в них бьёт молния. Часть ударов целит туда, где вы сейчас. Попала — минус жизнь.",
+   "use": "Молния выбивает больше половины прочности обычного врага. Увидели круг под собой — сдвиньтесь, а враги в кругах ослабнут сами."
+  },
+  "meteors": {
+   "how": "Пунктирные линии показывают, где пролетит метеор. Задел корабль — минус жизнь.",
+   "use": "Метеоры ранят и врагов на линии: крупный почти уничтожает обычного врага. Уходите с линии — пусть под удар попадут они."
+  },
+  "solar": {
+   "how": "Звезда набирает свет и вспыхивает: все вражеские пули на экране сгорают, враги получают урон.",
+   "use": "Перед вспышкой можно рискнуть и подлететь ближе к врагам — пули всё равно исчезнут. Выручает в плотном огне."
+  },
+  "debris": {
+   "how": "Через волну летят обломки, в каждом — монеты. Волну они не задерживают.",
+   "use": "Сбивайте обломки по пути — это бесплатные монеты. Не тараньте их: столкновение снимает жизнь."
+  },
+  "convoy": {
+   "how": "Через экран проходят грузовики. Не сбили за несколько секунд — уйдут вместе с грузом.",
+   "use": "Переведите огонь на грузовик: из него выпадают ящики с монетами и бонусом. Ракеты и лазер с фокусом сносят его быстрее всего."
+  },
+  "evo_laser": {
+   "how": "Лазер стал лучом: пробивает всех врагов на линии, урон +25%.",
+   "use": "Встаньте под колонну или плотный строй — один выстрел бьёт всех сразу."
+  },
+  "evo_rocket": {
+   "how": "Каждый взрыв ракеты разбрасывает вокруг 4 малых заряда.",
+   "use": "Стреляйте в гущу врагов: заряды разлетаются и добивают соседей."
+  },
+  "evo_lightning": {
+   "how": "Молния замораживает каждого врага в цепи.",
+   "use": "Замороженные почти не двигаются, медленно стреляют и получают +15% урона. Цепь по большому строю — передышка от его пуль."
+  },
+  "evo_shotgun": {
+   "how": "Дробь в упор сразу добивает врагов, у которых меньше 20% прочности. На боссов не действует.",
+   "use": "Подранили крепкого врага — подлетите вплотную и добейте одним залпом. Особенно хорошо против элиты."
+  },
+  "evo_plasma": {
+   "how": "Шар плазмы оставляет горящий след: враги, попавшие в него, загораются.",
+   "use": "Стреляйте на пути строя: след поджигает всех, кто пролетит через него, даже если шар их не задел."
+  },
+  "evo_darkmatter": {
+   "how": "Сфера стирает вражеские пули вокруг себя, а схлопываясь, взрывается вдвое сильнее.",
+   "use": "Сфера — ещё и щит: держитесь за ней, когда летит плотный огонь, и пускайте её в гущу врагов."
+  }
+ },
+ "PRESTIGE_LVL": 25
+}

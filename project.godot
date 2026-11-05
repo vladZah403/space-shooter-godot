@@ -18,6 +18,9 @@ config/icon="res://icon.png"
 
 [autoload]
 
+D="*res://scripts/core/data.gd"
+G="*res://scripts/core/gfx.gd"
+FX="*res://scripts/core/fx.gd"
 Atlas="*res://scripts/atlas.gd"
 
 [display]
