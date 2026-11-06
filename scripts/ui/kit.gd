@@ -217,3 +217,107 @@ static func clear(n: Node) -> void:
 	for c in n.get_children():
 		n.remove_child(c)
 		c.queue_free()
+
+
+## холст внутри интерфейса: рисует через Ctx каждый кадр (превью кораблей, оружия, спрайтов)
+## fn(ctx, size: Vector2, t: float)
+class CtxView extends Control:
+	var fn: Callable
+	var ctx: Ctx
+	var t := 0.0
+
+	func _init(draw_fn: Callable, min_size := Vector2(64, 64)) -> void:
+		fn = draw_fn
+		custom_minimum_size = min_size
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _ready() -> void:
+		ctx = Ctx.new(get_canvas_item())
+
+	func _process(dt: float) -> void:
+		if not is_visible_in_tree(): return
+		t += dt
+		ctx.begin()
+		fn.call(ctx, size, t)
+
+
+static func ctx_view(draw_fn: Callable, min_size := Vector2(64, 64)) -> CtxView:
+	return CtxView.new(draw_fn, min_size)
+
+
+## ряд вкладок: tabs = [[id, текст], ...]; on_pick(id)
+static func tabs(items: Array, cur: String, on_pick: Callable) -> HBoxContainer:
+	var h := hbox(4)
+	for it in items:
+		var id: String = it[0]
+		var fn := func(): on_pick.call(id)
+		var b := button(it[1], fn, "primary" if id == cur else "", "sm")
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		h.add_child(b)
+	return h
+
+
+## переключатель-кнопка «вкл/выкл»
+static func toggle(on: bool, on_change: Callable) -> Button:
+	var b := Button.new()
+	b.toggle_mode = true
+	b.button_pressed = on
+	b.focus_mode = Control.FOCUS_NONE
+	b.custom_minimum_size = Vector2(64, 34)
+	b.text = "ВКЛ" if on else "ВЫКЛ"
+	b.add_theme_font_override("font", font(800))
+	b.add_theme_font_size_override("font_size", 11)
+	var st_on := box(Color(GREEN, 0.25), GREEN, 17, 1, 4)
+	var st_off := box(Color(1, 1, 1, 0.06), LINE2, 17, 1, 4)
+	b.add_theme_stylebox_override("normal", st_off)
+	b.add_theme_stylebox_override("hover", st_off)
+	b.add_theme_stylebox_override("pressed", st_on)
+	b.add_theme_stylebox_override("hover_pressed", st_on)
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	b.toggled.connect(func(v: bool):
+		b.text = "ВКЛ" if v else "ВЫКЛ"
+		A.play("click")
+		on_change.call(v))
+	return b
+
+
+## карточка-кнопка с содержимым: PanelContainer, нажатие — on_tap
+static func card(col: Color, selected: bool, on_tap: Callable, pad := 10) -> PanelContainer:
+	var p := panel(pad, Color(col, 0.14) if selected else Color(PANEL_SOLID, 0.9), col if selected else Color(col, 0.3), 14)
+	p.mouse_filter = Control.MOUSE_FILTER_STOP
+	p.gui_input.connect(func(e: InputEvent):
+		if e is InputEventMouseButton and not e.pressed and e.button_index == MOUSE_BUTTON_LEFT and Rect2(Vector2.ZERO, p.size).has_point(e.position):
+			on_tap.call())
+	return p
+
+
+## все дочерние узлы пропускают нажатия к родителю-карточке
+static func passthrough(n: Node) -> void:
+	for c in n.get_children():
+		if c is Control: (c as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+		passthrough(c)
+
+
+## полоска прогресса
+static func bar(k: float, col: Color, h := 6.0) -> ProgressBar:
+	var b := ProgressBar.new()
+	b.show_percentage = false
+	b.custom_minimum_size.y = h
+	b.max_value = 1.0
+	b.value = clampf(k, 0, 1)
+	b.add_theme_stylebox_override("background", box(Color(1, 1, 1, 0.1), Color(0, 0, 0, 0), int(h / 2)))
+	b.add_theme_stylebox_override("fill", box(col, Color(0, 0, 0, 0), int(h / 2)))
+	b.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return b
+
+
+## сегменты уровня: v из n
+static func segs(v: int, n: int, col: Color) -> HBoxContainer:
+	var h := hbox(3)
+	for i in n:
+		var r := ColorRect.new()
+		r.custom_minimum_size = Vector2(12, 5)
+		r.color = col if i < v else Color(1, 1, 1, 0.1)
+		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		h.add_child(r)
+	return h

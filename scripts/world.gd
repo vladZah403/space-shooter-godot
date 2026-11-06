@@ -31,6 +31,8 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_on_resize)
 	_on_resize()
 	Ui.build(self)
+	# заставка при запуске (её можно выключить в настройках)
+	if M.s.settings.get("intro", true) and not autoplay: Intro.play(func(): pass)
 	if autoplay:
 		print("[bot] автоигра")
 		M.s.seenIntro = true

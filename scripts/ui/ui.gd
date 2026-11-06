@@ -37,6 +37,8 @@ func build(world: Node) -> void:
 	Kit.full(root)
 	layer.add_child(root)
 	hud = HudView.new(); root.add_child(hud); Hud.view = hud
+	# баннеры волн — под окнами выбора и паузой
+	banner_box = Views.Banner.new(); root.add_child(banner_box)
 	menu = Views.MenuView.new(); root.add_child(menu)
 	offer = OfferView.new(); root.add_child(offer)
 	map = MapView.new(); root.add_child(map)
@@ -44,7 +46,6 @@ func build(world: Node) -> void:
 	revive = Views.ReviveView.new(); root.add_child(revive)
 	over = Views.OverView.new(); root.add_child(over)
 	tip = Views.TipView.new(); root.add_child(tip)
-	banner_box = Views.Banner.new(); root.add_child(banner_box)
 	toasts = Kit.vbox(8)
 	toasts.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	toasts.set_anchors_preset(Control.PRESET_TOP_WIDE)
@@ -125,6 +126,27 @@ func toMenu() -> void:
 	cur = "menu"
 	menu.open()
 	Main.setMusic("menu")
+	_checkLogin()
+
+
+## награда за вход: если сегодня ещё не забрали — окно с наградой дня (Intro, если идёт, — сначала)
+func _checkLogin() -> void:
+	var st := M.loginStatus()
+	if not st.available or dialog_v.visible: return
+	await get_tree().create_timer(0.5).timeout
+	while Intro.playing: await get_tree().create_timer(0.3).timeout
+	if cur != "menu" or not M.loginStatus().available: return
+	var r: Dictionary = D.LOGIN[st.day]
+	var claim := func():
+		var got = M.claimLogin()
+		if got:
+			A.play("buy"); Haptic.success()
+			toast({"ico": "🎁", "title": "НАГРАДА", "text": "+%d монет%s" % [got.coins, " и +1 очко навыка" if got.get("sp", 0) else ""]})
+			menu.refresh()
+	var streak := ("Серия: %d %s подряд!" % [st.streak, U.plural(st.streak, "день", "дня", "дней")]) if st.streak > 1 else "Заходите каждый день — награда растёт!"
+	dialog({"ico": "🎁", "title": "НАГРАДА ЗА ВХОД · ДЕНЬ %d" % (st.day + 1), "text": "+%d монет%s
+
+%s" % [r.coins, " и +1 очко навыка" if r.get("sp", 0) else "", streak], "ok": "ЗАБРАТЬ", "noCancel": true, "onOk": claim})
 
 
 func startRun(diffId: String, opts = null) -> void:

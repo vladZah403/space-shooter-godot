@@ -112,6 +112,12 @@ class MenuView extends Control:
 	var diff: Control
 	var screens: Control
 	var hero: Control
+	var content: Control
+
+	## разделы меню закрывают главный экран целиком — и корабль на фоне прячем
+	func set_content_visible(on: bool) -> void:
+		content.visible = on
+		Game.attract.slot = {"y": hero.global_position.y + hero.size.y / 2 - 10, "h": hero.size.y} if on else {"y": -999.0, "h": 0.0}
 
 	func _ready() -> void:
 		Kit.full(self)
@@ -121,6 +127,7 @@ class MenuView extends Control:
 		Kit.full(m)
 		m.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(m)
+		content = m
 		var v := Kit.vbox(10)
 		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		m.add_child(v)
@@ -173,6 +180,7 @@ class MenuView extends Control:
 		visible = true
 		diff.visible = false
 		screens.close()
+		content.visible = true
 		refresh()
 		Game.attract.slot = {"y": hero.global_position.y + hero.size.y / 2 - 10, "h": hero.size.y}
 
@@ -197,6 +205,7 @@ class MenuView extends Control:
 	func show_diff() -> void:
 		A.play("click")
 		Haptic.medium()
+		set_content_visible(false)
 		diff.open()
 
 	func open_screen(id: String) -> void:
@@ -206,6 +215,7 @@ class MenuView extends Control:
 		if diff.visible:
 			A.play("back")
 			diff.visible = false
+			set_content_visible(true)
 			return
 		if screens.visible:
 			screens.back()
@@ -239,6 +249,7 @@ class DiffView extends Control:
 		var close_fn := func():
 			A.play("back")
 			visible = false
+			if get_parent().has_method("set_content_visible"): get_parent().set_content_visible(true)
 		head.add_child(Kit.button("✕", close_fn, "ghost", "sm"))
 		v.add_child(head)
 		lives = Kit.label("", 13, Kit.MUTED, 600)
