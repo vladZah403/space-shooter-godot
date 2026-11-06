@@ -110,6 +110,8 @@ func spawn(type: String, o := {}) -> En:
 		call("_init_" + e.ai, e, o)
 	elif Foes.has_init(e.ai):
 		Foes.init_ai(e, o)
+	elif Sectors.has_init(e.ai):
+		Sectors.init_ai(e, o)
 	if e.ty != 0.0: e.ty = maxf(e.ty, minY(e))
 	Game.enemies.append(e)
 	if def.hint: Foes.seen(e)
@@ -1182,6 +1184,7 @@ func updateAll(edt: float, dt: float) -> void:
 		var ai: String = e.ai if e.ai != "" else e.def.ai
 		if hasAI(ai): runAI(ai, e, edt2)
 		elif Foes.hasAI(ai): Foes.runAI(ai, e, edt2)
+		elif Sectors.hasAI(ai): Sectors.runAI(ai, e, edt2)
 		if not e.horiz: e.bank = U.damp(e.bank, U.clamp((e.x - e.lastX) / maxf(edt2, 0.001) * 0.0012, -0.35, 0.35), 8, dt)
 		if e.y > H + e.h + 20 or e.y < -H:
 			e.alive = false; e.leaving = true
