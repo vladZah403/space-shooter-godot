@@ -72,6 +72,7 @@ func clear() -> void:
 	parts.clear(); expl.clear(); rings.clear(); texts.clear(); beams.clear(); sprites.clear(); scr.clear(); arcs.clear()
 	trauma = 0.0
 	flash_a = 0.0
+	Post.clear()
 
 
 func _p(type: int, x: float, y: float, vx: float, vy: float, life: float, size: float, color: String) -> Part:
@@ -133,6 +134,8 @@ func debris(x: float, y: float, color: String, n: int, speed := 160.0) -> void:
 func ring(x: float, y: float, r0: float, r1: float, color: String, dur: float, width := 3.0) -> void:
 	if rings.size() > 40: rings.pop_front()
 	rings.append({"x": x, "y": y, "r0": r0, "r1": r1, "color": color, "life": dur, "max": dur, "w": width})
+	# большое кольцо (бомба, нова, смерть босса) — ударная волна по экрану
+	if r1 >= G.FW * 0.8 and width >= 6: Post.wave(x, y, 1.0 + (width - 6) * 0.1)
 
 
 ## взрыв: size ~ 1 (малый) … 4 (босс); o.kind: crit | kill | ship | plasma | super | boss; o.hue — перекраска
@@ -160,6 +163,10 @@ func explode(x: float, y: float, size := 1.0, color := "", o := {}) -> void:
 	if size >= 1.4: debris(x, y, "#8a93b8", int(round(size * 4)), 140 + size * 30)
 	if size >= 1.2: smoke(x, y, int(round(size * 2.5)), (28 + size * 12) * S)
 	if size >= 1.5: embers(x, y, color if color != "" else "#ff9f3d", int(round(size * 5)), 120)
+	# искажение экрана: смерть босса — мощная волна, супервзрыв — средняя, крупные взрывы — лёгкая
+	if kind == "boss": Post.wave(x, y, 2.2)
+	elif kind == "super" or size >= 2.5: Post.wave(x, y, 0.8)
+	elif size >= 1.6: Post.wave(x, y, 0.3)
 
 
 func hit(x: float, y: float, color: String) -> void:

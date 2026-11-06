@@ -530,6 +530,7 @@ func drawBack(ctx: Ctx) -> void:
 		ctx.begin_path(); ctx.arc(e.x, e.y, r, 0, TAU); ctx.stroke_path()
 	for g: En in gravs:
 		var R := g.w * 1.25
+		Post.lens(g.x, g.y, R * 0.9, 0.4)
 		ctx.alpha = 0.16
 		ctx.draw_tex(G.soft("#7a3dff", 64), g.x - R, g.y - R, R * 2, R * 2)
 		ctx.alpha = 0.35; ctx.stroke = U.col("#c89bff"); ctx.line_width = 1.5 * S

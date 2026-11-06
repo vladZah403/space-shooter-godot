@@ -258,6 +258,7 @@ func _gravity_back(ctx: Ctx, m: Dictionary) -> void:
 	ctx.alpha = st.a
 	ctx.draw_tex(G.proc("voidcore"), gx - R * 0.3, gy - R * 0.3, R * 0.6, R * 0.6)
 	ctx.alpha = 1.0
+	Post.lens(gx, gy, R * 0.75, 0.8 * st.a)
 
 
 # ── СЕРДЦЕ ГАЛАКТИКИ: порывы звёздного ветра — стрелки предупреждают, потом сносит пули, бонусы и корабль ──

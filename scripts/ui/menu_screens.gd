@@ -844,6 +844,8 @@ func _render_settings() -> void:
 	v.add_child(_segs("quality", [["auto", "Авто"], ["high", "Высокое"], ["medium", "Среднее"], ["low", "Низкое"]], func(): Main.applyQuality()))
 	v.add_child(_row("Тряска экрана", Kit.toggle(st.shake, func(on):
 		st.shake = on; FX.shake_on = on; M.soon())))
+	v.add_child(_row("Эффекты экрана", Kit.toggle(st.get("post", true), func(on):
+		st.post = on; M.soon())))
 	v.add_child(_row("Цифры урона", Kit.toggle(st.dmgNums, func(on):
 		st.dmgNums = on; M.soon())))
 	v.add_child(_row("Показывать FPS", Kit.toggle(st.fps, func(on):

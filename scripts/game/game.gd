@@ -1561,6 +1561,7 @@ func hitPlayer(sx: float, sy: float, cause := "") -> bool:
 		if relic("r_shieldburst"): blast(p.x, p.y, 120 * G.S, 60 * dmgMul() * (1 + wave.n * 0.05), "#7fe7ff", "shieldburst")
 		FX.sparks(p.x, p.y, "#7fe7ff", 18, 320)
 		FX.dmg_arc(p.x, p.y, sx, sy, "#7fe7ff")
+		Post.hurt(0.5)
 		A.play("shieldHit")
 		Haptic.medium()
 		clearBulletsAround(p.x, p.y, 90 * G.S)
@@ -1579,6 +1580,7 @@ func hitPlayer(sx: float, sy: float, cause := "") -> bool:
 	FX.vignette("#ff2a48", 0.6, 0.85)
 	FX.dmg_arc(p.x, p.y, sx, sy)
 	FX.shake(0.55)
+	Post.hurt(1.0)
 	A.play("playerHit")
 	Haptic.heavy()
 	# реликвия «Хронометр»: на последней жизни враги замедляются на 3 с (раз в волну)
@@ -3170,6 +3172,9 @@ func draw(ctx: Ctx) -> void:
 		ctx.fill_rect(G.FX - 1, 0, 1, H)
 		ctx.fill_rect(G.FX + G.FW, 0, 1, H)
 	if scene != null: drawScene(ctx)
+	if scene != null and scene.kind == "jump":
+		Post.warp = scene.warp
+		Post.warp_at = Vector2(G.FW / 2, G.H * 0.42)
 
 
 ## меню: корабль игрока парит над логотипом
@@ -3294,6 +3299,7 @@ func drawBullets(ctx: Ctx) -> void:
 				ctx.additive = false
 				ctx.draw_tex(G.proc("voidcore"), b.x - s * 0.5, b.y - s * 0.5, s, s)
 				ctx.additive = true
+				Post.lens(b.x, b.y, s * 0.9, 0.5)
 			ctx.alpha = 0.16
 			ctx.draw_tex(G.soft("#7a3dff", 64), b.x - b.r, b.y - b.r, b.r * 2, b.r * 2)
 			ctx.alpha = 0.28
@@ -3542,6 +3548,7 @@ func drawOverlays(ctx: Ctx) -> void:
 		ctx.additive = false
 		ctx.draw_tex(G.proc("voidcore"), h.x - s * 0.45, h.y - s * 0.45, s * 0.9, s * 0.9)
 		ctx.additive = true
+		Post.lens(h.x, h.y, s * 0.9, 0.9 * k)
 	# предупреждения о лучах и сами лучи
 	for bm in ov.beams:
 		if bm.t < bm.warn:

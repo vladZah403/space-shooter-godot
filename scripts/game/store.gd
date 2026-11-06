@@ -45,7 +45,7 @@ func defaults() -> Dictionary:
 		"achievements": {},
 		"daily": {"date": "", "missions": [], "bonus": false, "loginDate": "", "streak": 0, "seen": "", "ch": {"date": "", "best": 0, "wave": 0, "done": false}},
 		"settings": {"music": 70, "sfx": 80, "musicStyle": "synthwave", "quality": "auto", "vibro": true, "sens": 1.25,
-			"dmgNums": true, "shake": true, "fps": false, "diff": "normal", "intro": true, "dblBomb": true},
+			"dmgNums": true, "shake": true, "fps": false, "diff": "normal", "intro": true, "dblBomb": true, "post": true},
 		"lb": [],
 		"seenIntro": false,
 		"pilot": "kai",

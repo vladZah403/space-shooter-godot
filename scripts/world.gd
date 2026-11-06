@@ -53,6 +53,7 @@ func _process(delta: float) -> void:
 	Game.frame(rdt)
 	ctx.begin()
 	Game.draw(ctx)
+	Post.frame(rdt)
 	Ui.frame(rdt)
 	Main.measure(rdt)
 	_clock += rdt
