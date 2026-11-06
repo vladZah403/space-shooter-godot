@@ -15,18 +15,18 @@ shutil.copy(src / "project.godot", out / "project.godot")
 for p in [out / "scripts" / f"{n}.gd" for n in ("boss", "bullet", "enemy", "fx_sprite", "hud", "player", "main", "starfield")]:
     p.unlink()
 
-REAL = {"Game": "res://scripts/game/game.gd", "E": "res://scripts/game/enemies.gd", "B": "res://scripts/game/bosses.gd"}
-STUBS = ["Foes", "Skills", "Comp", "RunMap", "Events", "Scenes", "Intro", "Bg", "M", "A", "Haptic", "Bus", "Ui", "Main", "Hud"]
+# автозагрузка → файл в scripts/game/: перенесённый модуль подключается сам, остальные — заглушки
+MODULES = {"Game": "game", "E": "enemies", "B": "bosses", "Foes": "foes", "Sectors": "sectors", "Skills": "skills",
+           "Comp": "companion", "RunMap": "map", "Events": "events", "Scenes": "scenes", "Intro": "intro", "Bg": "bg",
+           "M": "store", "A": "audio", "Haptic": "haptic", "Bus": "bus", "Ui": "ui", "Main": "main", "Hud": "hud"}
 code = "\n".join(p.read_text(encoding="utf-8") for p in (src / "scripts").rglob("*.gd"))
 stubdir = out / "scripts" / "_stubs"
 stubdir.mkdir(parents=True)
 autoload = []
 RET = {"top_inset": "120.0", "bottomInset": "20.0", "topInset": "120.0"}
-for name, path in REAL.items():
-    if (out / path[6:]).exists():
-        autoload.append(f'{name}="*{path}"')
-for name in STUBS:
-    if (out / "scripts" / "game" / f"{name.lower()}.gd").exists():
+for name, stem in MODULES.items():
+    if (out / "scripts" / "game" / f"{stem}.gd").exists():
+        autoload.append(f'{name}="*res://scripts/game/{stem}.gd"')
         continue
     meth, prop = set(), set()
     for m in re.finditer(rf"\b{name}\.([A-Za-z_]\w*)\s*(\()?", code):

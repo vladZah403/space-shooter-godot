@@ -370,6 +370,7 @@ func doFire(e: En, f: Dictionary) -> void:
 			return
 		_:
 			if has_method("_fire_" + k): call("_fire_" + k, e, f, mx, my)
+			elif Foes.has_method("_fire_" + k): Foes.call("_fire_" + k, e, f, mx, my)   # 3.1: навес Мортиры (lob)
 	A.play("enemyShot")
 
 

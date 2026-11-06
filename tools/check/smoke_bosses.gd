@@ -30,7 +30,7 @@ func fight(i: int, phase_sec: float, ctx: Ctx) -> String:
 	var tm := 0.0
 	var killed := false
 	while tm < 120.0:
-		tm += dt
+		tm += dt; Game.t += dt
 		E.updateAll(dt, dt)
 		Game.runTimers(dt)
 		shots += Game.ebullets.size(); Game.ebullets.clear()

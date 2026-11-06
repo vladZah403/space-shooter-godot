@@ -106,7 +106,26 @@ var burn := 0.0
 var burnT := 0.0
 var burnDps := 0.0
 var enAcc := 0.0
-var extra := {}               # редкие поля врагов 3.1 (foes.js): ключ → значение
+# ── враги 3.1 (foes.gd) ──
+var side := 0.0               # Связка: -1 левый, 1 правый; яйцо Улья: у какого края
+var grow := 0.0               # яйцо: время до вылупления
+var stage := 0
+var loot: Array = []          # Вор: украденное { kind, val, pu }
+var idle := 0.0
+var prey: Pk = null
+var pair = null               # Связка: общий центр пары (словарь)
+var mate: En = null           # Связка: напарник
+var nopeT := -9.0             # когда в последний раз показывали надпись «НЕУЯЗВИМ» и т. п.
+var adapt := ""               # Мимик: к какому оружию привык
+var adaptT := 0.0
+var adaptAcc := {}
+var reflT := -9.0
+var domeR := 0.0
+var domeHitT := 0.0
+var healT := NAN
+var shown := 0.0
+var cloakT := NAN
+var extra := {}               # прочие редкие поля: ключ → значение
 
 # ── босс ──
 var bdef: Dictionary = {}

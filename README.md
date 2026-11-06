@@ -41,7 +41,7 @@ Godot_v4.6.3-stable_win64_console.exe --path . --fixed-fps 60 --quit-after 4800 
 
 Перенос полной игры (`scripts/game/`) ещё не подключён к сцене. Пока он не собран целиком, его
 проверяет `tools/check/run.sh`: копия проекта вне папки с заглушками недостающих модулей + дымовой тест
-(`smoke_bosses.gd` — все 13 боссов проходят три фазы и погибают):
+(`smoke_bosses.gd` — все 13 боссов проходят три фазы и погибают; `smoke_foes.gd` — враги 3.1):
 
 ```bash
 GODOT=путь/Godot_v4.6.3-stable_win64_console.exe tools/check/run.sh smoke_bosses.gd
