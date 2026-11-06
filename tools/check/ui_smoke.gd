@@ -17,6 +17,7 @@ func snap(name: String) -> void:
 func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--shots="): shots = a.substr(8)
+	M.s.settings.intro = false   # заставка закрыла бы снимки экранов
 	var world: Node = load("res://scenes/world.tscn").instantiate()
 	get_tree().root.add_child.call_deferred(world)
 	for i in 30: await get_tree().process_frame
@@ -72,5 +73,12 @@ func _ready() -> void:
 	for i in 90: await get_tree().process_frame
 	await snap("over")
 	print("итоги: ", Ui.over.visible)
+	# окна-подсказки с живыми сценами: все события, аномалии и эволюции
+	for key in Demo.SCENES + D.EVOLUTIONS.map(func(ev): return "evo_" + ev.weapon):
+		Ui.tip.open({"key": key, "kind": "ТЕСТ", "title": key, "how": "-", "use": "-"})
+		for i in 40: await get_tree().process_frame
+	await snap("tip")
+	Ui.tip.close()
+	print("подсказки с демо: все сцены")
 	print("UI SMOKE DONE")
 	get_tree().quit()

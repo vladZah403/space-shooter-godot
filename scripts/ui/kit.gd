@@ -225,9 +225,11 @@ class CtxView extends Control:
 	var fn: Callable
 	var ctx: Ctx
 	var t := 0.0
+	var holder = null   # объект, чей метод рисует (Callable сам его не удерживает)
 
-	func _init(draw_fn: Callable, min_size := Vector2(64, 64)) -> void:
+	func _init(draw_fn: Callable, min_size := Vector2(64, 64), keep = null) -> void:
 		fn = draw_fn
+		holder = keep
 		custom_minimum_size = min_size
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 
@@ -241,8 +243,13 @@ class CtxView extends Control:
 		fn.call(ctx, size, t)
 
 
-static func ctx_view(draw_fn: Callable, min_size := Vector2(64, 64)) -> CtxView:
-	return CtxView.new(draw_fn, min_size)
+static func ctx_view(draw_fn: Callable, min_size := Vector2(64, 64), keep = null) -> CtxView:
+	return CtxView.new(draw_fn, min_size, keep)
+
+
+## живое превью из demo.gd: сцена держится, пока жив сам холст
+static func demo_view(scene, min_size: Vector2) -> CtxView:
+	return CtxView.new(scene.draw, min_size, scene)
 
 
 ## ряд вкладок: tabs = [[id, текст], ...]; on_pick(id)

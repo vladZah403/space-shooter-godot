@@ -335,6 +335,8 @@ func _render_arsenal() -> void:
 	v.add_child(Kit.label(w.name + ("   · В БОЮ • %d" % (slot + 1) if slot >= 0 else ""), 18, wc, 900))
 	if w.get("tags") is Array and not w.tags.is_empty(): v.add_child(Kit.label("  ".join(w.tags), 11, Kit.MUTED, 700))
 	v.add_child(Kit.para(w.desc, 13, Kit.TEXT))
+	# живая демонстрация: как оружие стреляет (demo.gd)
+	v.add_child(Kit.demo_view(Demo.weapon(ars), Vector2(0, 160)))
 	var r: Dictionary = w.get("rate", {})
 	for x in [["Урон", "dmg"], ["Скорострельность", "speed"], ["Площадь", "area"], ["Дальность", "range"]]:
 		var h := Kit.hbox(8)
@@ -484,6 +486,8 @@ func _render_skills() -> void:
 	hh.add_child(hv)
 	v.add_child(hh)
 	v.add_child(Kit.para(sk.desc, 13, Kit.TEXT))
+	# 4.3.2: у активного навыка — живой предпросмотр, как у оружия в арсенале
+	if sk.type == "active": v.add_child(Kit.demo_view(Demo.skill(sk_sel), Vector2(0, 170)))
 	var why := ""
 	if not st.maxed:
 		if st.locked: why = "Сначала изучите " + " или ".join(req.map(func(r): return "«" + D.SKILLS[r].name + "»"))

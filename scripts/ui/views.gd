@@ -664,6 +664,7 @@ class TipView extends Control:
 	var how: Label
 	var use: Label
 	var panel: PanelContainer
+	var demo_box: VBoxContainer
 
 	func _ready() -> void:
 		Kit.full(self)
@@ -680,6 +681,7 @@ class TipView extends Control:
 		ico = Kit.label("", 40, Kit.TEXT, 600, HORIZONTAL_ALIGNMENT_CENTER); v.add_child(ico)
 		title = Kit.label("", 20, Kit.TEXT, 900, HORIZONTAL_ALIGNMENT_CENTER); v.add_child(title)
 		note = Kit.para("", 13, Kit.GOLD, HORIZONTAL_ALIGNMENT_CENTER); v.add_child(note)
+		demo_box = Kit.vbox(0); v.add_child(demo_box)
 		v.add_child(Kit.label("КАК РАБОТАЕТ", 11, Kit.CYAN, 800))
 		how = Kit.para("", 14, Kit.TEXT); v.add_child(how)
 		v.add_child(Kit.label("КАК ИСПОЛЬЗОВАТЬ", 11, Kit.GREEN, 800))
@@ -697,6 +699,11 @@ class TipView extends Control:
 		note.text = t.get("note", ""); note.visible = note.text != ""
 		how.text = t.get("how", "")
 		use.text = t.get("use", "")
+		# живая сцена: эволюция — оружие в усиленном виде, событие или аномалия — своя сцена
+		Kit.clear(demo_box)
+		var key: String = t.get("key", "")
+		if key.begins_with("evo_"): demo_box.add_child(Kit.demo_view(Demo.weapon(key.substr(4), true), Vector2(0, 150)))
+		elif Demo.hasScene(key): demo_box.add_child(Kit.demo_view(Demo.scene(key), Vector2(0, 150)))
 		A.play("perk", {"vol": 0.6})
 		visible = true
 
