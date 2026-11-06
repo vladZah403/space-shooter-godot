@@ -2574,9 +2574,9 @@ func waveCleared() -> void:
 	Bus.emit("waveClear", {"n": w.n, "bonus": bonus, "perfect": perfect})
 	# 4.1: после босса — трофейный сундук (откроется после забега), потом станция; после обычной волны — награда узла карты
 	if w.boss:
-		after(0.8, func(): if wave == w: RunMap.chestScene(RunMap.bossChest(), "ТРОФЕЙ БОССА", func(): offerModules("station")))
+		after(0.8, func(): if is_same(wave, w): RunMap.chestScene(RunMap.bossChest(), "ТРОФЕЙ БОССА", func(): offerModules("station")))
 	else:
-		after(1.2, func(): if wave == w and not RunMap.reward(w): nextWave())
+		after(1.2, func(): if is_same(wave, w) and not RunMap.reward(w): nextWave())
 
 
 ## события между волнами: Развилка и Торговец. true — событие показано, волна начнётся после выбора
