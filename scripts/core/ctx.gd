@@ -6,6 +6,8 @@ extends RefCounted
 ## Каждый кадр: begin() — затем команды. При смене режима смешивания начинается новый холст-слой,
 ## поэтому порядок наложения сохраняется как в браузере.
 ## clip_rect — обрезка по прямоугольнику (ctx.rect + ctx.clip в JS), действует до restore().
+## embed(rid) — вставить в этот же порядок рисования чужой холст (узел-ребёнок того же родителя, например
+## частицы Godot): он встанет между уже нарисованным и следующими командами.
 
 var alpha := 1.0
 var additive := false
@@ -27,6 +29,7 @@ var _stack: Array = []
 var _subpaths: Array = []   # Array[PackedVector2Array]
 var _closed: Array = []
 var _clip = null            # Rect2 в координатах холста или null
+var _break := false         # после embed следующая команда начинает новый слой (поверх встроенного)
 static var _white_tex: Texture2D
 
 
@@ -65,10 +68,12 @@ func begin() -> void:
 	_clip = null
 	material = null
 	dash = PackedFloat32Array()
+	_break = false
 
 
 func _item() -> RID:
-	if _idx < 0 or _items[_idx].add != additive or _items[_idx].mat != material or _items[_idx].clip != _clip:
+	if _idx < 0 or _break or _items[_idx].add != additive or _items[_idx].mat != material or _items[_idx].clip != _clip:
+		_break = false
 		_idx += 1
 		if _idx >= _items.size():
 			var rid := RenderingServer.canvas_item_create()
@@ -78,7 +83,7 @@ func _item() -> RID:
 		it.add = additive
 		it.mat = material
 		RenderingServer.canvas_item_set_material(it.rid, material.get_rid() if material != null else (_mat_add.get_rid() if additive else RID()))
-		RenderingServer.canvas_item_set_draw_index(it.rid, _idx)
+		RenderingServer.canvas_item_set_draw_index(it.rid, _idx * 2)   # нечётные индексы — для embed
 		if it.clip != _clip:
 			it.clip = _clip
 			RenderingServer.canvas_item_set_clip(it.rid, _clip != null)
@@ -88,6 +93,12 @@ func _item() -> RID:
 		RenderingServer.canvas_item_add_set_transform(cur.rid, _xf)
 		cur.xf = _xf
 	return cur.rid
+
+
+## встроить холст rid (ребёнок того же родительского холста) в текущее место порядка рисования
+func embed(rid: RID) -> void:
+	RenderingServer.canvas_item_set_draw_index(rid, _idx * 2 + 1)
+	_break = true
 
 
 # ── состояние ──

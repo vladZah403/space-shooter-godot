@@ -1,5 +1,5 @@
 extends Node
-## Снимки постобработки (запуск с окном): без эффектов, свечение, ударная волна, воронка, аберрация, форсаж.
+## Снимки постобработки (запуск с окном): без эффектов, свечение, ударная волна, сноп искр, воронка, аберрация, форсаж.
 ##   Godot.exe --path . --fixed-fps 60 res://tools/check/post_shots.tscn -- --autoplay --shots=ПАПКА
 ## (--autoplay — мир сам начинает забег и ведёт бота; снимки — на 10-й секунде боя)
 
@@ -35,6 +35,9 @@ func _ready() -> void:
 	Post.wave(G.FW / 2, G.H * 0.45, 2.2)
 	await frames(12)
 	await snap("c_wave")
+	Vfx.burst(G.FW / 2, G.H * 0.3, "#ffb03d", 3.0)
+	await frames(6)
+	await snap("c2_burst")
 	Game.ov.hole = {"x": G.FW / 2, "y": G.H * 0.32, "t": 0.0, "dur": 4.0, "tick": 0.0}
 	await frames(40)
 	await snap("d_hole")

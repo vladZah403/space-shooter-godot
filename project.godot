@@ -39,6 +39,7 @@ Scenes="*res://scripts/game/scenes.gd"
 Intro="*res://scripts/game/intro.gd"
 Bg="*res://scripts/game/bg.gd"
 Post="*res://scripts/game/post.gd"
+Vfx="*res://scripts/game/vfx.gd"
 Hud="*res://scripts/game/hud.gd"
 Ui="*res://scripts/ui/ui.gd"
 

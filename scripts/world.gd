@@ -35,6 +35,7 @@ func _ready() -> void:
 		elif a == "--prof": prof = true
 	get_viewport().size_changed.connect(_on_resize)
 	_on_resize()
+	Vfx.attach(self)
 	Ui.build(self)
 	# заставка при запуске (её можно выключить в настройках)
 	if M.s.settings.get("intro", true) and not autoplay: Intro.play(func(): pass)
@@ -60,6 +61,7 @@ func _process(delta: float) -> void:
 	ctx.begin()
 	Game.draw(ctx)
 	Post.frame(rdt)
+	Vfx.frame(rdt)
 	var t2 := Time.get_ticks_usec()
 	Ui.frame(rdt)
 	if prof: _profile(t0, t1, t2, Time.get_ticks_usec(), rdt)

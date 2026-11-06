@@ -73,6 +73,7 @@ func clear() -> void:
 	trauma = 0.0
 	flash_a = 0.0
 	Post.clear()
+	Vfx.clear()
 
 
 func _p(type: int, x: float, y: float, vx: float, vy: float, life: float, size: float, color: String) -> Part:
@@ -135,7 +136,9 @@ func ring(x: float, y: float, r0: float, r1: float, color: String, dur: float, w
 	if rings.size() > 40: rings.pop_front()
 	rings.append({"x": x, "y": y, "r0": r0, "r1": r1, "color": color, "life": dur, "max": dur, "w": width})
 	# большое кольцо (бомба, нова, смерть босса) — ударная волна по экрану
-	if r1 >= G.FW * 0.8 and width >= 6: Post.wave(x, y, 1.0 + (width - 6) * 0.1)
+	if r1 >= G.FW * 0.8 and width >= 6:
+		Post.wave(x, y, 1.0 + (width - 6) * 0.1)
+		Vfx.burst(x, y, color, 1.6)
 
 
 ## взрыв: size ~ 1 (малый) … 4 (босс); o.kind: crit | kill | ship | plasma | super | boss; o.hue — перекраска
@@ -167,6 +170,11 @@ func explode(x: float, y: float, size := 1.0, color := "", o := {}) -> void:
 	if kind == "boss": Post.wave(x, y, 2.2)
 	elif kind == "super" or size >= 2.5: Post.wave(x, y, 0.8)
 	elif size >= 1.6: Post.wave(x, y, 0.3)
+	# сноп искр на частицах движка
+	var sc := color if color != "" else "#ffb03d"
+	if kind == "boss": Vfx.burst(x, y, sc, 3.0)
+	elif kind == "super" or kind == "kill" or size >= 2.5: Vfx.burst(x, y, sc, 1.4)
+	elif size >= 1.6: Vfx.burst(x, y, sc, 0.6)
 
 
 func hit(x: float, y: float, color: String) -> void:

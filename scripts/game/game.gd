@@ -3139,6 +3139,7 @@ func draw(ctx: Ctx) -> void:
 	Events.draw(ctx)
 	drawOverlays(ctx)
 	FX.draw_front(ctx)
+	Vfx.draw(ctx)
 	FX.draw_texts(ctx)
 	ctx.restore()
 	# эффекты экрана
@@ -3393,6 +3394,8 @@ func drawPlayer(ctx: Ctx) -> void:
 	ctx.alpha = 0.35 if blink else 1.0
 	# в прыжке между секторами двигатели на форсаже
 	var boost: float = (1.3 if buffs.get("rapid", 0.0) > 0 or run.skillFx.get("sk_overclock", 0.0) > 0 else 1.0) + (scene.warp * 1.5 if scene != null and scene.kind == "jump" else 0.0)
+	# след двигателя на частицах Godot — под кораблём, остаётся в пространстве
+	Vfx.wake(ctx, p.x, p.y + p.w * 0.42, p.w, drawLook(s.ship.model, s.ship.skin, s.ship.trail).glowCol, boost)
 	drawShip(ctx, s.ship.model, s.ship.skin, s.ship.trail, p.x, p.y, p.w, p.tilt, t, boost, run.get("parts"))
 	ctx.alpha = 1.0
 	# ресурс текущего оружия — вертикальная шкала слева от корабля
