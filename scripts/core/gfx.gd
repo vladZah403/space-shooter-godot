@@ -15,7 +15,6 @@ var frames: Dictionary = Data.FRAMES
 var nozzles: Dictionary = Data.NOZZLES
 
 var _sheets: Array[Texture2D] = []
-var _images: Array = [null, null]
 var _tint := {}
 var _white := {}
 var _glow := {}
@@ -23,6 +22,7 @@ var _soft := {}
 var _hue := {}
 var _proc := {}
 var _icons := {}
+var _bake_shader: Shader
 
 
 func _ready() -> void:
@@ -109,18 +109,10 @@ func icon(name: String) -> Texture2D:
 	return at
 
 
-func _region_image(f: Array) -> Image:
-	if _images[f[5]] == null:
-		var img: Image = _sheets[f[5]].get_image()
-		if img.is_compressed():
-			img.decompress()
-		img.convert(Image.FORMAT_RGBA8)
-		_images[f[5]] = img
-	return (_images[f[5]] as Image).get_region(Rect2i(f[0], f[1], f[2], f[3]))
-
-
 # ── перекраска: hue — тон 0..360; sat — насыщенность; dark — затемнение; bright — осветление;
-#    alpha — сохранить прозрачность и у аддитивных кадров (иконки) ──
+#    alpha — сохранить прозрачность и у аддитивных кадров (иконки).
+#    Считается на видеокарте (assets/shaders/tint.gdshader → _bake): раньше попиксельный цикл на процессоре
+#    стоил 20–60 мс на каждый новый вариант — рывки при первом появлении элиты, цветных вспышек и т.п. ──
 func tinted(name: String, t: Dictionary) -> Texture2D:
 	var hue = t.get("hue")
 	var sat: float = t.get("sat", 0.0)
@@ -135,66 +127,37 @@ func tinted(name: String, t: Dictionary) -> Texture2D:
 	var f: Array = frames.get(name, [])
 	if f.is_empty():
 		return null
-	var img := _region_image(f)
-	var add: bool = f[4] == 1
-	var hc := Color.from_hsv(float(hue) / 360.0, 1.0, 1.0) if hue != null else Color.WHITE
 	var dk := Color.from_hsv(float(hue if hue != null else 0) / 360.0, 0.4, 1.0 - dark) if dark > 0.0 else Color.WHITE
-	for y in img.get_height():
-		for x in img.get_width():
-			var c := img.get_pixel(x, y)
-			var a := c.a
-			if add and not keep_a:
-				c = Color(c.r * a, c.g * a, c.b * a, 1.0)
-			if hue != null:
-				c = _blend_hue(c, hc)
-			if sat != 0.0:
-				c = _set_lum(_set_sat(c, sat), _lum(c))
-			if dark > 0.0:
-				c = Color(c.r * dk.r, c.g * dk.g, c.b * dk.b, c.a)
-			if bright > 0.0:
-				c = Color(1.0 - (1.0 - c.r) * (1.0 - bright), 1.0 - (1.0 - c.g) * (1.0 - bright), 1.0 - (1.0 - c.b) * (1.0 - bright), c.a)
-			c.a = 1.0 if add and not keep_a else a
-			img.set_pixel(x, y, c)
-	var tex := ImageTexture.create_from_image(img)
+	var hc := Color.from_hsv(float(hue) / 360.0, 1.0, 1.0) if hue != null else Color.WHITE
+	var tex := _bake(f, {"hue_on": hue != null, "hc": Vector3(hc.r, hc.g, hc.b), "sat": sat, "dark": dark,
+		"dk": Vector3(dk.r, dk.g, dk.b), "bright": bright, "add": f[4] == 1, "keep_a": keep_a})
 	_tint[key] = tex
 	return tex
 
 
-func _lum(c: Color) -> float:
-	return 0.3 * c.r + 0.59 * c.g + 0.11 * c.b
-
-
-func _clip(c: Color) -> Color:
-	var l := _lum(c)
-	var n := minf(c.r, minf(c.g, c.b))
-	var x := maxf(c.r, maxf(c.g, c.b))
-	var r := c
-	if n < 0.0:
-		r = Color(l + (c.r - l) * l / (l - n), l + (c.g - l) * l / (l - n), l + (c.b - l) * l / (l - n), c.a)
-	if x > 1.0:
-		r = Color(l + (r.r - l) * (1.0 - l) / (x - l), l + (r.g - l) * (1.0 - l) / (x - l), l + (r.b - l) * (1.0 - l) / (x - l), c.a)
-	return r
-
-
-func _set_lum(c: Color, l: float) -> Color:
-	var d := l - _lum(c)
-	return _clip(Color(c.r + d, c.g + d, c.b + d, c.a))
-
-
-func _set_sat(c: Color, s: float) -> Color:
-	var mx := maxf(c.r, maxf(c.g, c.b))
-	var mn := minf(c.r, minf(c.g, c.b))
-	if mx - mn <= 0.0:
-		return Color(0, 0, 0, c.a)
-	var k := s / (mx - mn)
-	return Color((c.r - mn) * k, (c.g - mn) * k, (c.b - mn) * k, c.a)
-
-
-## режим смешивания 'hue': тон источника, насыщенность и яркость фона
-func _blend_hue(base: Color, tint: Color) -> Color:
-	var mx := maxf(base.r, maxf(base.g, base.b))
-	var mn := minf(base.r, minf(base.g, base.b))
-	return _set_lum(_set_sat(tint, mx - mn), _lum(base))
+## кадр атласа через шейдер перекраски в отдельный SubViewport: рисуется один раз (UPDATE_ONCE) в том же
+## кадре, до основного экрана, и дальше живёт как обычная текстура
+func _bake(f: Array, params: Dictionary) -> Texture2D:
+	if _bake_shader == null:
+		_bake_shader = load("res://assets/shaders/tint.gdshader")
+	var vp := SubViewport.new()
+	vp.size = Vector2i(f[2], f[3])
+	vp.transparent_bg = true
+	vp.disable_3d = true
+	vp.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
+	vp.render_target_update_mode = SubViewport.UPDATE_ONCE
+	var sp := Sprite2D.new()
+	sp.texture = _sheets[f[5]]
+	sp.region_enabled = true
+	sp.region_rect = Rect2(f[0], f[1], f[2], f[3])
+	sp.centered = false
+	var m := ShaderMaterial.new()
+	m.shader = _bake_shader
+	for k in params: m.set_shader_parameter(k, params[k])
+	sp.material = m
+	vp.add_child(sp)
+	add_child(vp)
+	return vp.get_texture()
 
 
 ## тон цвета '#rrggbb' в градусах — для перекраски эффектов под цвет врага или бонуса
@@ -207,19 +170,14 @@ func hue_of(hex: String) -> float:
 	return h
 
 
-## белый силуэт кадра — вспышка при попадании
+## белый силуэт кадра — вспышка при попадании (тоже на видеокарте, см. _bake)
 func white(name: String) -> Texture2D:
 	if _white.has(name):
 		return _white[name]
 	var f: Array = frames.get(name, [])
 	if f.is_empty():
 		return null
-	var img := _region_image(f)
-	for y in img.get_height():
-		for x in img.get_width():
-			var a := img.get_pixel(x, y).a
-			img.set_pixel(x, y, Color(1, 1, 1, a))
-	var tex := ImageTexture.create_from_image(img)
+	var tex := _bake(f, {"white": true})
 	_white[name] = tex
 	return tex
 

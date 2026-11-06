@@ -2,7 +2,8 @@ extends Node2D
 ## Главная сцена: игровой цикл (Game.frame + Game.draw через Ctx), ввод пальцем/мышью/клавишами, смена размера,
 ## пауза при сворачивании. Интерфейс строит Ui на своём слое поверх (scripts/ui/ui.gd).
 ## Ключи запуска: «-- --autoplay» — бот-тестировщик играет сам (бессмертный корабль, выбирает первое),
-## «--shots=ПАПКА» — снимки экрана в моменты SHOT_AT (с), «--seconds=N» — выйти через N секунд игры.
+## «--shots=ПАПКА» — снимки экрана в моменты SHOT_AT (с), «--seconds=N» — выйти через N секунд игры,
+## «--prof» — раз в 10 с печатать среднее время кадра по частям (логика, отрисовка, интерфейс), мс.
 
 const SHOT_AT := [2.5, 8.0, 20.0, 40.0, 70.0, 100.0, 130.0, 160.0, 200.0]
 const KEYS := {
@@ -19,6 +20,8 @@ var max_seconds := 0.0
 var _clock := 0.0
 var _shot_i := 0
 var _bot_t := 0.0
+var prof := false
+var _prof := {"frame": 0.0, "draw": 0.0, "ui": 0.0, "n": 0, "max": 0.0, "t": 0.0}
 
 
 func _ready() -> void:
@@ -29,6 +32,7 @@ func _ready() -> void:
 		if a == "--autoplay": autoplay = true
 		elif a.begins_with("--shots="): shots_dir = a.substr(8)
 		elif a.begins_with("--seconds="): max_seconds = float(a.substr(10))
+		elif a == "--prof": prof = true
 	get_viewport().size_changed.connect(_on_resize)
 	_on_resize()
 	Ui.build(self)
@@ -50,11 +54,15 @@ func _process(delta: float) -> void:
 	var rdt := delta
 	if rdt > 0.25: rdt = 0.016   # после сворачивания — без скачка
 	if autoplay: _bot(rdt)
+	var t0 := Time.get_ticks_usec()
 	Game.frame(rdt)
+	var t1 := Time.get_ticks_usec()
 	ctx.begin()
 	Game.draw(ctx)
 	Post.frame(rdt)
+	var t2 := Time.get_ticks_usec()
 	Ui.frame(rdt)
+	if prof: _profile(t0, t1, t2, Time.get_ticks_usec(), rdt)
 	Main.measure(rdt)
 	_clock += rdt
 	if shots_dir != "" and _shot_i < SHOT_AT.size() and _clock >= SHOT_AT[_shot_i]:
@@ -63,6 +71,19 @@ func _process(delta: float) -> void:
 	if max_seconds > 0 and _clock >= max_seconds:
 		print("[bot] %.0f с: состояние %s, волна %s, убито %d, очки %d" % [_clock, Game.state, Game.wave.n if Game.wave else "-", Game.run.get("kills", 0) if Game.run else 0, Game.run.get("score", 0) if Game.run else 0])
 		get_tree().quit()
+
+
+func _profile(t0: int, t1: int, t2: int, t3: int, dt: float) -> void:
+	var p := _prof
+	p.frame += t1 - t0; p.draw += t2 - t1; p.ui += t3 - t2; p.n += 1
+	p.max = maxf(p.max, t3 - t0)
+	if t3 - t0 > 12000: print("[prof] рывок %.1f мс: логика %.1f, отрисовка %.1f, интерфейс %.1f (%s, %.1f с)" % [(t3 - t0) / 1000.0, (t1 - t0) / 1000.0, (t2 - t1) / 1000.0, (t3 - t2) / 1000.0, Game.state, _clock])
+	p.t += dt
+	if p.t < 10.0: return
+	var n: float = p.n * 1000.0
+	print("[prof] логика %.2f, отрисовка %.2f, интерфейс %.2f, худший кадр %.1f мс · врагов %d, пуль %d/%d, частиц %d, %s" % [
+		p.frame / n, p.draw / n, p.ui / n, p.max / 1000.0, Game.enemies.size(), Game.bullets.size(), Game.ebullets.size(), FX.parts.size(), Game.state])
+	_prof = {"frame": 0.0, "draw": 0.0, "ui": 0.0, "n": 0, "max": 0.0, "t": 0.0}
 
 
 func _shot() -> void:
