@@ -48,7 +48,7 @@ func _ready() -> void:
 	Ui.menu.show_diff()
 	await get_tree().process_frame
 	await snap("diff")
-	print("сложность открыта: ", Ui.menu.diff.visible)
+	print("сложность открыта: ", Ui.menu.diff.visible, ", окно: ", Ui.dialog_v.visible, " прозрачность ", Ui.dialog_v.modulate.a)
 	Ui.menu.diff._go()
 	for i in 120: await get_tree().process_frame
 	print("забег: ", Game.state, " волна ", Game.wave.n if Game.wave else "-")

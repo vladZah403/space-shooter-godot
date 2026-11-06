@@ -133,10 +133,57 @@ static func button(text: String, on_press: Callable, kind := "", size := "") -> 
 		A.play("click")
 		Haptic.select()
 		on_press.call())
-	# лёгкое «нажатие»: кнопка чуть сжимается
-	b.button_down.connect(func(): b.pivot_offset = b.size / 2; b.scale = Vector2(0.96, 0.96))
-	b.button_up.connect(func(): b.scale = Vector2.ONE)
+	# «нажатие»: кнопка сжимается и отпружинивает обратно (Tween)
+	b.button_down.connect(func():
+		b.pivot_offset = b.size / 2
+		_spring(b, Vector2(0.94, 0.94), 0.06, Tween.TRANS_QUAD))
+	b.button_up.connect(func(): _spring(b, Vector2.ONE, 0.28, Tween.TRANS_BACK))
 	return b
+
+
+static func _spring(c: Control, to: Vector2, dur: float, trans: int) -> void:
+	var old = c.get_meta("_spring") if c.has_meta("_spring") else null
+	if old is Tween and old.is_valid(): old.kill()
+	var tw := c.create_tween()
+	tw.tween_property(c, "scale", to, dur).set_trans(trans).set_ease(Tween.EASE_OUT)
+	c.set_meta("_spring", tw)
+
+
+## плавное появление окна: само окно проявляется, его первая панель «выпрыгивает» из 94 % размера;
+## slide — экран въезжает сбоку (разделы меню). Подключается раз: Kit.animate_on_show(окно)
+static func animate_on_show(c: Control, slide := false) -> void:
+	c.visibility_changed.connect(func(): if c.is_visible_in_tree(): appear(c, slide))
+
+
+static func appear(c: Control, slide := false) -> void:
+	var old = c.get_meta("_appear") if c.has_meta("_appear") else null
+	if old is Tween and old.is_valid(): old.kill()
+	c.modulate.a = 0.0
+	var tw := c.create_tween().set_parallel(true)
+	tw.tween_property(c, "modulate:a", 1.0, 0.16)
+	if slide:
+		# исходное место запоминаем один раз — повторное открытие посреди анимации не сдвинет экран
+		if not c.has_meta("_x0"): c.set_meta("_x0", c.position.x)
+		var x0: float = c.get_meta("_x0")
+		c.position.x = x0 + 28
+		tw.tween_property(c, "position:x", x0, 0.24).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	else:
+		var p := _first_panel(c)
+		if p:
+			# размер панели может быть ещё не посчитан — центр берём на каждом шаге
+			tw.tween_method(func(k: float):
+				p.pivot_offset = p.size / 2
+				p.scale = Vector2.ONE * lerpf(0.94, 1.0, k), 0.0, 1.0, 0.26).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	c.set_meta("_appear", tw)
+
+
+static func _first_panel(c: Node) -> PanelContainer:
+	var q: Array[Node] = [c]
+	while not q.is_empty():
+		var n: Node = q.pop_front()
+		if n is PanelContainer and n != c: return n
+		q.append_array(n.get_children())
+	return null
 
 
 static func panel(pad := 12, bg := PANEL, border := LINE, radius := 16) -> PanelContainer:

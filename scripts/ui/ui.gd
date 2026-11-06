@@ -54,6 +54,10 @@ func build(world: Node) -> void:
 	root.add_child(toasts)
 	ship = preload("res://scripts/ui/ship_view.gd").new(); root.add_child(ship)
 	dialog_v = Views.DialogView.new(); root.add_child(dialog_v)
+	# окна появляются плавно (Tween), разделы меню въезжают сбоку
+	for v in [pause_v, revive, over, tip, dialog_v, ship, menu.diff]: Kit.animate_on_show(v)
+	Kit.animate_on_show(menu.screens, true)
+	Kit.animate_on_show(map)
 	_wire()
 	toMenu()
 
