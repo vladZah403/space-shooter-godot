@@ -41,11 +41,17 @@ Godot_v4.6.3-stable_win64_console.exe --path . --fixed-fps 60 --quit-after 4800 
 
 Перенос полной игры (`scripts/game/`) ещё не подключён к сцене. Пока он не собран целиком, его
 проверяет `tools/check/run.sh`: копия проекта вне папки с заглушками недостающих модулей + дымовой тест
-(`smoke_bosses.gd` — все 13 боссов проходят три фазы и погибают; `smoke_foes.gd` — враги 3.1; `smoke_sectors.gd` — механики секторов; `smoke_skills.gd` — навыки и дроны; `smoke_store.gd` — сохранение и прогрессия; `smoke_events.gd` — события волн; `smoke_scenes.gd` — сцены узлов карты; `smoke_run.gd` — целый забег ботом; общая подготовка забега — `fixture.gd`):
+(`smoke_bosses.gd` — все 13 боссов проходят три фазы и погибают; `smoke_foes.gd` — враги 3.1; `smoke_sectors.gd` — механики секторов; `smoke_skills.gd` — навыки и дроны; `smoke_store.gd` — сохранение и прогрессия; `smoke_events.gd` — события волн; `smoke_scenes.gd` — сцены узлов карты; `smoke_audio.gd` — звук; `smoke_run.gd` — целый забег ботом; общая подготовка забега — `fixture.gd`):
 
 ```bash
 GODOT=путь/Godot_v4.6.3-stable_win64_console.exe tools/check/run.sh smoke_bosses.gd
 ```
+
+## Звук
+
+Эффекты и музыка синтезированы кодом JS-версии (`../space-shooter-game/js/audio.js`) и записаны в WAV:
+`node tools/render_audio.mjs` (нужен Chrome или Edge) → `assets/audio/sfx/*.wav`, `assets/audio/music/<стиль>_<0|1|2>.wav`
+(петли по 4 такта: меню, бой, босс) и `assets/audio/audio.json`. После правок звука в JS — запустить заново.
 
 ## Сборки
 
