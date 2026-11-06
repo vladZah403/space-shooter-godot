@@ -34,9 +34,14 @@ static func font(weight := 600) -> Font:
 	if _fonts.has(weight): return _fonts[weight]
 	if _font == null:
 		_font = load("res://assets/fonts/Exo2.ttf")
-		_emoji = SystemFont.new()
-		_emoji.font_names = PackedStringArray(["Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Symbol"])
-		_font.fallbacks = [_emoji]
+		# эмодзи: на компьютере и телефоне — цветные системные, в браузере их нет — свой Noto Emoji (OFL, контурный)
+		var noto: Font = load("res://assets/fonts/NotoEmoji.ttf")
+		if OS.has_feature("web"):
+			_font.fallbacks = [noto]
+		else:
+			_emoji = SystemFont.new()
+			_emoji.font_names = PackedStringArray(["Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Symbol"])
+			_font.fallbacks = [_emoji, noto]
 	var f := FontVariation.new()
 	f.base_font = _font
 	f.variation_opentype = {TextServerManager.get_primary_interface().name_to_tag("wght"): weight}

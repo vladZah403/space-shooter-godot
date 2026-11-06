@@ -24,6 +24,7 @@ var _bot_t := 0.0
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	ctx = Ctx.new(get_canvas_item())
+	ctx.font = Kit.font(700)   # надписи на поле (реплики, «КОМБО», числа урона) — тем же шрифтом с кириллицей
 	for a in OS.get_cmdline_user_args():
 		if a == "--autoplay": autoplay = true
 		elif a.begins_with("--shots="): shots_dir = a.substr(8)

@@ -44,7 +44,8 @@ func play(done: Callable) -> void:
 	_booms.clear()
 	_layer = CanvasLayer.new()
 	_layer.layer = 20
-	get_tree().root.add_child(_layer)
+	# заставка стартует из _ready сцены мира — корень дерева в этот момент занят, добавляем следующим шагом
+	get_tree().root.add_child.call_deferred(_layer)
 	_view = Control.new()
 	Kit.full(_view)
 	_view.mouse_filter = Control.MOUSE_FILTER_STOP
