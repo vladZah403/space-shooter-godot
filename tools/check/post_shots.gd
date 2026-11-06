@@ -1,5 +1,6 @@
 extends Node
-## Снимки постобработки (запуск с окном): без эффектов, свечение, ударная волна, сноп искр, воронка, аберрация, форсаж.
+## Снимки постобработки (запуск с окном): без эффектов, свечение, ударная волна, сноп искр, воронка, аберрация, форсаж,
+## размытие под паузой, блёклые цвета на последней жизни.
 ##   Godot.exe --path . --fixed-fps 60 res://tools/check/post_shots.tscn -- --autoplay --shots=ПАПКА
 ## (--autoplay — мир сам начинает забег и ведёт бота; снимки — на 10-й секунде боя)
 
@@ -48,4 +49,11 @@ func _ready() -> void:
 	Post.warp = 0.8
 	Post.warp_at = Vector2(G.FW / 2, G.H * 0.42)
 	await snap("f_warp")
+	Game.pause()
+	await frames(40)
+	await snap("g_pause")
+	Game.resume()
+	Game.player.lives = 1
+	await frames(40)
+	await snap("h_lastlife")
 	get_tree().quit()

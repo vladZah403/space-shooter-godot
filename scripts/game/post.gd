@@ -5,6 +5,8 @@ extends Node
 ##   Post.lens(x, y, r, k)  — воронка чёрной дыры на этот кадр (вызывать из отрисовки каждый кадр)
 ##   Post.hurt(k)           — вспышка хроматической аберрации (попадание по игроку)
 ##   Post.warp, Post.warp_at — форсаж прыжка (выставляет Game.draw на этот кадр)
+## Сам следит за игрой: под окнами (пауза, выбор, подсказка, итоги) игра размывается; на последней жизни
+## цвета блекнут, при заморозке — холодный тон, при замедлении времени — синеватый.
 ## Качество: низкое — выключено; среднее — волны/воронки/аберрация (слой включается, только пока они есть);
 ## высокое — плюс свечение (слой включён всегда). Выключается в настройках («Эффекты экрана»).
 
@@ -19,6 +21,9 @@ var aberr := 0.0
 var warp := 0.0
 var warp_at := Vector2.ZERO
 var bloom := 0.4
+var blur := 0.0
+var sat := 1.0
+var grade := Vector3.ONE
 var _wv := PackedVector4Array()
 var _lv := PackedVector4Array()
 
@@ -88,7 +93,8 @@ func frame(dt: float) -> void:
 	var bl := bloom if lv >= 2 else 0.0
 	var wp := warp if lv > 0 else 0.0
 	warp = 0.0
-	var on := lv > 0 and (bl > 0 or n > 0 or ln > 0 or aberr > 0.0004 or wp > 0.005)
+	_mood(dt)
+	var on := lv > 0 and (bl > 0 or n > 0 or ln > 0 or aberr > 0.0004 or wp > 0.005 or blur > 0.01 or sat < 0.99 or not grade.is_equal_approx(Vector3.ONE))
 	rect.visible = on
 	if not on: return
 	mat.set_shader_parameter("aspect", G.W / G.H)
@@ -100,6 +106,32 @@ func frame(dt: float) -> void:
 	mat.set_shader_parameter("bloom", bl)
 	mat.set_shader_parameter("warp", wp)
 	mat.set_shader_parameter("warp_c", Vector2((warp_at.x + G.FX) / G.W, warp_at.y / G.H))
+	mat.set_shader_parameter("blur", blur)
+	mat.set_shader_parameter("sat", sat)
+	mat.set_shader_parameter("grade", grade)
+
+
+## размытие и цветокоррекция по состоянию игры — плавно, без скачков
+func _mood(dt: float) -> void:
+	var st: String = Game.state
+	var blur_to := 0.85 if st in ["pause", "perk", "tip", "over", "revive"] else 0.0
+	var sat_to := 1.0
+	var gr_to := Vector3.ONE
+	var p = Game.player
+	if p != null and Game.run and st in ["play", "dying"]:
+		if Game.buffs.get("freeze", 0.0) > 0:
+			sat_to = 0.55; gr_to = Vector3(0.88, 1.0, 1.12)
+		elif Game.run.skillFx.get("sk_timewarp", 0.0) > 0:
+			sat_to = 0.75; gr_to = Vector3(0.92, 0.96, 1.1)
+		elif p.alive and p.lives == 1:
+			sat_to = 0.7
+	var k := 1.0 - exp(-dt * 7.0)
+	blur = lerpf(blur, blur_to, k)
+	if blur < 0.005: blur = 0.0
+	sat = lerpf(sat, sat_to, k)
+	if absf(sat - 1.0) < 0.005: sat = 1.0
+	grade = grade.lerp(gr_to, k)
+	if grade.is_equal_approx(Vector3.ONE) or (grade - Vector3.ONE).length() < 0.004: grade = Vector3.ONE
 
 
 func clear() -> void:
@@ -107,3 +139,6 @@ func clear() -> void:
 	lenses.clear()
 	aberr = 0.0
 	warp = 0.0
+	blur = 0.0
+	sat = 1.0
+	grade = Vector3.ONE

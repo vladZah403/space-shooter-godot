@@ -1,7 +1,8 @@
 shader_type canvas_item;
 // Постобработка поля боя (слой между миром и интерфейсом, scripts/game/post.gd):
 // ударные волны от взрывов, линзы-воронки чёрных дыр, хроматическая аберрация при попадании,
-// радиальный «форсаж» при прыжке в сектор и мягкое свечение ярких мест (bloom по мип-уровням экрана).
+// радиальный «форсаж» при прыжке в сектор, мягкое свечение ярких мест (bloom по мип-уровням экрана),
+// размытие игры под окнами (пауза, выбор, итоги) и цветокоррекция (последняя жизнь, заморозка, замедление).
 // Все расстояния — в долях высоты экрана (по x домножаем на aspect = W/H, чтобы круги были круглыми).
 
 uniform sampler2D screen_tex : hint_screen_texture, repeat_disable, filter_linear_mipmap;
@@ -15,6 +16,9 @@ uniform float bloom = 0.0;
 uniform float bloom_thr = 0.3;
 uniform float warp = 0.0;
 uniform vec2 warp_c = vec2(0.5, 0.42);
+uniform float blur = 0.0;
+uniform float sat = 1.0;
+uniform vec3 grade = vec3(1.0);
 
 vec2 rot(vec2 v, float a) {
 	float c = cos(a);
@@ -82,6 +86,14 @@ void fragment() {
 			+ textureLod(screen_tex, suv, 5.5).rgb * 0.2;
 		b = max(b - vec3(bloom_thr), vec3(0.0));
 		col += b * b * bloom * 3.0;
+	}
+	if (blur > 0.0) {
+		vec3 bl = textureLod(screen_tex, suv, 2.5).rgb * 0.6 + textureLod(screen_tex, suv, 3.5).rgb * 0.4;
+		col = mix(col, bl, blur);
+	}
+	if (sat < 0.999 || grade != vec3(1.0)) {
+		float l = dot(col, vec3(0.3, 0.59, 0.11));
+		col = mix(vec3(l), col, sat) * grade;
 	}
 	COLOR = vec4(col, 1.0);
 }
