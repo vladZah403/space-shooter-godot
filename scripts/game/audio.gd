@@ -4,7 +4,11 @@ extends Node
 ##  assets/audio/sfx/<имя>.wav, assets/audio/music/<стиль>_<0|1|2>.wav — петли по 4 такта для интенсивности
 ##  0 (меню), 1 (бой), 2 (босс/фивер). Все три слоя стиля играют синхронно, интенсивность — плавная смена громкости.
 ##  Шины: Master (компрессор, как DynamicsCompressor в JS) ← Music (фильтр «приглушить» на паузе) и SFX.
-##  A.play("explodeM", {"vol": 0.8, "rate": 1.2}); A.music_play("synthwave", 1); A.muffle(true)
+##  A.play("explodeM", {"vol": 0.8, "rate": 1.2, "x": e.x}); A.music_play("synthwave", 1); A.muffle(true)
+##  Улучшения Godot-версии: стереопанорама по x на поле (AudioStreamPlayer2D; в вебе — обычные плееры, там
+##  позиционный звук ненадёжен), лёгкая «космическая» реверберация на шине SFX, приглушение музыки под
+##  крупные взрывы и попадания (ducking). В вебе эффекты шин не работают (режим Sample), поэтому
+##  «приглушить на паузе» там — просто тише.
 
 const DIR := "res://assets/audio/"
 ## минимальный интервал (с) и громкость по умолчанию — чтобы частые звуки не «долбили»
@@ -14,11 +18,15 @@ const LIMIT := {
 	"coin": [0.04, 0.4], "xp": [0.03, 0.3], "mine": [0.1, 0.35],
 }
 const VOICES := 24
+## насколько приглушить музыку под звук (0..1), затем плавно вернуть
+const DUCK := {"explodeL": 0.35, "bomb": 0.5, "playerHit": 0.45, "bossRoar": 0.3, "revive": 0.3}
 const STYLE_IDS := ["synthwave", "chiptune", "ambient", "dnb", "cyber"]
 
 var meta: Dictionary = {}
 var sfx: Dictionary = {}          # имя → AudioStream
-var _pool: Array[AudioStreamPlayer] = []
+var _pool: Array[Node] = []      # AudioStreamPlayer2D (панорама) или AudioStreamPlayer (веб)
+var _web := OS.has_feature("web")
+var _duck := 0.0
 var _last := {}
 var _bus_music := 0
 var _bus_sfx := 0
@@ -44,7 +52,15 @@ func _ready() -> void:
 		var s = load(DIR + "sfx/" + name + ".wav")
 		if s: sfx[name] = s
 	for i in VOICES:
-		var p := AudioStreamPlayer.new()
+		var p: Node
+		if _web:
+			p = AudioStreamPlayer.new()
+		else:
+			var p2 := AudioStreamPlayer2D.new()
+			p2.attenuation = 0.0          # громкость не зависит от расстояния — только панорама
+			p2.max_distance = 100000.0
+			p2.panning_strength = 1.3
+			p = p2
 		p.bus = "SFX"
 		add_child(p)
 		_pool.append(p)
@@ -67,6 +83,11 @@ func _setup_buses() -> void:
 	_lowpass.cutoff_hz = 20000
 	AudioServer.add_bus_effect(_bus_music, _lowpass)
 	_bus_sfx = _add_bus("SFX")
+	# короткий «космический» хвост у взрывов и выстрелов — едва заметный, низы не мутит
+	var rev := AudioEffectReverb.new()
+	rev.room_size = 0.55; rev.damping = 0.55; rev.spread = 0.85; rev.hipass = 0.25
+	rev.dry = 1.0; rev.wet = 0.11; rev.predelay_msec = 30
+	AudioServer.add_bus_effect(_bus_sfx, rev)
 
 
 func _add_bus(name: String) -> int:
@@ -88,14 +109,14 @@ func applyVolumes() -> void:
 	AudioServer.set_bus_volume_db(_bus_sfx, linear_to_db(maxf(0.0001, sv * sv * 0.95)))
 
 
-## o: vol, rate
+## o: vol, rate, x — координата на поле (для стереопанорамы; без неё — по центру)
 func play(name: String, o := {}) -> void:
 	var s = sfx.get(name)
 	if s == null: return
 	var lim = LIMIT.get(name)
 	var now := Time.get_ticks_msec() / 1000.0
 	if lim and now - _last.get(name, -10.0) < lim[0]: return
-	var p: AudioStreamPlayer = null
+	var p: Node = null
 	for q in _pool:
 		if not q.playing:
 			p = q
@@ -106,7 +127,11 @@ func play(name: String, o := {}) -> void:
 	p.pitch_scale = o.get("rate", U.rand(0.94, 1.06) if lim else 1.0)
 	var vol: float = o.get("vol", 1.0) * (lim[1] if lim else 0.8) * meta.sfx[name].get("gain", 1.0) * 0.9
 	p.volume_db = linear_to_db(maxf(0.0001, vol))
+	if p is AudioStreamPlayer2D:
+		var x = o.get("x")
+		p.position = Vector2(G.FX + float(x) if x != null else G.W / 2, G.H / 2)
 	p.play()
+	if DUCK.has(name): _duck = maxf(_duck, DUCK[name] * minf(1.0, o.get("vol", 1.0)))
 
 
 ## приглушение музыки на паузе
@@ -163,12 +188,15 @@ func _process(dt: float) -> void:
 	# фильтр «приглушить»: как setTargetAtTime с постоянной 0,15 с
 	_muffle = lerpf(_muffle, _muffle_to, 1 - exp(-dt / 0.15))
 	_lowpass.cutoff_hz = _muffle
+	_duck = maxf(0.0, _duck - dt * 0.9)
 	if style == "": return
+	var k := 1.0 - _duck
+	if _web: k *= lerpf(0.45, 1.0, (_muffle - 700.0) / 19300.0)
 	var fade_k := (1.0 / (0.4 if _stop_fast else 1.2)) if _fade_to < _fade else (1.0 / 1.2)
 	_fade = move_toward(_fade, _fade_to, dt * fade_k)
 	for i in 3:
 		_layer_vol[i] = move_toward(_layer_vol[i], 1.0 if i == intensity else 0.0, dt * 2.5)
-		var v: float = _layer_vol[i] * _fade * meta.music["%s_%d" % [style, i]].get("gain", 1.0)
+		var v: float = _layer_vol[i] * _fade * k * meta.music["%s_%d" % [style, i]].get("gain", 1.0)
 		_layers[i].volume_db = linear_to_db(maxf(0.00001, v))
 	if _fade <= 0.0 and _fade_to <= 0.0:
 		for p in _layers: p.stop()

@@ -44,6 +44,14 @@ func free_items() -> void:
 	_items.clear()
 
 
+## слои рисования — RID сервера, сами не освобождаются: отдаём их, когда Ctx больше не нужен
+## (закрытые превью в меню, выход из игры), иначе каждое перестроение экрана копит «висящие» холсты
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:
+		# методы самого объекта здесь уже не вызвать — освобождаем напрямую
+		for it in _items: RenderingServer.free_rid(it.rid)
+
+
 ## начало кадра: стереть всё нарисованное в прошлом кадре
 func begin() -> void:
 	for it in _items:

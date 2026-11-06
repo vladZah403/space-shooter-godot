@@ -373,7 +373,7 @@ func doFire(e: En, f: Dictionary) -> void:
 		_:
 			if has_method("_fire_" + k): call("_fire_" + k, e, f, mx, my)
 			elif Foes.has_method("_fire_" + k): Foes.call("_fire_" + k, e, f, mx, my)   # 3.1: навес Мортиры (lob)
-	A.play("enemyShot")
+	A.play("enemyShot", {"x": e.x})
 
 
 # ── 3.0: новые атаки (их же берут боссы) ──
@@ -1194,7 +1194,7 @@ func updateAll(edt: float, dt: float) -> void:
 		c.t += dt
 		if c.t < c.dur and U.random() < dt * 14:
 			FX.explode(c.x + U.rand(-0.4, 0.4) * c.w, c.y + U.rand(-0.35, 0.35) * c.h, U.rand(1, 2), U.pick(["#ffb03d", "#ff6a2a", c.color]))
-			A.play("explodeS", {"vol": 0.6})
+			A.play("explodeS", {"vol": 0.6, "x": c.x})
 		if c.t >= c.dur:
 			corpses.remove_at(i)
 			FX.explode(c.x, c.y, 4, c.color, {"kind": "boss"})
@@ -1202,6 +1202,7 @@ func updateAll(edt: float, dt: float) -> void:
 			FX.flash("#ffffff", 0.7)
 			FX.shake(1)
 			A.play("explodeL")
+			Haptic.boom()
 
 
 # ════════════════════════════════════════════════════════════
@@ -1225,7 +1226,7 @@ func kill(e: En, src: String) -> void:
 		FX.explode(e.x - e.w * 0.25, e.y, 1.4, col)
 		FX.explode(e.x + e.w * 0.25, e.y, 1.4, "#ffb03d")
 	if FX.quality > 0: FX.debris(e.x, e.y, col, int(round(size * 3)), 140)
-	A.play("explodeM" if size > 1.5 else "explodeS", {"vol": 0.8 if size > 1.5 else 0.6})
+	A.play("explodeM" if size > 1.5 else "explodeS", {"vol": 0.8 if size > 1.5 else 0.6, "x": e.x})
 	if size > 1.5: FX.shake(0.45 if e.mini else 0.18)
 	if e.mini:
 		FX.flash("#ffd9a0", 0.25)

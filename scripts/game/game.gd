@@ -1287,7 +1287,7 @@ func damageEnemy(e: En, dmg: float, o := {}) -> float:
 			e.cyc = 2.6
 		else:
 			e.shieldHitT = 0.12
-			if U.random() < 0.2: A.play("hitArmor", {"vol": 0.5})
+			if U.random() < 0.2: A.play("hitArmor", {"vol": 0.5, "x": e.x})
 			return 0.0
 	# 3.1: защита от оружия, купол Проектора, привыкание Мимика (foes.gd)
 	var rk: float = Foes.resist(e, src, dmg)
@@ -1342,7 +1342,7 @@ func damageEnemy(e: En, dmg: float, o := {}) -> float:
 				Bus.emit("toast", {"ico": "🛡️", "title": "ЩИТ", "text": "Щит дредноута сломан!", "info": true})
 				FX.shake(0.3)
 		elif U.random() < 0.3:
-			A.play("hitArmor")
+			A.play("hitArmor", {"x": e.x})
 		if dmg <= 0.01: return 0.0
 	if e.boss:
 		dmg = B.bossCap(e, dmg)
@@ -1371,7 +1371,7 @@ func damageEnemy(e: En, dmg: float, o := {}) -> float:
 		e.dmgSum += maxf(0, dmg + e.hp) if e.hp < 0 else dmg
 		if crit: e.dmgCrit = true
 	e.hitT = t
-	if not e.boss and U.random() < 0.25: A.play("hit")
+	if not e.boss and U.random() < 0.25: A.play("hit", {"x": e.x})
 	if e.hp <= 0: E.kill(e, src)
 	return dmg
 
