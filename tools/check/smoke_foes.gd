@@ -2,16 +2,11 @@ extends Node2D
 ## Дымовой тест врагов 3.1 (foes.gd): каждый вид выходит на поле и живёт ~14 с — поведение, защиты от оружия,
 ## привыкание Мимика, лечение Медика, кража Вора, навес Мортиры, купол, поле Гравитона, луч Связки, отрисовка.
 
+const Fx := preload("res://fixture.gd")
+
+
 func setup() -> void:
-	M.s = {}
-	Game.state = "play"
-	Game.diff = D.DIFFS.normal
-	Game.st = {"coins": 1.0}
-	Game.run = {"relics": {}, "bossDamaged": false, "bossDps": 0.0, "bossK": 1.0, "skillFx": {}, "noDrops": false, "anomaly": null}
-	Game.wave = {"n": 25, "boss": false, "danger": false}
-	var p := Pl.new()
-	p.x = G.FW / 2; p.y = G.H * 0.8; p.inv = 1e9; p.alive = true; p.lives = 1; p.maxLives = 3
-	Game.player = p
+	Fx.setup(25)
 
 
 func pickup(x: float, y: float, kind: String) -> void:

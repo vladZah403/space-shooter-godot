@@ -2,16 +2,11 @@ extends Node2D
 ## Дымовой тест боссов: каждый из 13 боссов выходит, проходит три фазы под постоянным уроном и погибает.
 ## Проверяет, что атаки, движение, смена фаз, подстройка прочности и отрисовка работают без ошибок.
 
+const Fx := preload("res://fixture.gd")
+
+
 func setup() -> void:
-	M.s = {}
-	Game.state = "play"
-	Game.diff = D.DIFFS.normal
-	Game.st = {"coins": 1.0}
-	Game.run = {"relics": {}, "bossDamaged": false, "bossDps": 0.0, "bossK": 1.0, "bosses": 0, "bossIds": [], "score": 0, "skillFx": {}}
-	Game.wave = {"n": 5, "danger": false}
-	var p := Pl.new()
-	p.x = G.FW / 2; p.y = G.H * 0.8; p.inv = 1e9; p.alive = true
-	Game.player = p
+	Fx.setup(5)
 
 
 func fight(i: int, phase_sec: float, ctx: Ctx) -> String:

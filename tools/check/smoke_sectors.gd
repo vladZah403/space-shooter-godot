@@ -3,16 +3,11 @@ extends Node2D
 ## появление «обстановки», облака, гравитация и ветер двигают пули и корабль, порталы перебрасывают снаряды,
 ## столпы и Око бьют лучами, гибель льда/яда/спутника, отрисовка.
 
+const Fx := preload("res://fixture.gd")
+
+
 func setup() -> void:
-	M.s = {}
-	Game.state = "play"
-	Game.diff = D.DIFFS.normal
-	Game.st = {"coins": 1.0}
-	Game.run = {"relics": {}, "bossDamaged": false, "skillFx": {}, "noDrops": false, "anomaly": null}
-	Game.wave = {"n": 7, "boss": false, "danger": false}
-	var p := Pl.new()
-	p.x = G.FW / 2; p.y = G.H * 0.8; p.inv = 1e9; p.alive = true; p.lives = 3; p.maxLives = 3
-	Game.player = p
+	Fx.setup(7)
 
 
 func run_mech(id: String, k: int, ctx: Ctx) -> String:

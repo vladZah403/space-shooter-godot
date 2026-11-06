@@ -5,6 +5,7 @@ extends RefCounted
 ## translate/rotate/scale, draw_image, fill_rect, пути (move_to/line_to/arc) с stroke/fill, текст.
 ## Каждый кадр: begin() — затем команды. При смене режима смешивания начинается новый холст-слой,
 ## поэтому порядок наложения сохраняется как в браузере.
+## clip_rect — обрезка по прямоугольнику (ctx.rect + ctx.clip в JS), действует до restore().
 
 var alpha := 1.0
 var additive := false
@@ -17,12 +18,13 @@ var dash: PackedFloat32Array = PackedFloat32Array()
 
 var _parent: RID
 var _mat_add: Material
-var _items: Array = []      # [{ rid, add, xf }]
+var _items: Array = []      # [{ rid, add, clip, xf }]
 var _idx := -1
 var _xf := Transform2D.IDENTITY
 var _stack: Array = []
 var _subpaths: Array = []   # Array[PackedVector2Array]
 var _closed: Array = []
+var _clip = null            # Rect2 в координатах холста или null
 
 
 func _init(parent_canvas_item: RID) -> void:
@@ -49,20 +51,25 @@ func begin() -> void:
 	additive = false
 	_xf = Transform2D.IDENTITY
 	_stack.clear()
+	_clip = null
 	dash = PackedFloat32Array()
 
 
 func _item() -> RID:
-	if _idx < 0 or _items[_idx].add != additive:
+	if _idx < 0 or _items[_idx].add != additive or _items[_idx].clip != _clip:
 		_idx += 1
 		if _idx >= _items.size():
 			var rid := RenderingServer.canvas_item_create()
 			RenderingServer.canvas_item_set_parent(rid, _parent)
-			_items.append({"rid": rid, "add": false, "xf": Transform2D.IDENTITY})
+			_items.append({"rid": rid, "add": false, "clip": null, "xf": Transform2D.IDENTITY})
 		var it: Dictionary = _items[_idx]
 		it.add = additive
 		RenderingServer.canvas_item_set_material(it.rid, _mat_add.get_rid() if additive else RID())
 		RenderingServer.canvas_item_set_draw_index(it.rid, _idx)
+		if it.clip != _clip:
+			it.clip = _clip
+			RenderingServer.canvas_item_set_clip(it.rid, _clip != null)
+			RenderingServer.canvas_item_set_custom_rect(it.rid, _clip != null, _clip if _clip != null else Rect2())
 	var cur: Dictionary = _items[_idx]
 	if cur.xf != _xf:
 		RenderingServer.canvas_item_add_set_transform(cur.rid, _xf)
@@ -72,14 +79,21 @@ func _item() -> RID:
 
 # ── состояние ──
 func save() -> void:
-	_stack.push_back([_xf, alpha, additive, fill, stroke, line_width, dash])
+	_stack.push_back([_xf, alpha, additive, fill, stroke, line_width, dash, _clip])
 
 
 func restore() -> void:
 	if _stack.is_empty():
 		return
 	var s: Array = _stack.pop_back()
-	_xf = s[0]; alpha = s[1]; additive = s[2]; fill = s[3]; stroke = s[4]; line_width = s[5]; dash = s[6]
+	_xf = s[0]; alpha = s[1]; additive = s[2]; fill = s[3]; stroke = s[4]; line_width = s[5]; dash = s[6]; _clip = s[7]
+
+
+## обрезка по прямоугольнику в текущих координатах (с поворотом — по охватывающему прямоугольнику);
+## вложенные обрезки пересекаются
+func clip_rect(x: float, y: float, w: float, h: float) -> void:
+	var r: Rect2 = _xf * Rect2(x, y, w, h)
+	_clip = r if _clip == null else (_clip as Rect2).intersection(r)
 
 
 func translate(x: float, y: float) -> void:

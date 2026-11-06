@@ -8,7 +8,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 PROJ=$(cd "$HERE/../.." && pwd)
 OUT=${2:-"${TEMP:-/tmp}/ss-godot-check"}
 python "$HERE/mkcheck.py" "$PROJ" "$OUT"
-mkdir -p "$OUT/scenes" && cp "$HERE/$1" "$OUT/smoke.gd"
+mkdir -p "$OUT/scenes" && cp "$HERE/$1" "$OUT/smoke.gd" && cp "$HERE/fixture.gd" "$OUT/fixture.gd"
 printf '[gd_scene format=3]\n\n[ext_resource type="Script" path="res://smoke.gd" id="1"]\n\n[node name="Main" type="Node2D"]\nscript = ExtResource("1")\n' > "$OUT/scenes/main.tscn"
 cd "$OUT"
 timeout 300 "$GODOT" --headless --path . --import >/dev/null 2>&1 || true

@@ -10,6 +10,12 @@ const RECORD_TABLES := ["ENEMIES", "BOSSES", "PERKS", "RELICS", "MODULES", "SKIL
 	"COMPANIONS", "MAP_NODES", "SECTORS", "EVENTS", "ANOMALIES", "POWERUPS", "DIFFS", "ACHIEVEMENTS", "MISSIONS",
 	"TRAILS", "SKINS", "MAP_EVENTS", "EVOLUTIONS", "CHALLENGE_MODS", "MODES", "CHESTS", "GENERAL", "TIPS"]
 
+## таблица → { поле: значение, если поля нет }. null — «не задано» (проверять != null)
+const OPTIONAL := {
+	"ENEMIES": {"tint": null, "rot": PI},   # спрайт без своего поворота смотрит вниз (def.rot ?? Math.PI)
+	"COMPANIONS": {"hue": null},
+}
+
 var data: Dictionary = {}
 
 
@@ -23,11 +29,13 @@ func _init() -> void:
 		push_error("Файл данных повреждён: " + PATH)
 		return
 	data = parsed
-	# у врагов без своего поворота спрайт смотрит вниз (в JS: def.rot !== undefined ? def.rot : Math.PI) —
-	# без этого дополнение ниже дало бы им rot = 0
-	for e in data.ENEMIES.values():
-		if not e.has("rot"):
-			e.rot = PI
+	# необязательные поля, где в JS «нет поля» ≠ 0 (проверка !== undefined): ставим их до дополнения,
+	# иначе дополнение дало бы 0 — например, оттенок 0 (красный) всем врагам без своего tint
+	for t in OPTIONAL:
+		for r in data[t].values():
+			for k in OPTIONAL[t]:
+				if not r.has(k):
+					r[k] = OPTIONAL[t][k]
 	for t in RECORD_TABLES:
 		if data.has(t):
 			_normalize(data[t])
