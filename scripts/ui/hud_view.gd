@@ -156,6 +156,9 @@ func _draw_hud() -> void:
 		ctx.alpha = _hitT / 0.35 * 0.55
 		ctx.draw_tex(FX._vignette_tex("#ff2a48"), 0, 0, G.W, G.H)
 		ctx.alpha = 1.0
+	# счётчик кадров (настройка «Показывать FPS»)
+	if M.s.settings.get("fps", false):
+		_txt("%d FPS • Q%d" % [int(round(Main.fps)), Main.quality], fx + 12, G.H - Hud.safe_bottom() - 80, 10, Kit.GREEN, 700, 0, 3)
 	# ── верх: пауза, счёт и волна, монеты и сундуки ──
 	ctx.fill = Color(8 / 255.0, 12 / 255.0, 30 / 255.0, 0.6)
 	ctx.begin_path(); ctx.round_rect(fx + 12, top + 10, 44, 44, 14); ctx.fill_path()

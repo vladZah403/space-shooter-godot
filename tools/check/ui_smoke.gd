@@ -25,7 +25,7 @@ func _ready() -> void:
 	M.s.coins = 100000
 	M.s.shipLvl = 30
 	var ms = Ui.menu.screens
-	for id in ["hangar", "arsenal", "skills", "missions", "relics", "achievements", "codex", "settings"]:
+	for id in ["hangar", "arsenal", "skills", "missions", "relics", "achievements", "codex", "leaders", "settings"]:
 		Ui.menu.open_screen(id)
 		for i in 3: await get_tree().process_frame
 		await snap("menu_" + id)

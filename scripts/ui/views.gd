@@ -164,7 +164,7 @@ class MenuView extends Control:
 		grid.add_theme_constant_override("h_separation", 8)
 		grid.add_theme_constant_override("v_separation", 8)
 		for it in [["🚀 АНГАР", "hangar"], ["⚔ АРСЕНАЛ", "arsenal"], ["⚛ НАВЫКИ", "skills"], ["🎯 ЗАДАНИЯ", "missions"],
-				["💎 РЕЛИКВИИ", "relics"], ["🏅 НАГРАДЫ", "achievements"], ["📖 СПРАВОЧНИК", "codex"], ["⚙ НАСТРОЙКИ", "settings"]]:
+				["💎 РЕЛИКВИИ", "relics"], ["🏅 НАГРАДЫ", "achievements"], ["📖 СПРАВОЧНИК", "codex"], ["🏆 РЕКОРДЫ", "leaders"], ["⚙ НАСТРОЙКИ", "settings"]]:
 			var id: String = it[1]
 			var tile_fn := func(): open_screen(id)
 			var b := Kit.button(it[0], tile_fn, "", "")

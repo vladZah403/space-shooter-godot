@@ -5,7 +5,7 @@ extends Control
 
 const HudView := preload("res://scripts/ui/hud_view.gd")
 const TITLES := {"hangar": "АНГАР", "arsenal": "АРСЕНАЛ", "skills": "НАВЫКИ", "missions": "ЗАДАНИЯ", "relics": "РЕЛИКВИИ",
-	"achievements": "НАГРАДЫ", "codex": "СПРАВОЧНИК", "settings": "НАСТРОЙКИ"}
+	"achievements": "НАГРАДЫ", "codex": "СПРАВОЧНИК", "settings": "НАСТРОЙКИ", "leaders": "РЕКОРДЫ"}
 const W_LETTER := {"laser": "Л", "shotgun": "Д", "rocket": "Р", "arc": "С", "plasma": "П", "lightning": "М", "darkmatter": "Т"}
 
 var cur := ""
@@ -731,6 +731,47 @@ func _render_codex() -> void:
 		h.add_child(v)
 		p.add_child(h)
 		if not kn: p.modulate.a = 0.7
+		body.add_child(p)
+
+
+# ════════════════════════════════════════════════════════════
+# РЕКОРДЫ: своя статистика и 10 лучших забегов на каждой сложности (мирового рейтинга без сервера нет)
+# ════════════════════════════════════════════════════════════
+func _render_leaders() -> void:
+	var s: Dictionary = M.s
+	var st: Dictionary = s.stats
+	var g := _grid(2)
+	for x in [["Игр сыграно", U.fmt(st.games)], ["Лучшая волна", str(st.bestWave)], ["Врагов уничтожено", U.fmt(st.kills)], ["Боссов побеждено", U.fmt(st.bosses)],
+			["Лучшее комбо", "×%d" % st.maxCombo], ["Время в бою", U.fmt_time(st.playTime)], ["Монет заработано", U.fmt(st.coinsEarned)], ["Улучшений выбрано", U.fmt(st.perks)]]:
+		var p := Kit.panel(8)
+		var v := Kit.vbox(0)
+		v.add_child(Kit.label(x[0], 11, Kit.MUTED, 700))
+		v.add_child(Kit.label(x[1], 16, Kit.TEXT, 900))
+		p.add_child(v)
+		p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		g.add_child(p)
+	if tab == "" or not D.DIFFS.has(tab): tab = s.settings.diff if D.DIFFS.has(s.settings.diff) else "normal"
+	var tb: Array = []
+	for id in D.DIFF_ORDER: tb.append([id, D.DIFFS[id].get("short", "") if D.DIFFS[id].get("short", "") != "" else D.DIFFS[id].name])
+	body.add_child(Kit.tabs(tb.slice(0, 4), tab, func(id):
+		tab = id; render()))
+	body.add_child(Kit.tabs(tb.slice(4), tab, func(id):
+		tab = id; render()))
+	var rows: Array = s.lb.filter(func(r): return r.diff == tab)
+	if rows.is_empty():
+		body.add_child(Kit.para("На сложности «%s» ещё нет забегов" % D.DIFFS[tab].name, 13, Kit.MUTED, HORIZONTAL_ALIGNMENT_CENTER))
+	for i in rows.size():
+		var r: Dictionary = rows[i]
+		var p := Kit.panel(10)
+		var h := Kit.hbox(10)
+		h.add_child(Kit.label(["🥇", "🥈", "🥉"][i] if i < 3 else str(i + 1), 18, Kit.GOLD, 900))
+		var v := Kit.vbox(0)
+		v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		v.add_child(Kit.label(U.fmt(r.score) + " очков", 15, Kit.TEXT, 900))
+		var dt := Time.get_datetime_dict_from_unix_time(int(r.date / 1000))
+		v.add_child(Kit.label("Волна %d • %02d.%02d.%d" % [r.wave, dt.day, dt.month, dt.year], 11, Kit.MUTED, 700))
+		h.add_child(v)
+		p.add_child(h)
 		body.add_child(p)
 
 
