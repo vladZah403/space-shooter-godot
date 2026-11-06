@@ -1,9 +1,11 @@
 extends Node2D
-## Дымовой тест целого забега: новый профиль → Game.start → Game.frame 60 раз в секунду до 4 минут игрового
-## времени. Бот: корабль бессмертен и качается по ширине, улучшения/модули/события выбирает первыми,
+## Дымовой тест целого забега: новый профиль → Game.start → Game.frame 60 раз в секунду до 7 минут игрового
+## времени. Бот: корабль бессмертен и качается по ширине, улучшения/модули/события/узлы карты выбирает первыми,
 ## подсказки закрывает, кат-сцены пропускает. Пишет ход волн и что в итоге сломалось (если сломалось).
 
-const SECONDS := 240.0
+const SECONDS := 420.0
+
+var nodes: Array = []
 
 
 func pick_offer() -> void:
@@ -11,6 +13,11 @@ func pick_offer() -> void:
 		"perk":
 			var ch: Array = Game.perkChoices()
 			if not ch.is_empty(): Game.choosePerk(ch[0].id)
+		"map":
+			var step: int = (int(Game.run.mapStep) - 1) % 5
+			var ch: Array = RunMap.choices(Game.run.map, step)
+			nodes.append(Game.run.map.cols[step][ch[0]].t)
+			RunMap.choose(step, ch[0])
 		"event", "module-buy":
 			var cards: Array = Game.offer.get("cards", []) if Game.offer is Dictionary else []
 			var free := cards.filter(func(c): return not c.get("price", 0))
@@ -53,6 +60,8 @@ func _ready() -> void:
 		if stuck > 20:
 			print("ЗАСТРЯЛ в состоянии %s (%s)" % [Game.state, Game.offerKind])
 			break
+	print("узлы карты: ", nodes)
+	print("сундуков: ", Game.run.chests, "  в сохранении: ", M.s.chests)
 	print("итог: %.0f с, состояние %s, волна %s, убито %d, боссов %d, улучшений %d" % [tm, Game.state, Game.wave.n if Game.wave else "-", Game.run.kills, Game.run.bosses, Game.run.perkCount])
 	print("SMOKE DONE")
 	get_tree().quit()

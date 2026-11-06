@@ -274,6 +274,18 @@ func fill_path() -> void:
 		RenderingServer.canvas_item_add_triangle_array(item, idx, pts, cols)
 
 
+## многоугольник с цветом в каждой вершине — цвета плавно смешиваются (замена радиальному градиенту:
+## веер треугольников «центр → край» с прозрачным краем)
+func fill_poly(pts: PackedVector2Array, cols: PackedColorArray) -> void:
+	if alpha <= 0.0 or pts.size() < 3:
+		return
+	var c := PackedColorArray()
+	c.resize(cols.size())
+	for i in cols.size():
+		c[i] = _mod(cols[i])
+	RenderingServer.canvas_item_add_polygon(_item(), pts, c)
+
+
 func stroke_line(x0: float, y0: float, x1: float, y1: float) -> void:
 	if alpha <= 0.0:
 		return
