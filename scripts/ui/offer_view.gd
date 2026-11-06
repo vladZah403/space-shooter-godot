@@ -9,6 +9,12 @@ var sub: Label
 var art: TextureRect
 var cards: VBoxContainer
 var reroll: Button
+var ship_btn: Button
+var portrait: Control
+var say: Label
+var _phrase := ""
+var _pt := 0.0
+var _mod_offer: Array = []
 var _wait := 0.0
 var _picks: Array = []       # [Callable] — что выбрать боту
 
@@ -36,6 +42,20 @@ func _ready() -> void:
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	art.custom_minimum_size = Vector2(0, 92)
 	box.add_child(art)
+	# 4.1: торговец — живой портрет с репликой, которая печатается по буквам
+	portrait = Kit.ctx_view(func(c: Ctx, sz: Vector2, t: float):
+		var s0 := G.S
+		G.S = 0.62   # портрет мельче поля: помощники сцены берут масштаб из G.S
+		Scenes.merchant(c, sz.x / 2, sz.y * 0.5 + sin(t * 2) * 3, 74, t, {"thrust": 0.15, "cargo": 1.0})
+		G.S = s0, Vector2(200, 110))
+	portrait.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	box.add_child(portrait)
+	say = Kit.label("", 14, Color("#1b1430"), 800, HORIZONTAL_ALIGNMENT_CENTER)
+	var sp := PanelContainer.new()
+	sp.add_theme_stylebox_override("panel", Kit.box(Color(1, 250 / 255.0, 235 / 255.0, 0.96), Color(0, 0, 0, 0), 10, 1, 6))
+	sp.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	sp.add_child(say)
+	box.add_child(sp)
 	title = Kit.label("", 26, Kit.TEXT, 900, HORIZONTAL_ALIGNMENT_CENTER)
 	box.add_child(title)
 	sub = Kit.label("", 14, Kit.MUTED, 600, HORIZONTAL_ALIGNMENT_CENTER)
@@ -45,10 +65,16 @@ func _ready() -> void:
 	box.add_child(cards)
 	reroll = Kit.button("", func(): _reroll(), "", "sm")
 	box.add_child(reroll)
+	ship_btn = Kit.button("🛠 СХЕМА КОРАБЛЯ", func(): Ui.ship.open(_mod_offer), "", "sm")
+	box.add_child(ship_btn)
 
 
 func _process(dt: float) -> void:
 	if visible and _wait > 0: _wait -= dt
+	if visible and portrait.visible:
+		_pt += dt
+		var n := mini(_phrase.length(), int(_pt * 28))
+		if say.text.length() != n: say.text = _phrase.substr(0, n)
 	# ширина под поле боя: на широком экране — по центру
 	box.custom_minimum_size.x = minf(G.FW - 32, 420)
 
@@ -62,7 +88,10 @@ func _open(t: String, s: String) -> void:
 	title.add_theme_font_size_override("font_size", 20 if t.length() > 12 else 26)
 	sub.text = s
 	art.visible = false
+	portrait.visible = false
+	say.get_parent().visible = false
 	reroll.visible = false
+	ship_btn.visible = false
 	Kit.clear(cards)
 	_picks.clear()
 	visible = true
@@ -172,6 +201,8 @@ func _reroll() -> void:
 
 func showModules(choices: Array, kind: String) -> void:
 	_open("СТАРТОВЫЙ МОДУЛЬ" if kind == "start" else "СТАНЦИЯ", "Модуль корабля — до конца забега")
+	_mod_offer = choices.map(func(m): return m.id)
+	ship_btn.visible = true
 	for m in choices:
 		var rar: Dictionary = D.RARITY[m.rar]
 		var lv := Game.mod(m.id)
@@ -186,7 +217,13 @@ func showModules(choices: Array, kind: String) -> void:
 func showEvent(o: Dictionary) -> void:
 	_open(o.title, o.get("sub", ""))
 	var a: String = o.get("art", "")
-	if a != "" and G.has(a):
+	if a == "p_merchant":
+		portrait.visible = true
+		say.get_parent().visible = true
+		_phrase = U.pick(Scenes.HELLO)
+		_pt = 0.0
+		say.text = ""
+	elif a != "" and G.has(a):
 		art.texture = G.icon(a)
 		art.visible = true
 	for c in o.cards:

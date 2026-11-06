@@ -19,6 +19,7 @@ var over: Control
 var tip: Control
 var revive: Control
 var dialog_v: Control
+var ship: Control
 var toasts: VBoxContainer
 var banner_box: Control
 var cur := "menu"
@@ -51,6 +52,7 @@ func build(world: Node) -> void:
 	toasts.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	toasts.offset_left = 12; toasts.offset_right = -12
 	root.add_child(toasts)
+	ship = preload("res://scripts/ui/ship_view.gd").new(); root.add_child(ship)
 	dialog_v = Views.DialogView.new(); root.add_child(dialog_v)
 	_wire()
 	toMenu()
@@ -122,7 +124,7 @@ func topInset() -> float:
 func toMenu() -> void:
 	Game.quit()
 	hud.close()
-	for v in [over, pause_v, offer, revive, map, tip]: v.close()
+	for v in [over, pause_v, offer, revive, map, tip, ship]: v.close()
 	cur = "menu"
 	menu.open()
 	Main.setMusic("menu")
@@ -153,7 +155,7 @@ func startRun(diffId: String, opts = null) -> void:
 	# повтор забега сохраняет правила испытания, но только в тот же день
 	if opts is Dictionary and opts.get("challenge") and opts.challenge.date != U.today_utc(): opts = {"challenge": M.challenge()}
 	_runOpts = opts
-	for v in [menu, over, pause_v, offer, revive, map, tip]: v.close()
+	for v in [menu, over, pause_v, offer, revive, map, tip, ship, dialog_v]: v.close()
 	cur = "game"
 	runEvents = []
 	Game.start(diffId, opts if opts is Dictionary else {})
@@ -178,6 +180,9 @@ func back() -> void:
 	if tip.visible:
 		Game.closeTip()
 		return
+	if ship.visible:
+		ship.close()
+		return
 	if pause_v.visible:
 		Game.resume()
 		return
@@ -189,7 +194,7 @@ func back() -> void:
 
 func showGameOver(sum: Dictionary) -> void:
 	hud.close()
-	for v in [pause_v, offer, revive, map]: v.close()
+	for v in [pause_v, offer, revive, map, ship]: v.close()
 	cur = "over"
 	Main.setMusic("menu")
 	get_tree().create_timer(0.35).timeout.connect(func(): over.open(sum))

@@ -402,6 +402,7 @@ class PauseView extends Control:
 			b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			tg.add_child(b)
 		v.add_child(tg)
+		v.add_child(Kit.button("🛠 СХЕМА КОРАБЛЯ", func(): Ui.ship.open(), "", "sm"))
 		v.add_child(Kit.button("▶  ПРОДОЛЖИТЬ", func(): Game.resume(), "primary", "big"))
 		var quit_fn := func():
 			var leave := func():

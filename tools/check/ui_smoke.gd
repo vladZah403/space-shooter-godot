@@ -62,6 +62,18 @@ func _ready() -> void:
 	await snap("offer")
 	print("улучшения: карточек ", Ui.offer.cards.get_child_count())
 	Ui.offer.close()
+	# лавка торговца с живым портретом и схема корабля
+	Ui.offer.showEvent(Game.merchantOffer())
+	for i in 60: await get_tree().process_frame
+	await snap("merchant")
+	print("лавка: карточек ", Ui.offer.cards.get_child_count(), ", реплика «", Ui.offer.say.text, "»")
+	Ui.offer.close()
+	Game.run.mods["power"] = 2
+	Ui.ship.open(["cooling", "gyro"])
+	for i in 20: await get_tree().process_frame
+	await snap("ship")
+	print("схема корабля: отсек ", Ui.ship.sel)
+	Ui.ship.close()
 	Ui.map.open({"map": RunMap.generate(0), "step": 0, "choices": [0, 1, 2], "n": 2})
 	for i in 10: await get_tree().process_frame
 	for i in 30: await get_tree().process_frame
