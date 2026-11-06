@@ -210,6 +210,21 @@ func quadratic_curve_to(cpx: float, cpy: float, x: float, y: float) -> void:
 		line_to(q.x, q.y)
 
 
+## прямоугольник со скруглёнными углами (ctx.roundRect)
+func round_rect(x: float, y: float, w: float, h: float, r: float) -> void:
+	r = minf(r, minf(w, h) / 2.0)
+	move_to(x + r, y)
+	line_to(x + w - r, y)
+	arc(x + w - r, y + r, r, -PI / 2, 0)
+	line_to(x + w, y + h - r)
+	arc(x + w - r, y + h - r, r, 0, PI / 2)
+	line_to(x + r, y + h)
+	arc(x + r, y + h - r, r, PI / 2, PI)
+	line_to(x, y + r)
+	arc(x + r, y + r, r, PI, PI * 1.5)
+	close_path()
+
+
 func rect(x: float, y: float, w: float, h: float) -> void:
 	move_to(x, y)
 	line_to(x + w, y)

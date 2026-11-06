@@ -352,3 +352,126 @@ func _bolt_into(img: Image) -> void:
 		for x in img.get_width():
 			if Geometry2D.is_point_in_polygon(Vector2(x + 0.5, y + 0.5), poly):
 				img.set_pixel(x, y, Color.WHITE)
+
+
+# ════════════════════════════════════════════════════════════
+# 4.1: СУНДУК — пиксель-арт в коде (грузовой контейнер с крышкой-«крыльями»), как gfx.chest в JS
+# ════════════════════════════════════════════════════════════
+const CHEST_PAL := {
+	"bronze": {"hull": "#4a3a33", "hullL": "#6b5447", "hullD": "#2a201d", "trim": "#d0894a", "trimL": "#ffc58a", "trimD": "#7a4a22", "neon": "#ff9a4d"},
+	"silver": {"hull": "#34405a", "hullL": "#52648c", "hullD": "#1e2638", "trim": "#b9c6de", "trimL": "#ffffff", "trimD": "#66749a", "neon": "#3de0ff"},
+	"gold": {"hull": "#2e2244", "hullL": "#4a3870", "hullD": "#181026", "trim": "#ffc83d", "trimL": "#fff1a6", "trimD": "#a8700c", "neon": "#ff4df0"},
+}
+const HAZARD := ["#ffc83d", "#1b1622"]
+const PX := 4   # экранных пикселей в одном «пикселе» рисунка
+
+
+## рисунок w×h «пикселей» с тёмным контуром в 1 пиксель, увеличенный в PX раз без сглаживания
+func _pixel_art(w: int, h: int, paint: Callable) -> Image:
+	var c := Image.create(w + 2, h + 2, false, Image.FORMAT_RGBA8)
+	paint.call(func(px: int, py: int, pw: int, ph: int, col: String): c.fill_rect(Rect2i(px + 1, py + 1, pw, ph), Color.from_string(col, Color.WHITE)))
+	var o := Image.create(w + 2, h + 2, false, Image.FORMAT_RGBA8)
+	var line := Color.from_string("#0b0a18", Color.BLACK)
+	for y in h + 2:
+		for x in w + 2:
+			var cc := c.get_pixel(x, y)
+			if cc.a > 0.0:
+				o.set_pixel(x, y, cc)
+				continue
+			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var q: Vector2i = Vector2i(x, y) + d
+				if q.x >= 0 and q.y >= 0 and q.x < w + 2 and q.y < h + 2 and c.get_pixel(q.x, q.y).a > 0.0:
+					o.set_pixel(x, y, line)
+					break
+	o.resize((w + 2) * PX, (h + 2) * PX, Image.INTERPOLATE_NEAREST)
+	return o
+
+
+## { body, lid, icon (Texture2D), hinge } — кадры сундука ступени tier
+func chest(tier: String) -> Dictionary:
+	var key := "chest_" + tier
+	if _proc.has(key): return _proc[key]
+	var P: Dictionary = CHEST_PAL.get(tier, CHEST_PAL.bronze)
+	var gold := tier == "gold"
+	var silver := tier == "silver"
+	var body := _pixel_art(32, 16, _paint_chest_body.bind(P, gold, silver))
+	var lid := _pixel_art(32, 11, _paint_chest_lid.bind(P, gold))
+	# закрытый сундук целиком — для значков в окнах
+	var hinge := lid.get_height() - PX * 3
+	var icon := Image.create(body.get_width(), body.get_height() + hinge, false, Image.FORMAT_RGBA8)
+	icon.blend_rect(body, Rect2i(Vector2i.ZERO, body.get_size()), Vector2i(0, hinge))
+	icon.blend_rect(lid, Rect2i(Vector2i.ZERO, lid.get_size()), Vector2i.ZERO)
+	var res := {"body": ImageTexture.create_from_image(body), "lid": ImageTexture.create_from_image(lid), "icon": ImageTexture.create_from_image(icon), "hinge": float(hinge)}
+	_proc[key] = res
+	return res
+
+
+## сундук на холсте: центр (x, y), ширина w; open 0..1 — створки раскрываются, shake — дрожь крышки.
+## → { mouth, top, bottom }: mouth — y щели между крышкой и корпусом (оттуда бьёт свет)
+func draw_chest(ctx: Ctx, tier: String, x: float, y: float, w: float, open := 0.0, shake := 0.0) -> Dictionary:
+	var c := chest(tier)
+	var body: Texture2D = c.body
+	var lid: Texture2D = c.lid
+	var k := w / body.get_width()
+	var bh := body.get_height() * k
+	var lh := lid.get_height() * k
+	var top: float = y - (bh + c.hinge * k) / 2
+	var by: float = top + c.hinge * k
+	var pivot := top + lh
+	ctx.draw_tex(body, x - w / 2, by, w, bh)
+	# крышка делится посередине: створки поворачиваются на петлях по внешним углам и встают «крыльями»
+	var o := clampf(open, 0, 1)
+	var e := 1 - pow(1 - o, 3)
+	var lift := shake * k * 3 + e * k * 4
+	var hw := lid.get_width() / 2.0
+	for sd in [-1.0, 1.0]:
+		ctx.save()
+		ctx.translate(x + sd * w / 2, pivot - lift)
+		ctx.rotate(sd * e * 1.15)
+		ctx.draw_image(lid, 0.0 if sd < 0 else hw, 0, hw, lid.get_height(), 0.0 if sd < 0 else -w / 2, -lh, w / 2, lh)
+		ctx.restore()
+	return {"mouth": by + PX * k, "top": top, "bottom": by + bh}
+
+
+func _paint_chest_body(r: Callable, P: Dictionary, gold: bool, silver: bool) -> void:
+	# проём под створками (виден, когда они раскрыты): изнутри светится цветом сундука
+	r.call(1, 0, 30, 2, P.hullD); r.call(3, 1, 26, 1, P.neon)
+	# корпус и верхний обод
+	r.call(0, 2, 32, 13, P.hull)
+	r.call(0, 2, 32, 1, P.trimL); r.call(0, 3, 32, 1, P.trim); r.call(3, 4, 26, 1, P.hullL)
+	# вентиляционные щели
+	for vx in [5, 22]:
+		for vy in [5, 7]: r.call(vx, vy, 5, 1, P.hullD)
+	# неоновая полоса и тень под ней
+	r.call(3, 9, 26, 1, P.neon); r.call(3, 10, 26, 1, P.hullD)
+	# жёлто-чёрная разметка груза
+	for y in range(11, 13):
+		for x in range(3, 29): r.call(x, y, 1, 1, HAZARD[((x + y) >> 1) & 1])
+	# замок: тёмный экран со световым индикатором и кнопками
+	r.call(12, 4, 8, 7, P.trimD); r.call(13, 5, 6, 4, "#0a0d18"); r.call(14, 6, 4, 1, P.neon); r.call(14, 7, 1, 1, P.trimL); r.call(17, 7, 1, 1, P.trimL)
+	# рёбра жёсткости по бокам, заклёпки
+	for bx in [0, 29]:
+		r.call(bx, 2, 3, 13, P.trim); r.call(bx, 2, 1, 13, P.trimL); r.call(bx + 2, 3, 1, 12, P.trimD); r.call(bx + 1, 6, 1, 1, P.trimD); r.call(bx + 1, 11, 1, 1, P.trimD)
+	# основание и опоры
+	r.call(0, 13, 32, 1, P.trim); r.call(0, 14, 32, 1, P.trimD)
+	r.call(1, 15, 5, 1, P.trimD); r.call(26, 15, 5, 1, P.trimD)
+	if gold or silver:
+		r.call(8, 9, 1, 1, "#ffffff"); r.call(23, 9, 1, 1, "#ffffff")
+
+
+func _paint_chest_lid(r: Callable, P: Dictionary, gold: bool) -> void:
+	# ручка (делится пополам вместе со створками)
+	r.call(11, 0, 10, 1, P.trimL); r.call(11, 1, 2, 1, P.trimD); r.call(19, 1, 2, 1, P.trimD)
+	# скошенный верх и панель
+	r.call(2, 2, 28, 1, P.trimL); r.call(1, 3, 30, 1, P.trim); r.call(0, 4, 32, 5, P.hull)
+	r.call(3, 4, 26, 1, P.hullL); r.call(3, 6, 9, 1, P.hullD); r.call(20, 6, 9, 1, P.hullD)
+	# огни по краям и эмблема-кристалл посередине
+	r.call(4, 7, 1, 1, P.neon); r.call(27, 7, 1, 1, P.neon)
+	r.call(15, 4, 2, 1, P.neon); r.call(14, 5, 4, 2, P.neon); r.call(15, 7, 2, 1, P.neon); r.call(15, 5, 1, 1, "#ffffff")
+	# рёбра жёсткости, как на корпусе
+	for bx in [0, 29]:
+		r.call(bx, 3, 3, 8, P.trim); r.call(bx, 3, 1, 8, P.trimL); r.call(bx + 2, 4, 1, 7, P.trimD)
+	# нижняя кромка: светящийся шов между крышкой и корпусом
+	r.call(0, 9, 32, 1, P.trim); r.call(0, 10, 32, 1, P.trimD); r.call(3, 10, 26, 1, P.neon)
+	if gold:
+		r.call(6, 5, 1, 1, "#ffffff"); r.call(25, 5, 1, 1, "#ffffff")
