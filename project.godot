@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Space Shooter"
 config/description="Вертикальный космический шутер: Godot-версия игры Space Shooter"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/world.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.png"
 
@@ -21,7 +21,25 @@ config/icon="res://icon.png"
 D="*res://scripts/core/data.gd"
 G="*res://scripts/core/gfx.gd"
 FX="*res://scripts/core/fx.gd"
-Atlas="*res://scripts/atlas.gd"
+Bus="*res://scripts/game/bus.gd"
+M="*res://scripts/game/store.gd"
+A="*res://scripts/game/audio.gd"
+Haptic="*res://scripts/game/haptic.gd"
+Main="*res://scripts/game/main.gd"
+Game="*res://scripts/game/game.gd"
+E="*res://scripts/game/enemies.gd"
+B="*res://scripts/game/bosses.gd"
+Foes="*res://scripts/game/foes.gd"
+Sectors="*res://scripts/game/sectors.gd"
+Skills="*res://scripts/game/skills.gd"
+Comp="*res://scripts/game/companion.gd"
+RunMap="*res://scripts/game/map.gd"
+Events="*res://scripts/game/events.gd"
+Scenes="*res://scripts/game/scenes.gd"
+Intro="*res://scripts/game/intro.gd"
+Bg="*res://scripts/game/bg.gd"
+Hud="*res://scripts/game/hud.gd"
+Ui="*res://scripts/ui/ui.gd"
 
 [display]
 

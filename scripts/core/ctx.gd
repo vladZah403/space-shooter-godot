@@ -15,16 +15,19 @@ var line_width := 1.0
 var font: Font
 var font_size := 16
 var dash: PackedFloat32Array = PackedFloat32Array()
+## свой материал (шейдер) для следующих команд; null — обычный/аддитивный режим. Сохраняется в save/restore
+var material: Material = null
 
 var _parent: RID
 var _mat_add: Material
-var _items: Array = []      # [{ rid, add, clip, xf }]
+var _items: Array = []      # [{ rid, add, mat, clip, xf }]
 var _idx := -1
 var _xf := Transform2D.IDENTITY
 var _stack: Array = []
 var _subpaths: Array = []   # Array[PackedVector2Array]
 var _closed: Array = []
 var _clip = null            # Rect2 в координатах холста или null
+static var _white_tex: Texture2D
 
 
 func _init(parent_canvas_item: RID) -> void:
@@ -52,19 +55,21 @@ func begin() -> void:
 	_xf = Transform2D.IDENTITY
 	_stack.clear()
 	_clip = null
+	material = null
 	dash = PackedFloat32Array()
 
 
 func _item() -> RID:
-	if _idx < 0 or _items[_idx].add != additive or _items[_idx].clip != _clip:
+	if _idx < 0 or _items[_idx].add != additive or _items[_idx].mat != material or _items[_idx].clip != _clip:
 		_idx += 1
 		if _idx >= _items.size():
 			var rid := RenderingServer.canvas_item_create()
 			RenderingServer.canvas_item_set_parent(rid, _parent)
-			_items.append({"rid": rid, "add": false, "clip": null, "xf": Transform2D.IDENTITY})
+			_items.append({"rid": rid, "add": false, "mat": null, "clip": null, "xf": Transform2D.IDENTITY})
 		var it: Dictionary = _items[_idx]
 		it.add = additive
-		RenderingServer.canvas_item_set_material(it.rid, _mat_add.get_rid() if additive else RID())
+		it.mat = material
+		RenderingServer.canvas_item_set_material(it.rid, material.get_rid() if material != null else (_mat_add.get_rid() if additive else RID()))
 		RenderingServer.canvas_item_set_draw_index(it.rid, _idx)
 		if it.clip != _clip:
 			it.clip = _clip
@@ -79,14 +84,14 @@ func _item() -> RID:
 
 # ── состояние ──
 func save() -> void:
-	_stack.push_back([_xf, alpha, additive, fill, stroke, line_width, dash, _clip])
+	_stack.push_back([_xf, alpha, additive, fill, stroke, line_width, dash, _clip, material])
 
 
 func restore() -> void:
 	if _stack.is_empty():
 		return
 	var s: Array = _stack.pop_back()
-	_xf = s[0]; alpha = s[1]; additive = s[2]; fill = s[3]; stroke = s[4]; line_width = s[5]; dash = s[6]; _clip = s[7]
+	_xf = s[0]; alpha = s[1]; additive = s[2]; fill = s[3]; stroke = s[4]; line_width = s[5]; dash = s[6]; _clip = s[7]; material = s[8]
 
 
 ## обрезка по прямоугольнику в текущих координатах (с поворотом — по охватывающему прямоугольнику);
@@ -126,6 +131,20 @@ func draw_image(tex: Texture2D, sx: float, sy: float, sw: float, sh: float, dx: 
 	if tex == null or alpha <= 0.0:
 		return
 	RenderingServer.canvas_item_add_texture_rect_region(_item(), Rect2(dx, dy, dw, dh), tex.get_rid(), Rect2(sx, sy, sw, sh), _mod(tint))
+
+
+## прямоугольник, закрашенный шейдером mat (UV 0..1 по прямоугольнику, COLOR — белый с alpha)
+func shader_rect(mat: Material, x: float, y: float, w: float, h: float) -> void:
+	if alpha <= 0.0:
+		return
+	if _white_tex == null:
+		var img := Image.create(1, 1, false, Image.FORMAT_RGBA8)
+		img.fill(Color.WHITE)
+		_white_tex = ImageTexture.create_from_image(img)
+	var old := material
+	material = mat
+	RenderingServer.canvas_item_add_texture_rect(_item(), Rect2(x, y, w, h), _white_tex.get_rid(), false, _mod(Color.WHITE))
+	material = old
 
 
 ## вся текстура в прямоугольник

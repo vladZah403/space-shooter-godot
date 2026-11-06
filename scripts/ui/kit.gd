@@ -1,0 +1,219 @@
+class_name Kit
+extends RefCounted
+## Набор для интерфейса: цвета и шрифты как в style.css JS-версии («стекло + неон»), тема Godot и строители
+## элементов — метки, кнопки (обычная, primary, gold, danger, ghost), панели, значки (спрайт или эмодзи).
+
+const BG := "#05060f"
+const PANEL := Color(14 / 255.0, 22 / 255.0, 52 / 255.0, 0.72)
+const PANEL2 := Color(20 / 255.0, 30 / 255.0, 70 / 255.0, 0.6)
+const PANEL_SOLID := Color("#0d1534")
+const LINE := Color(130 / 255.0, 170 / 255.0, 1.0, 0.16)
+const LINE2 := Color(130 / 255.0, 170 / 255.0, 1.0, 0.28)
+const TEXT := Color("#eaf0ff")
+const MUTED := Color("#8e9bc9")
+const DIM := Color("#5b6796")
+const CYAN := Color("#3de0ff")
+const BLUE := Color("#4c7dff")
+const VIOLET := Color("#a06bff")
+const PINK := Color("#ff3d8b")
+const GOLD := Color("#ffc83d")
+const GREEN := Color("#3dffa2")
+const RED := Color("#ff4d5e")
+const ORANGE := Color("#ff8a3d")
+## цвета редкости (карточки улучшений, реликвии)
+const RAR := {"common": "#9fb3d9", "uncommon": "#3dffa2", "rare": "#3de0ff", "epic": "#b06bff", "legendary": "#ffc83d"}
+
+static var _font: FontFile
+static var _fonts := {}
+static var _theme: Theme
+static var _emoji: SystemFont
+
+
+## шрифт Exo 2 (OFL, с кириллицей) нужной насыщенности; запасной — системные эмодзи
+static func font(weight := 600) -> Font:
+	if _fonts.has(weight): return _fonts[weight]
+	if _font == null:
+		_font = load("res://assets/fonts/Exo2.ttf")
+		_emoji = SystemFont.new()
+		_emoji.font_names = PackedStringArray(["Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Symbol"])
+		_font.fallbacks = [_emoji]
+	var f := FontVariation.new()
+	f.base_font = _font
+	f.variation_opentype = {TextServerManager.get_primary_interface().name_to_tag("wght"): weight}
+	_fonts[weight] = f
+	return f
+
+
+static func box(bg: Color, border := Color(0, 0, 0, 0), radius := 12, bw := 1, pad := 0) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = bg
+	s.border_color = border
+	s.set_border_width_all(bw if border.a > 0 else 0)
+	s.set_corner_radius_all(radius)
+	s.set_content_margin_all(pad)
+	s.anti_aliasing = true
+	return s
+
+
+static func theme() -> Theme:
+	if _theme: return _theme
+	var t := Theme.new()
+	t.default_font = font(600)
+	t.default_font_size = 15
+	t.set_color("font_color", "Label", TEXT)
+	t.set_color("font_color", "Button", TEXT)
+	t.set_color("font_hover_color", "Button", TEXT)
+	t.set_color("font_pressed_color", "Button", TEXT)
+	t.set_color("font_focus_color", "Button", TEXT)
+	t.set_color("font_disabled_color", "Button", Color(TEXT, 0.4))
+	t.set_stylebox("normal", "Button", box(PANEL2, LINE2, 12, 1, 8))
+	t.set_stylebox("hover", "Button", box(PANEL2.lightened(0.08), LINE2, 12, 1, 8))
+	t.set_stylebox("pressed", "Button", box(PANEL2.darkened(0.15), LINE2, 12, 1, 8))
+	t.set_stylebox("disabled", "Button", box(Color(PANEL2, 0.3), Color(LINE2, 0.15), 12, 1, 8))
+	t.set_stylebox("focus", "Button", StyleBoxEmpty.new())
+	t.set_stylebox("panel", "PanelContainer", box(PANEL, LINE, 16, 1, 12))
+	t.set_stylebox("panel", "Panel", box(PANEL, LINE, 16, 1, 0))
+	# прокрутка: тонкая полоса
+	var grab := box(Color(LINE2, 0.6), Color(0, 0, 0, 0), 3)
+	t.set_stylebox("grabber", "VScrollBar", grab)
+	t.set_stylebox("grabber_highlight", "VScrollBar", grab)
+	t.set_stylebox("grabber_pressed", "VScrollBar", grab)
+	t.set_stylebox("scroll", "VScrollBar", box(Color(0, 0, 0, 0.15), Color(0, 0, 0, 0), 3))
+	_theme = t
+	return t
+
+
+static func label(text: String, size := 15, color := TEXT, weight := 600, align := HORIZONTAL_ALIGNMENT_LEFT) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.add_theme_font_override("font", font(weight))
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", color)
+	l.horizontal_alignment = align
+	return l
+
+
+## текст в несколько строк по ширине контейнера
+static func para(text: String, size := 14, color := MUTED, align := HORIZONTAL_ALIGNMENT_LEFT) -> Label:
+	var l := label(text, size, color, 500, align)
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.custom_minimum_size.x = 10
+	return l
+
+
+## kind: "" | primary | gold | danger | ghost; size: sm | "" | big
+static func button(text: String, on_press: Callable, kind := "", size := "") -> Button:
+	var b := Button.new()
+	b.text = text
+	b.focus_mode = Control.FOCUS_NONE
+	b.add_theme_font_override("font", font(800))
+	b.add_theme_font_size_override("font_size", 11 if size == "sm" else (16 if size == "big" else 13))
+	b.custom_minimum_size.y = 36 if size == "sm" else (58 if size == "big" else 48)
+	var bg := PANEL2
+	var border := LINE2
+	var fc := TEXT
+	match kind:
+		"primary": bg = Color("#3fb0ff"); border = Color(0, 0, 0, 0); fc = Color("#04122b")
+		"gold": bg = Color("#ffbf4a"); border = Color(0, 0, 0, 0); fc = Color("#2b1700")
+		"danger": bg = Color(1, 77 / 255.0, 94 / 255.0, 0.08); border = Color(1, 77 / 255.0, 94 / 255.0, 0.35); fc = Color("#ff8a96")
+		"ghost": bg = Color(0, 0, 0, 0); border = Color(0, 0, 0, 0); fc = MUTED
+	var r := 10 if size == "sm" else 12
+	b.add_theme_stylebox_override("normal", box(bg, border, r, 1, 8))
+	b.add_theme_stylebox_override("hover", box(bg.lightened(0.08), border, r, 1, 8))
+	b.add_theme_stylebox_override("pressed", box(bg.darkened(0.12), border, r, 1, 8))
+	b.add_theme_stylebox_override("disabled", box(Color(bg, bg.a * 0.4), Color(border, border.a * 0.4), r, 1, 8))
+	for k in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]: b.add_theme_color_override(k, fc)
+	b.add_theme_color_override("font_disabled_color", Color(fc, 0.4))
+	b.pressed.connect(func():
+		A.play("click")
+		Haptic.select()
+		on_press.call())
+	# лёгкое «нажатие»: кнопка чуть сжимается
+	b.button_down.connect(func(): b.pivot_offset = b.size / 2; b.scale = Vector2(0.96, 0.96))
+	b.button_up.connect(func(): b.scale = Vector2.ONE)
+	return b
+
+
+static func panel(pad := 12, bg := PANEL, border := LINE, radius := 16) -> PanelContainer:
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", box(bg, border, radius, 1, pad))
+	return p
+
+
+static func vbox(sep := 8) -> VBoxContainer:
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", sep)
+	return v
+
+
+static func hbox(sep := 8) -> HBoxContainer:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", sep)
+	return h
+
+
+static func margin(l := 16, t := 16, r := 16, b := 16) -> MarginContainer:
+	var m := MarginContainer.new()
+	m.add_theme_constant_override("margin_left", l)
+	m.add_theme_constant_override("margin_top", t)
+	m.add_theme_constant_override("margin_right", r)
+	m.add_theme_constant_override("margin_bottom", b)
+	return m
+
+
+## значок: кадр атласа (если есть) или эмодзи; size — сторона в пикселях
+static func icon(sprite: String, emoji: String, size := 32) -> Control:
+	var tex := G.icon(sprite) if sprite != "" else null
+	if tex:
+		var r := TextureRect.new()
+		r.texture = tex
+		r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		r.custom_minimum_size = Vector2(size, size)
+		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		return r
+	var l := label(emoji, int(size * 0.8), TEXT, 600, HORIZONTAL_ALIGNMENT_CENTER)
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.custom_minimum_size = Vector2(size, size)
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return l
+
+
+## значок из готовой текстуры (сундук, иконка оружия)
+static func tex_icon(tex: Texture2D, size := 32) -> TextureRect:
+	var r := TextureRect.new()
+	r.texture = tex
+	r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	r.custom_minimum_size = Vector2(size, size)
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return r
+
+
+## растянуть на весь родитель
+static func full(c: Control) -> Control:
+	c.set_anchors_preset(Control.PRESET_FULL_RECT)
+	c.offset_left = 0; c.offset_top = 0; c.offset_right = 0; c.offset_bottom = 0
+	return c
+
+
+## полупрозрачная подложка окна
+static func dim(alpha := 0.62) -> ColorRect:
+	var r := ColorRect.new()
+	r.color = Color(2 / 255.0, 4 / 255.0, 14 / 255.0, alpha)
+	full(r)
+	return r
+
+
+static func spacer(h := 0.0, expand := false) -> Control:
+	var c := Control.new()
+	c.custom_minimum_size.y = h
+	if expand: c.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return c
+
+
+static func clear(n: Node) -> void:
+	for c in n.get_children():
+		n.remove_child(c)
+		c.queue_free()

@@ -1,0 +1,381 @@
+extends Node
+## Фон (автозагрузка Bg) — перенос gfx.bg из gfx.js. Небо и туманности, планета и детали сектора — шейдеры
+## на видеокарте (assets/shaders/nebula, planet) вместо холстов с градиентами; звёзды, яркие звёзды с лучами,
+## кометы, далёкие корабли и пыль гиперпрыжка — как в JS. Смена сектора — плавная (старый набор гаснет).
+## Bg.setSector(i, instant), Bg.update(dt, скорость), Bg.draw(ctx, качество), Bg.warp — форсаж прыжка.
+
+const NEBULA := preload("res://assets/shaders/nebula.gdshader")
+const PLANET := preload("res://assets/shaders/planet.gdshader")
+## своя деталь вдали у каждого сектора (по порядку D.SECTORS)
+const KINDS := ["sun", "rocks", "galaxy", "moons", "giant", "galaxy", "blackhole", "core", "rocks", "moons", "rocks", "sun", "blackhole"]
+
+var sector := -1
+var sec: Dictionary = {}
+var cur = null           # { neb: ShaderMaterial, planet, feats }
+var prev = null
+var fade := 1.0
+var warp := 0.0
+var scroll := 0.0
+var stars: Array = []
+var dust: Array = []
+var bright: Array = []
+var comets: Array = []
+var ships: Array = []
+var cometT := 4.0
+var shipT := 6.0
+var _spike: Texture2D
+var _size := Vector2.ZERO
+
+
+## звёзды и пыль под размер экрана (при смене размера окна)
+func makeStars() -> void:
+	var W := G.W
+	var H := G.H
+	_size = Vector2(W, H)
+	stars.clear()
+	var n := int(round(W * H / 5200.0))
+	for i in n:
+		var layer := i % 3
+		stars.append({"x": U.random() * W, "y": U.random() * H, "layer": layer,
+			"s": U.rand(0.5, 1.1) if layer == 0 else (U.rand(0.9, 1.6) if layer == 1 else U.rand(1.4, 2.4)),
+			"a": U.rand(0.25, 0.5) if layer == 0 else U.rand(0.45, 0.95), "tw": U.rand(0, TAU), "ts": U.rand(1, 3)})
+	dust.clear()
+	for i in 26: dust.append({"x": U.random() * W, "y": U.random() * H, "len": U.rand(10, 40), "a": U.rand(0.05, 0.16)})
+	# 4.0: несколько ярких звёзд с лучами — мерцают
+	bright.clear()
+	for i in 7: bright.append({"x": U.random() * W, "y": U.random() * H, "s": U.rand(9, 18), "ph": U.random() * TAU, "sp": U.rand(0.6, 1.6)})
+
+
+func resize() -> void:
+	makeStars()
+	if sector >= 0:
+		var s := sector
+		sector = -1
+		setSector(s, true)
+
+
+## звезда с четырьмя лучами (рисуется один раз)
+func spike() -> Texture2D:
+	if _spike: return _spike
+	var s := 64
+	var h := s / 2.0
+	var img := Image.create(s, s, false, Image.FORMAT_RGBA8)
+	for y in s:
+		for x in s:
+			var dx := x + 0.5 - h
+			var dy := y + 0.5 - h
+			var a := clampf(1.0 - Vector2(dx, dy).length() / (h * 0.35), 0, 1)
+			# лучи: тонкий длинный и толстый короткий по горизонтали и вертикали
+			for ray in [[1.6, h], [0.9, h * 0.6]]:
+				for d in [[dx, dy], [dy, dx]]:
+					if absf(d[1]) < ray[0] / 2.0 + 0.5 and absf(d[0]) < ray[1]:
+						a = maxf(a, 0.9 * (1.0 - absf(d[0]) / ray[1]))
+			img.set_pixel(x, y, Color(1, 1, 1, a))
+	_spike = ImageTexture.create_from_image(img)
+	return _spike
+
+
+func setSector(idx: int, instant := false) -> void:
+	var n: int = D.SECTORS.size()
+	var si := ((idx % n) + n) % n
+	if sector == idx and cur != null: return
+	if stars.is_empty() or _size != Vector2(G.W, G.H): makeStars()
+	prev = null if instant else cur
+	fade = 1.0 if instant else 0.0
+	sector = idx
+	sec = D.SECTORS[si]
+	cur = {"neb": makeNebula(sec), "planet": makePlanet(sec), "feats": makeFeats(sec, si)}
+
+
+func makeNebula(s: Dictionary) -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	m.shader = NEBULA
+	m.set_shader_parameter("sky_top", U.col(s.sky[1]))
+	m.set_shader_parameter("sky_bot", U.col(s.sky[0]))
+	var neb: Array = s.neb
+	m.set_shader_parameter("neb0", U.col(neb[0]))
+	m.set_shader_parameter("neb1", U.col(neb[1 % neb.size()]))
+	m.set_shader_parameter("neb2", U.col(neb[2 % neb.size()]))
+	m.set_shader_parameter("seed", U.rand(0, 50))
+	return m
+
+
+## планета: шейдер-шар; кольца (у половины планет) — дугами поверх
+func makePlanet(s: Dictionary, hue_add := 0.0, k := 1.0) -> Dictionary:
+	var R: float = round(minf(G.W, 520) * U.rand(0.16, 0.26)) * k
+	var m := ShaderMaterial.new()
+	m.shader = PLANET
+	var h: float = fmod(s.planet + hue_add, 360.0)
+	m.set_shader_parameter("hue", h / 360.0)
+	m.set_shader_parameter("seed", U.rand(0, 50))
+	var size := R * 3.4
+	return {"kind": "planet", "mat": m, "R": R, "hue": h, "x": U.rand(0.1, 0.9) * G.W, "y": -size * 0.6 - U.random() * G.H * 0.5, "s": size,
+		"speed": U.rand(9, 16), "rings": U.random() < 0.55 and k >= 1.0, "ringRot": U.rand(-0.5, 0.5)}
+
+
+func makeFeats(s: Dictionary, idx: int) -> Array:
+	var kind: String = KINDS[idx % KINDS.size()]
+	var W := G.W
+	var H := G.H
+	var out: Array = []
+	var col: String = s.neb[0]
+	var col2: String = s.neb[1]
+	match kind:
+		"sun", "giant":
+			var giant := kind == "giant"
+			var R := W * 0.9 if giant else W * 0.12
+			var size := R * (2.4 if giant else 5.0)
+			var spots: Array = []
+			if giant:
+				for i in 30: spots.append({"x": U.rand(-R, R) * 0.4, "y": U.rand(-R, R) * 0.4, "r": U.rand(4, 20), "c": "#ffb03d" if U.random() < 0.5 else "#7a1020"})
+			out.append({"kind": kind, "R": R, "col": col, "x": W * 0.5 if giant else W * U.rand(0.1, 0.9), "y": H * 1.15 if giant else H * 0.12, "s": size, "speed": 0.6, "spots": spots})
+		"blackhole":
+			var R := W * 0.16
+			out.append({"kind": kind, "R": R, "col": col, "col2": col2, "x": W * U.rand(0.2, 0.8), "y": H * 0.3, "s": R * 5, "speed": 0.8})
+		"galaxy", "core":
+			var core := kind == "core"
+			var R := W * (0.45 if core else 0.24)
+			var size := ceilf(R * 2.4)
+			out.append({"kind": kind, "R": R, "col": col, "tex": _galaxyTex(R, size, col, col2), "x": W * U.rand(0.25, 0.75), "y": -size / 2, "s": size, "speed": 2.0 if core else 3.0})
+		"moons":
+			for i in 2:
+				var p := makePlanet(s, 40 + i * 60, 0.45 - i * 0.12)
+				p.y = -p.s - H * (0.3 + i * 0.6); p.speed = 6 + i * 3
+				out.append(p)
+		"rocks":
+			# далёкие глыбы: тёмные многоугольники с подсветкой края
+			for i in 9:
+				var r := U.rand(6, 18)
+				var pts := PackedVector2Array()
+				for k in 8:
+					var a := k / 7.0 * TAU
+					var rr := r * U.rand(0.7, 1)
+					pts.append(Vector2(cos(a) * rr, sin(a) * rr))
+				out.append({"kind": "rock", "pts": pts, "col": col, "x": U.random() * W, "y": U.random() * H, "s": r * 2.6, "speed": U.rand(18, 30), "rock": true})
+	return out
+
+
+## рукава галактики: точки по двум спиралям (рисуются в картинку один раз)
+func _galaxyTex(R: float, size: float, col: String, col2: String) -> Texture2D:
+	var s := int(size)
+	var img := Image.create(s, s, false, Image.FORMAT_RGBA8)
+	var h := s / 2.0
+	# как translate(h, h) → scale(1; 0,55) → rotate(0,4) в JS
+	var xf := Transform2D.IDENTITY.translated(Vector2(h, h)) * Transform2D.IDENTITY.scaled(Vector2(1, 0.55)) * Transform2D(0.4, Vector2.ZERO)
+	for arm in 2:
+		for i in 260:
+			var t := i / 260.0
+			var a := arm * PI + t * 7
+			var r := R * (0.08 + t * 0.9)
+			var p := xf * Vector2(cos(a) * r + U.rand(-6, 6), sin(a) * r + U.rand(-6, 6))
+			var c := U.col(col if i % 3 else col2, 0.5 * (1 - t))
+			for dy in 2:
+				for dx in 2:
+					var px := int(p.x) + dx
+					var py := int(p.y) + dy
+					if px >= 0 and py >= 0 and px < s and py < s:
+						var o := img.get_pixel(px, py)
+						img.set_pixel(px, py, Color(minf(1, o.r + c.r * c.a), minf(1, o.g + c.g * c.a), minf(1, o.b + c.b * c.a), minf(1, o.a + c.a)))
+	return ImageTexture.create_from_image(img)
+
+
+# ════════════════════════════════════════════════════════════
+# ОБНОВЛЕНИЕ
+# ════════════════════════════════════════════════════════════
+func update(dt: float, speedMul := 1.0) -> void:
+	if cur == null: return
+	var sp := speedMul * (1 + warp * 14)
+	scroll += dt * sp
+	if fade < 1:
+		fade = minf(1, fade + dt * 0.6)
+		if fade >= 1: prev = null
+	if warp > 0: warp = maxf(0, warp - dt * 0.55)
+	var H := G.H
+	var W := G.W
+	for st: Dictionary in stars:
+		st.y += (14 if st.layer == 0 else (34 if st.layer == 1 else 70)) * dt * sp
+		if st.y > H + 4:
+			st.y -= H + 8; st.x = U.random() * W
+	for d: Dictionary in dust:
+		d.y += 260 * dt * sp
+		if d.y > H + d.len:
+			d.y = -d.len; d.x = U.random() * W
+	var p: Dictionary = cur.planet
+	p.y += p.speed * dt * sp
+	if p.y - p.s / 2 > H:
+		p.y = -p.s / 2 - H * U.rand(1.5, 3); p.x = U.rand(0.1, 0.9) * W
+	# 4.0: детали сектора, кометы и далёкие корабли
+	for f: Dictionary in cur.feats:
+		f.y += f.speed * dt * sp
+		if f.y - f.s / 2 > H:
+			f.y = -f.s / 2 - (U.random() * H * 0.5 if f.get("rock") else H * U.rand(1, 2))
+			if f.get("rock"): f.x = U.random() * W
+	cometT -= dt
+	if cometT <= 0:
+		cometT = U.rand(6, 13)
+		var fromL := U.random() < 0.5
+		var a := U.rand(0.35, 0.7) if fromL else PI - U.rand(0.35, 0.7)
+		var v := U.rand(260, 420)
+		comets.append({"x": -30.0 if fromL else W + 30, "y": U.rand(0.02, 0.4) * H, "vx": cos(a) * v, "vy": sin(a) * v, "life": 3.0, "len": U.rand(60, 120)})
+	for i in range(comets.size() - 1, -1, -1):
+		var c: Dictionary = comets[i]
+		c.x += c.vx * dt; c.y += c.vy * dt; c.life -= dt
+		if c.life <= 0: comets.remove_at(i)
+	shipT -= dt
+	if shipT <= 0:
+		shipT = U.rand(10, 20)
+		var spr: String = U.pick(["e_cruiser", "e_heavyfighter", "e_bombardier", "interceptor", "gunship"])
+		var n := U.randi(1, 3)
+		var up := U.random() < 0.5
+		for i in n: ships.append({"spr": spr, "x": U.rand(0.15, 0.85) * W + i * 22, "y": H + 40 + i * 26 if up else -40.0 - i * 26, "vy": (-1 if up else 1) * U.rand(30, 45), "w": U.rand(16, 26)})
+	for i in range(ships.size() - 1, -1, -1):
+		var s: Dictionary = ships[i]
+		s.y += s.vy * dt * (0.6 + sp * 0.4)
+		if s.y < -80 or s.y > H + 80: ships.remove_at(i)
+
+
+# ════════════════════════════════════════════════════════════
+# ОТРИСОВКА
+# ════════════════════════════════════════════════════════════
+func _drawNebula(ctx: Ctx, m: ShaderMaterial, a: float, quality: int) -> void:
+	var H := G.H
+	m.set_shader_parameter("scroll1", fmod(scroll * 7.0, H) / H)
+	m.set_shader_parameter("scroll2", fmod(scroll * 14.0, H) / H)
+	m.set_shader_parameter("aspect", G.W / H)
+	m.set_shader_parameter("layers", 2.0 if quality >= 2 else 1.0)
+	ctx.alpha = a
+	ctx.shader_rect(m, 0, 0, G.W, H)
+	ctx.alpha = 1.0
+
+
+## планета или деталь; за краем экрана не рисуется
+func _drawFeat(ctx: Ctx, f: Dictionary, a: float) -> void:
+	if a <= 0 or f.y + f.s / 2 < 0 or f.y - f.s / 2 > G.H: return
+	var x: float = f.x
+	var y: float = f.y
+	ctx.save()
+	ctx.alpha = a
+	match f.kind:
+		"planet":
+			ctx.shader_rect(f.mat, x - f.s / 2, y - f.s / 2, f.s, f.s)
+			if f.rings:
+				var R: float = f.R
+				ctx.translate(x, y); ctx.rotate(f.ringRot); ctx.scale(1, 0.26)
+				ctx.stroke = Color.from_hsv(fmod(f.hue + 25, 360) / 360.0, 0.45, 0.85, 0.45); ctx.line_width = R * 0.14
+				ctx.begin_path(); ctx.arc(0, 0, R * 1.5, PI * 1.05, PI * 2.95); ctx.stroke_path()
+				ctx.stroke = Color.from_hsv(fmod(f.hue + 40, 360) / 360.0, 0.35, 0.9, 0.25); ctx.line_width = R * 0.07
+				ctx.begin_path(); ctx.arc(0, 0, R * 1.75, 0, TAU); ctx.stroke_path()
+		"sun":
+			ctx.additive = true
+			ctx.alpha = a * 0.35; ctx.draw_tex(G.soft(f.col, 64), x - f.s / 2, y - f.s / 2, f.s, f.s)
+			var s2: float = f.s * 0.3
+			ctx.alpha = a * 0.8; ctx.draw_tex(G.soft(sec.star, 64), x - s2 / 2, y - s2 / 2, s2, s2)
+			# ядро: в JS — белое лишь в самом центре градиента (12% радиуса), дальше цвет звезды
+			var s3: float = f.R * 0.55
+			ctx.alpha = a * 0.75; ctx.draw_tex(G.glow("#fffae6", 64), x - s3, y - s3, s3 * 2, s3 * 2)
+		"giant":
+			ctx.additive = true
+			ctx.alpha = a * 0.45; ctx.draw_tex(G.soft("#ff2d4d", 64), x - f.s / 2, y - f.s / 2, f.s, f.s)
+			var s2: float = f.s * 0.62
+			ctx.alpha = a * 0.6; ctx.draw_tex(G.soft("#ff7846", 64), x - s2 / 2, y - s2 / 2, s2, s2)
+			ctx.alpha = a * 0.18
+			for sp: Dictionary in f.spots: ctx.draw_tex(G.soft(sp.c, 32), x + sp.x - sp.r * 2, y + sp.y - sp.r * 2, sp.r * 4, sp.r * 4)
+		"blackhole":
+			var R: float = f.R
+			ctx.additive = true
+			ctx.alpha = a * 0.4; ctx.draw_tex(G.soft(f.col, 64), x - f.s / 2, y - f.s / 2, f.s, f.s)
+			ctx.additive = false
+			# аккреционный диск — наклонное кольцо
+			ctx.save(); ctx.translate(x, y); ctx.rotate(-0.35); ctx.scale(1, 0.32)
+			ctx.line_width = R * 0.12
+			for i in 18:
+				ctx.stroke = U.col(f.col2 if i % 2 else "#ffb03d", 0.12)
+				ctx.begin_path(); ctx.arc(0, 0, R * (1.15 + i * 0.05), 0, TAU); ctx.stroke_path()
+			ctx.restore()
+			ctx.fill = Color.BLACK; ctx.fill_circle(x, y, R * 0.62)
+			ctx.stroke = U.col("#ffd9a0", 0.7); ctx.line_width = 2
+			ctx.begin_path(); ctx.arc(x, y, R * 0.66, 0, TAU); ctx.stroke_path()
+		"galaxy", "core":
+			var R: float = f.R
+			var cr: float = R * (0.7 if f.kind == "core" else 0.35)
+			ctx.additive = true
+			ctx.alpha = a * 0.8; ctx.draw_tex(G.soft("#fff5dc", 64), x - cr, y - cr, cr * 2, cr * 2)
+			ctx.alpha = a * 0.35; ctx.draw_tex(G.soft(f.col, 64), x - cr * 1.6, y - cr * 1.6, cr * 3.2, cr * 3.2)
+			ctx.alpha = a; ctx.draw_tex(f.tex, x - f.s / 2, y - f.s / 2, f.s, f.s)
+		"rock":
+			ctx.translate(x, y)
+			ctx.fill = U.col("#0d0f1c"); ctx.stroke = U.col(f.col, 0.5); ctx.line_width = 1.2
+			ctx.begin_path()
+			var pts: PackedVector2Array = f.pts
+			for i in pts.size():
+				if i: ctx.line_to(pts[i].x, pts[i].y)
+				else: ctx.move_to(pts[i].x, pts[i].y)
+			ctx.close_path(); ctx.fill_path(); ctx.stroke_path()
+	ctx.restore()
+
+
+func _drawSet(ctx: Ctx, set_: Dictionary, a: float, quality: int) -> void:
+	if quality > 0:
+		for f: Dictionary in set_.feats: _drawFeat(ctx, f, a * (0.8 if f.get("rock") else 1.0))
+	_drawFeat(ctx, set_.planet, a)
+
+
+func draw(ctx: Ctx, quality := 2) -> void:
+	if cur == null: setSector(0, true)
+	var W := G.W
+	var H := G.H
+	var fading: bool = prev != null and fade < 1
+	ctx.save()
+	if fading: _drawNebula(ctx, prev.neb, 1.0, quality)
+	_drawNebula(ctx, cur.neb, fade if fading else 1.0, quality)
+	# при смене сектора старая планета и детали гаснут, новые проявляются
+	if fading: _drawSet(ctx, prev, 1 - fade, quality)
+	_drawSet(ctx, cur, fade if fading else 1.0, quality)
+	# звёзды
+	var t := Time.get_ticks_msec() / 1000.0
+	var col := U.col(sec.get("star", "#ffffff"))
+	ctx.fill = col
+	var stretch := warp
+	for st: Dictionary in stars:
+		if quality == 0 and st.layer == 0: continue
+		var tw: float = 1.0 if st.layer == 0 else 0.65 + 0.35 * sin(t * st.ts + st.tw)
+		ctx.alpha = st.a * tw
+		if stretch > 0.05:
+			var len: float = st.s + stretch * (st.layer + 1) * 40
+			ctx.fill_rect(st.x, st.y - len, st.s, len)
+		else:
+			ctx.fill_rect(st.x, st.y, st.s, st.s)
+	# яркие звёзды с лучами, кометы и далёкие корабли
+	if quality > 0:
+		var sp := spike()
+		ctx.additive = true
+		for b: Dictionary in bright:
+			var k: float = 0.45 + 0.4 * sin(t * b.sp + b.ph)
+			var s: float = b.s * (0.8 + 0.3 * k)
+			ctx.alpha = k
+			ctx.draw_tex(sp, b.x - s, b.y - s, s * 2, s * 2)
+		ctx.alpha = 1.0
+		for c: Dictionary in comets:
+			var a := minf(1, c.life)
+			var d := Vector2(c.vx, c.vy).length()
+			var dir := Vector2(c.vx, c.vy) / d
+			var tail: Vector2 = Vector2(c.x, c.y) - dir * c.len
+			var nrm := Vector2(-dir.y, dir.x)
+			ctx.fill_poly(PackedVector2Array([Vector2(c.x, c.y) + nrm, Vector2(c.x, c.y) - nrm, tail - nrm * 0.3, tail + nrm * 0.3]),
+				PackedColorArray([Color(1, 1, 1, 0.9 * a), Color(1, 1, 1, 0.9 * a), Color(col.r, col.g, col.b, 0), Color(col.r, col.g, col.b, 0)]))
+		ctx.additive = false
+		for s: Dictionary in ships:
+			ctx.alpha = 0.28
+			G.draw(ctx, s.spr, s.x, s.y, s.w, PI if s.vy > 0 else 0.0)
+		ctx.alpha = 1.0
+	# пыль скорости — только во время гиперпрыжка, у штриха затухающий хвост
+	if quality > 0 and stretch > 0.05:
+		ctx.fill = U.col("#9fc4ff")
+		var k := minf(1, stretch * 3)
+		for d: Dictionary in dust:
+			var len: float = d.len * (1 + stretch * 6)
+			ctx.alpha = d.a * 2.5 * k
+			ctx.fill_rect(d.x, d.y - len * 0.4, 1, len * 0.4)
+			ctx.alpha = d.a * 1.1 * k
+			ctx.fill_rect(d.x, d.y - len, 1, len * 0.6)
+	ctx.restore()
