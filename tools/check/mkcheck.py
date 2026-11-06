@@ -40,6 +40,8 @@ for name, stem in MODULES.items():
     autoload.append(f'{name}="*res://scripts/_stubs/{name}.gd"')
 
 pg = (out / "project.godot").read_text(encoding="utf-8")
+# своё имя — своя папка user:// : тесты сохранения не трогают профиль настоящей игры
+pg = re.sub(r'config/name="[^"]*"', 'config/name="Space Shooter (check)"', pg)
 pg = re.sub(r"(\[autoload\]\n\n(?:.*\n)*?)(\n\[)", lambda m: m.group(1) + "\n".join(autoload) + "\n" + m.group(2), pg, count=1)
 (out / "project.godot").write_text(pg, encoding="utf-8")
 print("autoloads:", ", ".join(a.split("=")[0] for a in autoload))

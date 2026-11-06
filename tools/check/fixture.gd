@@ -1,10 +1,9 @@
 extends RefCounted
 ## Общая подготовка дымовых тестов: состояние забега как после Game.start (тот же набор полей run, st —
-## без бонусов), бессмертный корабль. Пока store.gd (M) не перенесён, M.s — минимальное сохранение.
+## без бонусов), бессмертный корабль, M.s — новый профиль (M.defaults()).
 
 static func setup(wave_n := 5) -> void:
-	M.s = {"skills": {}, "ship": {"model": D.SHIPS.keys()[0], "skin": "", "trail": ""}, "settings": {"dmgNums": true}, "foeSeen": [], "hints": {}, "tips": {},
-		"comp": {"sel": "", "owned": [], "lv": {}}, "weapons": {"loadout": ["laser"]}}
+	M.s = M.defaults()
 	Game.state = "play"
 	Game.mode = "normal"
 	Game.diff = D.DIFFS.normal

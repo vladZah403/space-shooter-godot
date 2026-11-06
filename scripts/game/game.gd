@@ -3240,7 +3240,7 @@ func drawPickups(ctx: Ctx) -> void:
 				ctx.draw_tex(G.glow(def.color, 64), it.x - s, it.y - s, s * 2, s * 2)
 				ctx.alpha = 0.5 + 0.5 * sin(it.age * 20) if it.age > 11 else 1.0
 				ctx.additive = false
-				if def.sprite != "": G.draw(ctx, def.sprite, it.x, it.y, s)
+				if def.get("sprite"): G.draw(ctx, def.sprite, it.x, it.y, s)
 				else: Hud.drawBadge(ctx, def, it.x, it.y, s)
 		ctx.alpha = 1.0
 
