@@ -38,7 +38,7 @@ func _ready() -> void:
 	var tl := Kit.label("КОРАБЛЬ · МОДУЛИ", 18, Kit.TEXT, 900)
 	tl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(tl)
-	head.add_child(Kit.button("✕", func(): close(), "ghost", "sm"))
+	head.add_child(Kit.icon_button("close", "", func(): close(), "ghost", "sm"))
 	v.add_child(head)
 	var h := Kit.hbox(10)
 	h.size_flags_vertical = Control.SIZE_EXPAND_FILL

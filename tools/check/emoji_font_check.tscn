@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tools/check/emoji_font_check.gd" id="1"]
+
+[node name="EmojiFontCheck" type="Node"]
+script = ExtResource("1")

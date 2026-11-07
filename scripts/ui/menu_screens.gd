@@ -31,7 +31,7 @@ func _ready() -> void:
 	var v := Kit.vbox(10)
 	m.add_child(v)
 	var head := Kit.hbox(8)
-	head.add_child(Kit.button("‹", func(): back(), "", "sm"))
+	head.add_child(Kit.icon_button("back", "", func(): back(), "", "sm"))
 	title = Kit.label("", 20, Kit.TEXT, 900)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
@@ -117,14 +117,22 @@ func _item(parent: Control, draw_fn: Callable, name_: String, sub: String, tag: 
 	var pv := Kit.ctx_view(draw_fn, Vector2(64, 64))
 	pv.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(pv)
-	v.add_child(Kit.label(name_, 13, Kit.TEXT, 900, HORIZONTAL_ALIGNMENT_CENTER))
+	# подписи переносятся по ширине карточки: иначе длинное «🔒 Рекорд 50 000 очков» раздвигает сетку
+	# из трёх столбцов шире экрана, и весь экран уезжает вправо
+	v.add_child(_wrap(Kit.label(name_, 13, Kit.TEXT, 900, HORIZONTAL_ALIGNMENT_CENTER)))
 	if sub != "":
 		var s := Kit.para(sub, 11, Kit.MUTED, HORIZONTAL_ALIGNMENT_CENTER)
 		v.add_child(s)
-	if tag != "": v.add_child(Kit.label(tag, 12, tag_col, 800, HORIZONTAL_ALIGNMENT_CENTER))
+	if tag != "": v.add_child(_wrap(Kit.label(tag, 12, tag_col, 800, HORIZONTAL_ALIGNMENT_CENTER)))
 	c.add_child(v)
 	Kit.passthrough(c)
 	parent.add_child(c)
+
+
+static func _wrap(l: Label) -> Label:
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.custom_minimum_size.x = 10
+	return l
 
 
 ## корабль в превью: облик модели и раскраски по центру области

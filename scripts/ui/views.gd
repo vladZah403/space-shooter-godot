@@ -113,6 +113,46 @@ class MenuView extends Control:
 	var screens: Control
 	var hero: Control
 	var content: Control
+	var mission_sub: Label
+
+	## плитка раздела (.tile в JS): значок цвета раздела, название, подпись
+	func _tile(icon: String, title: String, sub: String, col: Color, id: String) -> Button:
+		var b := Kit.button("", func(): open_screen(id), "", "")
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.custom_minimum_size = Vector2(10, 84)
+		var v := Kit.vbox(4)
+		v.alignment = BoxContainer.ALIGNMENT_CENTER
+		Kit.full(v)
+		var ic := Icons.rect(icon, col, 24)
+		ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		v.add_child(ic)
+		v.add_child(Kit.label(title, 11, Kit.TEXT, 800, HORIZONTAL_ALIGNMENT_CENTER))
+		var s := Kit.label(sub, 11, Kit.DIM, 600, HORIZONTAL_ALIGNMENT_CENTER)
+		v.add_child(s)
+		Kit.passthrough(v)
+		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(v)
+		b.set_meta("sub", s)
+		return b
+
+	## небольшая кнопка строки под плитками (.mb-btn в JS): значок и подпись
+	func _bar_btn(icon: String, text: String, col: Color, id: String) -> Button:
+		var b := Kit.button("", func(): open_screen(id), "ghost", "")
+		for st in ["normal", "hover", "pressed"]:
+			b.add_theme_stylebox_override(st, Kit.box(Color(10 / 255.0, 16 / 255.0, 40 / 255.0, 0.45 if st != "pressed" else 0.7), Color(1, 1, 1, 0.06), 14, 1, 4))
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.custom_minimum_size = Vector2(10, 56)
+		var v := Kit.vbox(3)
+		v.alignment = BoxContainer.ALIGNMENT_CENTER
+		Kit.full(v)
+		var ic := Icons.rect(icon, Color(col, 0.85), 19)
+		ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		v.add_child(ic)
+		v.add_child(Kit.label(text, 10, Kit.DIM.lightened(0.25), 600, HORIZONTAL_ALIGNMENT_CENTER))
+		Kit.passthrough(v)
+		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(v)
+		return b
 
 	## разделы меню закрывают главный экран целиком — и корабль на фоне прячем
 	func set_content_visible(on: bool) -> void:
@@ -150,27 +190,32 @@ class MenuView extends Control:
 		logo.add_child(l2)
 		logo.add_child(Kit.label("GODOT EDITION", 12, Kit.GOLD, 800, HORIZONTAL_ALIGNMENT_CENTER))
 		v.add_child(logo)
+		var best_row := Kit.hbox(6)
+		best_row.alignment = BoxContainer.ALIGNMENT_CENTER
+		best_row.add_child(Icons.rect("trophy", Kit.GOLD, 16))
 		best = Kit.label("", 13, Kit.MUTED, 700, HORIZONTAL_ALIGNMENT_CENTER)
-		v.add_child(best)
+		best_row.add_child(best)
+		v.add_child(best_row)
 		# место под корабль (Game.drawAttract рисует его в игровом слое)
 		hero = Kit.spacer(0, true)
 		v.add_child(hero)
 		hero.resized.connect(func(): Game.attract.slot = {"y": hero.global_position.y + hero.size.y / 2 - 10, "h": hero.size.y})
-		v.add_child(Kit.button("▶  ИГРАТЬ", func(): show_diff(), "primary", "big"))
+		v.add_child(Kit.icon_button("play", "ИГРАТЬ", func(): show_diff(), "primary", "big"))
 		play_sub = Kit.label("", 12, Kit.MUTED, 600, HORIZONTAL_ALIGNMENT_CENTER)
 		v.add_child(play_sub)
-		var grid := GridContainer.new()
-		grid.columns = 2
-		grid.add_theme_constant_override("h_separation", 8)
-		grid.add_theme_constant_override("v_separation", 8)
-		for it in [["🚀 АНГАР", "hangar"], ["⚔ АРСЕНАЛ", "arsenal"], ["⚛ НАВЫКИ", "skills"], ["🎯 ЗАДАНИЯ", "missions"],
-				["💎 РЕЛИКВИИ", "relics"], ["🏅 НАГРАДЫ", "achievements"], ["📖 СПРАВОЧНИК", "codex"], ["🏆 РЕКОРДЫ", "leaders"], ["⚙ НАСТРОЙКИ", "settings"]]:
-			var id: String = it[1]
-			var tile_fn := func(): open_screen(id)
-			var b := Kit.button(it[0], tile_fn, "", "")
-			b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			grid.add_child(b)
-		v.add_child(grid)
+		# как в JS: четыре крупные плитки, ниже — строка небольших значков; цвет значка у каждого раздела свой
+		var tiles := Kit.hbox(7)
+		for it in [["ship", "АНГАР", "Корабли", Kit.CYAN, "hangar"], ["swords", "АРСЕНАЛ", "Оружие", Kit.GOLD, "arsenal"],
+				["atom", "НАВЫКИ", "Древо", Kit.VIOLET, "skills"], ["target", "ЗАДАНИЯ", "", Kit.ORANGE, "missions"]]:
+			var t := _tile(it[0], it[1], it[2], it[3], it[4])
+			tiles.add_child(t)
+			if it[4] == "missions": mission_sub = t.get_meta("sub")
+		v.add_child(tiles)
+		var bar := Kit.hbox(6)
+		for it in [["trophy", "Рекорды", Kit.PINK, "leaders"], ["medal", "Награды", Kit.GREEN, "achievements"],
+				["chest", "Реликвии", Kit.GOLD, "relics"], ["list", "Справочник", Kit.CYAN, "codex"], ["gear", "Настройки", Color("#aab4d8"), "settings"]]:
+			bar.add_child(_bar_btn(it[0], it[1], it[2], it[3]))
+		v.add_child(bar)
 		diff = DiffView.new()
 		add_child(diff)
 		screens = MenuScreens.new()
@@ -193,7 +238,9 @@ class MenuView extends Control:
 		var s: Dictionary = M.s
 		var pil: Dictionary = D.PILOTS.get(s.pilot, D.PILOTS.kai)
 		lvl.text = "%s %s • Корабль %d%s" % [pil.ico, pil.name, s.shipLvl, (" • ✦%d" % s.prestige) if s.prestige else ""]
-		best.text = "🏆 Рекорд: %s  •  Волна %d" % [U.fmt(s.stats.bestScore), s.stats.bestWave]
+		best.text = "Рекорд: %s  •  Волна %d" % [U.fmt(s.stats.bestScore), s.stats.bestWave]
+		var ms := M.missions()
+		mission_sub.text = "%d / %d" % [ms.filter(func(m): return m.done).size(), ms.size()]
 		var cd: Dictionary = D.DIFFS.get(s.settings.diff, D.DIFFS.normal)
 		play_sub.text = "Сложность: %s • награды ×%s" % [cd.name, Views_fmt(cd.coins)]
 		refresh_wallet()
@@ -250,7 +297,7 @@ class DiffView extends Control:
 			A.play("back")
 			visible = false
 			if get_parent().has_method("set_content_visible"): get_parent().set_content_visible(true)
-		head.add_child(Kit.button("✕", close_fn, "ghost", "sm"))
+		head.add_child(Kit.icon_button("close", "", close_fn, "ghost", "sm"))
 		v.add_child(head)
 		lives = Kit.label("", 13, Kit.MUTED, 600)
 		v.add_child(lives)
@@ -681,6 +728,8 @@ class TipView extends Control:
 		kind = Kit.label("", 11, Kit.MUTED, 800, HORIZONTAL_ALIGNMENT_CENTER); v.add_child(kind)
 		ico = Kit.label("", 40, Kit.TEXT, 600, HORIZONTAL_ALIGNMENT_CENTER); v.add_child(ico)
 		title = Kit.label("", 20, Kit.TEXT, 900, HORIZONTAL_ALIGNMENT_CENTER); v.add_child(title)
+		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		title.custom_minimum_size.x = 10
 		note = Kit.para("", 13, Kit.GOLD, HORIZONTAL_ALIGNMENT_CENTER); v.add_child(note)
 		demo_box = Kit.vbox(0); v.add_child(demo_box)
 		v.add_child(Kit.label("КАК РАБОТАЕТ", 11, Kit.CYAN, 800))

@@ -34,10 +34,16 @@ static func font(weight := 600) -> Font:
 	if _fonts.has(weight): return _fonts[weight]
 	if _font == null:
 		_font = load("res://assets/fonts/Exo2.ttf")
-		# эмодзи: на компьютере и телефоне — цветные системные, в браузере их нет — свой Noto Emoji (OFL, контурный)
+		# эмодзи: на компьютере и телефоне — цветные системные; в браузере системных шрифтов не видно —
+		# цветные значки берём у браузера (WebEmoji), остальное — свой Noto Emoji (OFL, контурный)
 		var noto: Font = load("res://assets/fonts/NotoEmoji.ttf")
 		if OS.has_feature("web"):
-			_font.fallbacks = [noto]
+			# цветные значки рисует сам браузер (как в JS-версии), остальное — контурный Noto Emoji
+			var web := WebEmoji.build()
+			_font.fallbacks = [web, noto] if web else [noto]
+			# системных шрифтов в браузере нет; с этим флагом Godot пропускает «не цветные» шрифты для эмодзи
+			# (растровый из браузера он считает не цветным) в поисках системного, которого нет
+			_font.allow_system_fallback = false
 		else:
 			_emoji = SystemFont.new()
 			_emoji.font_names = PackedStringArray(["Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Symbol"])
@@ -138,6 +144,27 @@ static func button(text: String, on_press: Callable, kind := "", size := "") -> 
 		b.pivot_offset = b.size / 2
 		_spring(b, Vector2(0.94, 0.94), 0.06, Tween.TRANS_QUAD))
 	b.button_up.connect(func(): _spring(b, Vector2.ONE, 0.28, Tween.TRANS_BACK))
+	return b
+
+
+## кнопка со значком из Icons (как <svg><use href="#i-…"> в JS): значок и надпись вместе по центру;
+## text "" — только значок (назад, закрыть). Цвет значка — цвет надписи кнопки
+static func icon_button(id: String, text: String, on_press: Callable, kind := "", size := "", px := 0) -> Button:
+	var b := button("", on_press, kind, size)
+	var fc := b.get_theme_color("font_color")
+	if px <= 0: px = 20 if size == "sm" else (26 if size == "big" else 22)
+	var h := hbox(10)
+	h.alignment = BoxContainer.ALIGNMENT_CENTER
+	full(h)
+	h.add_child(Icons.rect(id, fc, px))
+	if text != "":
+		var l := label(text, b.get_theme_font_size("font_size"), fc, 800)
+		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		h.add_child(l)
+	passthrough(h)
+	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(h)
+	b.custom_minimum_size.x = maxf(b.custom_minimum_size.y, h.get_combined_minimum_size().x + 20)
 	return b
 
 
@@ -312,6 +339,11 @@ static func tabs(items: Array, cur: String, on_pick: Callable) -> HBoxContainer:
 		var fn := func(): on_pick.call(id)
 		var b := button(it[1], fn, "primary" if id == cur else "", "sm")
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		# узкие поля по бокам (как .tab в JS): пять вкладок влезают в экран 390
+		for st in ["normal", "hover", "pressed", "disabled"]:
+			var sb := b.get_theme_stylebox(st)
+			sb.content_margin_left = 3
+			sb.content_margin_right = 3
 		h.add_child(b)
 	return h
 
