@@ -66,7 +66,7 @@ func _wire() -> void:
 	Bus.on("toast", func(t): toast(t))
 	Bus.on("achievement", func(a):
 		if inRun(): runEvents.append({"ico": a.ico, "text": a.name})
-		toast({"ico": a.ico, "title": "ДОСТИЖЕНИЕ", "text": a.name, "rew": "+%d" % a.reward}))
+		toast({"ico": a.ico, "ach": a, "title": "ДОСТИЖЕНИЕ", "text": a.name, "rew": "+%d" % a.reward}))
 	Bus.on("mission", func(m):
 		if inRun():
 			runEvents.append({"ico": "📋", "text": M.missionText(m)})

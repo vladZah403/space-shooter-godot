@@ -675,7 +675,9 @@ func _render_achievements() -> void:
 		var done: bool = s.achievements.has(a.id)
 		var p := Kit.panel(10, Color(Kit.GREEN, 0.08) if done else Color(Kit.PANEL_SOLID, 0.9), Color(Kit.GREEN, 0.4) if done else Kit.LINE, 14)
 		var h := Kit.hbox(10)
-		h.add_child(Kit.icon("", a.ico, 34))
+		var ico := Kit.ach_icon(a, 40)
+		if not done: ico.modulate = Color(0.55, 0.6, 0.75)   # не полученная — приглушена
+		h.add_child(ico)
 		var v := Kit.vbox(2)
 		v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		v.add_child(Kit.label(a.name, 14, Kit.TEXT if done else Kit.TEXT, 900))

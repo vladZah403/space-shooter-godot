@@ -209,7 +209,8 @@ func spawn_debris(c: Dictionary) -> void:
 	for e: En in Game.enemies:
 		if e.alive and e.type == "debris": n += 1
 	if n >= 10: return
-	E.spawn("debris", {"sprite": "fx_rock%d" % U.randi(1, 6), "noElite": true, "scale": U.rand(0.8, 1.35)})
+	# обломки станций и спутников (лист Влада, db_1…6); вытянутые — чуть крупнее, иначе выходят тонкими
+	E.spawn("debris", {"sprite": "db_%d" % U.randi(1, 6), "noElite": true, "scale": U.rand(1.0, 1.4)})
 
 
 # ── КОНВОЙ (3.1): грузовики с ящиками, два-три за волну ──

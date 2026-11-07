@@ -27,8 +27,21 @@ var _bake_shader: Shader
 
 func _ready() -> void:
 	_sheets = [load("res://assets/sprites.png"), load("res://assets/sprites2.png")]
+	_load_extra()
 	get_viewport().size_changed.connect(resize)
 	resize()
+
+
+## спрайты, нарисованные уже для Godot-версии (медали достижений, обломки): листы и кадры из
+## data/extra_frames.json (собирает tools/extra_sprites.py), листы идут после двух атласов JS
+func _load_extra() -> void:
+	var f := FileAccess.open("res://data/extra_frames.json", FileAccess.READ)
+	if f == null: return
+	var d = JSON.parse_string(f.get_as_text())
+	if not (d is Dictionary): return
+	frames = Data.FRAMES.duplicate()
+	for p in d.sheets: _sheets.append(load(p))
+	for k in d.frames: frames[k] = (d.frames[k] as Array).map(func(v): return int(v))
 
 
 ## размеры поля, как в main.js JS-версии

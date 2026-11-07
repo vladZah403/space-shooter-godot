@@ -595,6 +595,24 @@ func statValue(stat: String) -> float:
 	return float(v) if (v is float or v is int) else 0.0
 
 
+## медаль достижения (лист Влада, кадры ach_<группа>) и номер ступени в группе — рисуется плашкой поверх
+const ACH_MEDAL := {
+	"first_kill": ["kills", 1], "kill200_total": ["kills", 2], "kill1000_total": ["kills", 3], "kill5000": ["kills", 4],
+	"boss1": ["boss", 1], "boss10": ["boss", 2], "boss_all": ["boss", 3], "overlord": ["boss", 4], "no_damage_boss": ["boss", 5],
+	"combo5": ["combo", 1], "combo10": ["combo", 2], "combo30": ["combo", 3],
+	"score1000": ["score", 1], "score5000": ["score", 2], "score250k": ["score", 3], "score1m": ["score", 4],
+	"survive5": ["wave", 1], "wave20": ["wave", 2], "wave40": ["wave", 3], "wave65": ["wave", 4],
+	"nightmare10": ["hard", 1], "god_mode_clear": ["hard", 2], "glass10": ["hard", 3],
+	"shield": ["survive", 1], "no_hit_level": ["survive", 2], "survive_1hp": ["survive", 3], "survive_10min": ["survive", 4],
+	"bomb_chain": ["aim", 1], "accuracy80": ["aim", 2],
+	"perk15": ["evo", 1], "evo1": ["evo", 2], "evo_all": ["evo", 3],
+	"weapon_all": ["arsenal", 1], "max_one_upgrade": ["arsenal", 2], "skill_tree_full": ["arsenal", 3],
+	"ship_lvl20": ["fleet", 1], "ship3": ["fleet", 2], "ship6": ["fleet", 3], "ships_all": ["fleet", 4], "prestige1": ["fleet", 5],
+	"coins10k": ["pilot", 1], "games50": ["pilot", 2], "daily3": ["pilot", 3], "daily_7": ["pilot", 4],
+	"events10": ["pilot", 5], "challenge1": ["pilot", 6], "challenge7": ["pilot", 7], "trail_fx": ["pilot", 8],
+}
+
+
 func _ach(id: String):
 	for a in D.ACHIEVEMENTS:
 		if a.id == id: return a

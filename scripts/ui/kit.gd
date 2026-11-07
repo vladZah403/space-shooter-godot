@@ -258,6 +258,36 @@ static func icon(sprite: String, emoji: String, size := 32) -> Control:
 	return l
 
 
+## значок достижения: медаль группы (M.ACH_MEDAL) с номером ступени в цветной плашке;
+## нет медали — эмодзи из данных, как раньше
+const TIER_COL := [Color("#d08a4e"), Color("#c9d3e6"), Color("#ffc83d"), Color("#b98cff"), Color("#3de0ff"), Color("#ff6fa8"), Color("#3dffa2"), Color("#ff9a52")]
+
+static func ach_icon(a: Dictionary, size := 34) -> Control:
+	var m: Array = M.ACH_MEDAL.get(a.id, [])
+	var tex: Texture2D = G.icon("ach_" + str(m[0])) if m.size() == 2 else null
+	if tex == null: return icon("", a.ico, size)
+	var c := Control.new()
+	c.custom_minimum_size = Vector2(size, size)
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var r := tex_icon(tex, size)
+	full(r)
+	c.add_child(r)
+	var tier: int = m[1]
+	var bs := maxi(13, roundi(size * 0.4))
+	var b := Panel.new()
+	b.add_theme_stylebox_override("panel", box(TIER_COL[(tier - 1) % TIER_COL.size()], Color(0.02, 0.03, 0.08, 0.85), bs, 1))
+	b.size = Vector2(bs, bs)
+	b.position = Vector2(size - bs * 0.8, size - bs * 0.8)
+	b.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var l := label(str(tier), maxi(9, roundi(bs * 0.66)), Color("#140c02"), 900, HORIZONTAL_ALIGNMENT_CENTER)
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	full(l)
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(l)
+	c.add_child(b)
+	return c
+
+
 ## значок из готовой текстуры (сундук, иконка оружия)
 static func tex_icon(tex: Texture2D, size := 32) -> TextureRect:
 	var r := TextureRect.new()

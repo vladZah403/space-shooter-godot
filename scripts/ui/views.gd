@@ -18,6 +18,7 @@ static func toast_el(t: Dictionary) -> Control:
 	var ico: String = t.get("ico", "🏆")
 	if ico == "chest": h.add_child(Kit.tex_icon(G.chest("silver").icon, 30))
 	elif ico == "info": h.add_child(Kit.icon("", "ℹ️", 30))
+	elif t.has("ach"): h.add_child(Kit.ach_icon(t.ach, 32))
 	else: h.add_child(Kit.icon(t.get("icon", ""), ico, 30))
 	var v := Kit.vbox(1)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL

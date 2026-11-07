@@ -844,7 +844,7 @@ class SceneDemo extends Scene:
 			if sun.t > 3: sun = null
 		if mode == "debris" and spawn <= 0:
 			spawn = 0.55
-			rocks.append({"x": U.rand(0.1, 0.9) * W, "y": -12 * k, "w": U.rand(16, 26) * k, "spr": "fx_rock%d" % U.randi(1, 6), "rot": U.random() * 6, "vr": U.rand(-2, 2), "vy": U.rand(45, 70) * k, "hp": 18.0, "dead": false})
+			rocks.append({"x": U.rand(0.1, 0.9) * W, "y": -12 * k, "w": U.rand(20, 30) * k, "spr": "db_%d" % U.randi(1, 6), "rot": U.random() * 6, "vr": U.rand(-2, 2), "vy": U.rand(45, 70) * k, "hp": 18.0, "dead": false})
 		for r in rocks:
 			r.y += r.vy * dt; r.rot += r.vr * dt
 			if r.y > H + 20: r.dead = true
