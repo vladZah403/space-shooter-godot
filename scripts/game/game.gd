@@ -199,6 +199,7 @@ func clearWorld() -> void:
 		Bus.emit("cinema", false)
 	ov = {"rail": null, "hole": null, "beams": [], "lasers": [], "fire": []}
 	E.corpses.clear()
+	E.burns.clear()
 	Events.reset()
 	Foes.reset()
 	Skills.reset()

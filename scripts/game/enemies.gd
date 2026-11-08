@@ -38,6 +38,9 @@ const NO_SEP := {"swarm": 1, "formation": 1, "kamikaze": 1, "dive": 1, "diver": 
 
 var uid := 100000
 var corpses: Array = []
+## Godot: сгорающие корпуса сбитых врагов — шейдер распада (assets/shaders/dissolve.gdshader)
+var burns: Array = []
+var _burn_mat: ShaderMaterial
 
 
 # ════════════════════════════════════════════════════════════
@@ -1189,6 +1192,11 @@ func updateAll(edt: float, dt: float) -> void:
 		if e.y > H + e.h + 20 or e.y < -H:
 			e.alive = false; e.leaving = true
 	separate(dt)
+	for i in range(burns.size() - 1, -1, -1):
+		var c: Dictionary = burns[i]
+		c.t += dt
+		c.x += c.vx * dt; c.y += c.vy * dt; c.rot += c.spin * dt
+		if c.t >= c.dur: burns.remove_at(i)
 	for i in range(corpses.size() - 1, -1, -1):
 		var c: Dictionary = corpses[i]
 		c.t += dt
@@ -1214,6 +1222,7 @@ func kill(e: En, src: String) -> void:
 		B.bossDeath(e)
 		return
 	e.alive = false
+	_addBurn(e)
 	var S := G.S
 	var size := U.clamp(maxf(e.w, e.h * 0.8) / (48 * S), 0.6, 2.6)
 	var col: String = COLORS.get(e.type, "#ffb03d")
@@ -1266,6 +1275,38 @@ func hitTest(e: En, x: float, y: float, pad: float, k := 1.0) -> bool:
 	return U.dist2(e.x, e.y, x, y) <= rr * rr
 
 
+## Godot: корпус сбитого врага выгорает пятнами (не на низком качестве и не для мелочи вроде пуль-врагов)
+func _addBurn(e: En) -> void:
+	if FX.quality == 0 or e.w < 14 * G.S or (e.cv == null and G.frame(e.sprite).is_empty()): return
+	if burns.size() >= 24: burns.pop_front()
+	var flip := horizFlip(e) if e.horiz else 1.0
+	var rot := 0.0 if e.horiz else (e.spinAng if not is_nan(e.spinAng) else _rotOf(e))
+	burns.append({"sprite": e.sprite, "cv": e.cv, "x": e.x, "y": e.y, "w": e.w, "h": e.h, "rot": rot, "flip": flip,
+		"vx": U.rand(-20, 20) * G.S, "vy": U.rand(10, 40) * G.S, "spin": U.rand(-1.2, 1.2), "t": 0.0, "dur": 0.9 if not e.mini else 1.2})
+
+
+## поворот корпуса при отрисовке (как в drawAll): курс ныряльщиков, камикадзе, личинок, крен
+func _rotOf(e: En) -> float:
+	var def: Dictionary = e.def
+	var ai: String = def.ai
+	var rot: float = def.rot + e.bank
+	if (ai == "kamikaze" or ai == "hunter") and e.st >= 1: rot = e.dir - PI / 2
+	if (e.ai == "diver" and e.st == 2) or e.ai == "flank": rot = def.rot + e.dir - PI / 2
+	if e.larva: rot = e.dir - PI / 2
+	return rot
+
+
+func _burnMat() -> ShaderMaterial:
+	if _burn_mat == null:
+		_burn_mat = ShaderMaterial.new()
+		_burn_mat.shader = load("res://assets/shaders/dissolve.gdshader")
+		var fn := FastNoiseLite.new()
+		fn.frequency = 0.05
+		fn.fractal_octaves = 3
+		_burn_mat.set_shader_parameter("noise", ImageTexture.create_from_image(fn.get_seamless_image(128, 128)))
+	return _burn_mat
+
+
 ## горизонтальные спрайты: «смотрят» влево (босс) или вправо (Рейдер, миноукладчик, био-мех) — отражаем по ходу движения
 func horizFlip(e: En) -> float:
 	if e.boss: return -1.0 if (e.sprite == "b_mothership" or e.sprite == "b_heavycruiser") and e.face > 0 else 1.0
@@ -1309,6 +1350,23 @@ func drawAll(ctx: Ctx) -> void:
 		var wh := G.white(c.sprite)
 		if wh: ctx.draw_tex(wh, -c.w / 2, -c.h / 2, c.w, c.h)
 		ctx.restore()
+	# сгорающие корпуса: прогресс распада — в альфе цвета (шейдер читает её как долю выгоревшего)
+	if not burns.is_empty():
+		var mat := _burnMat()
+		for c: Dictionary in burns:
+			ctx.save()
+			ctx.translate(c.x, c.y)
+			if c.flip < 0: ctx.scale(-1, 1)
+			ctx.rotate(c.rot)
+			ctx.alpha = 1.0
+			ctx.additive = false
+			ctx.material = mat
+			var tint := Color(1, 1, 1, clampf(c.t / c.dur, 0.0, 1.0))
+			if c.cv: ctx.draw_tex(c.cv, -c.w / 2, -c.h / 2, c.w, c.h, tint)
+			else:
+				var f := G.frame(c.sprite)
+				ctx.draw_image(G.src(f), f[0], f[1], f[2], f[3], -c.w / 2, -c.h / 2, c.w, c.h, tint)
+			ctx.restore()
 	var bubble := G.has("fx_sh_bubble")
 	for e: En in Game.enemies:
 		if not e.alive: continue
