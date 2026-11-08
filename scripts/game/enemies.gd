@@ -1454,11 +1454,16 @@ func drawFrame(ctx: Ctx, sprite: String, cv: Texture2D, w: float, h: float, tint
 
 var _cloak_mat: ShaderMaterial
 
-## Godot: Невидимка в маскировке — стеклянный контур (assets/shaders/cloak.gdshader) и марево (Post.bubble с k < 0)
-func drawCloaked(ctx: Ctx, e: En) -> void:
+func cloakMat() -> ShaderMaterial:
 	if _cloak_mat == null:
 		_cloak_mat = ShaderMaterial.new()
 		_cloak_mat.shader = load("res://assets/shaders/cloak.gdshader")
+	return _cloak_mat
+
+
+## Godot: Невидимка в маскировке — стеклянный контур (assets/shaders/cloak.gdshader) и марево (Post.bubble с k < 0)
+func drawCloaked(ctx: Ctx, e: En) -> void:
+	cloakMat()
 	var vis := clampf((e.alpha - 0.12) / 0.83, 0.0, 1.0)
 	var oa := ctx.alpha
 	ctx.alpha = 1.0

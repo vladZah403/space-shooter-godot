@@ -32,11 +32,15 @@ func _ready() -> void:
 		if a == "--autoplay": autoplay = true
 		elif a.begins_with("--shots="): shots_dir = a.substr(8)
 		elif a.begins_with("--seconds="): max_seconds = float(a.substr(10))
-		elif a == "--prof": prof = true
+		elif a == "--prof":
+			prof = true
+			Ctx.stats_on = true
+	if prof: print("[prof] ядер %d, качество Q%d (авто %s), телефон %s, свечение %s" % [OS.get_processor_count(), Main.quality, Main.autoQ, Main.is_mobile(), Main.bloom_ok()])
 	get_viewport().size_changed.connect(_on_resize)
 	_on_resize()
 	Vfx.attach(self)
 	Ui.build(self)
+	(func(): Warm.run(self)).call_deferred()   # шейдеры и глифы — заранее, а не в бою
 	# заставка при запуске (её можно выключить в настройках)
 	if M.s.settings.get("intro", true) and not autoplay: Intro.play(func(): pass)
 	if autoplay:
@@ -83,9 +87,11 @@ func _profile(t0: int, t1: int, t2: int, t3: int, dt: float) -> void:
 	p.t += dt
 	if p.t < 10.0: return
 	var n: float = p.n * 1000.0
-	print("[prof] логика %.2f, отрисовка %.2f, интерфейс %.2f, худший кадр %.1f мс · врагов %d, пуль %d/%d, частиц %d, %s" % [
-		p.frame / n, p.draw / n, p.ui / n, p.max / 1000.0, Game.enemies.size(), Game.bullets.size(), Game.ebullets.size(), FX.parts.size(), Game.state])
-	_prof = {"frame": 0.0, "draw": 0.0, "ui": 0.0, "n": 0, "max": 0.0, "t": 0.0}
+	print("[prof] %.0f FPS (Q%d, %s) · логика %.2f, отрисовка %.2f, интерфейс %.2f, худший кадр %.1f мс · многоугольников %.0f/кадр · врагов %d, пуль %d/%d, частиц %d, %s" % [
+		p.n / maxf(p.t, 0.001), Main.quality, str(get_tree().root.size), p.frame / n, p.draw / n, p.ui / n, p.max / 1000.0, (Ctx.stat_poly - p.get("poly0", 0)) / float(p.n), Game.enemies.size(), Game.bullets.size(), Game.ebullets.size(), FX.parts.size(), Game.state])
+	print("[prof] виды за 10 с: ", Ctx.stat_kind)
+	Ctx.stat_kind.clear()
+	_prof = {"frame": 0.0, "draw": 0.0, "ui": 0.0, "n": 0, "max": 0.0, "t": 0.0, "poly0": Ctx.stat_poly}
 
 
 func _shot() -> void:

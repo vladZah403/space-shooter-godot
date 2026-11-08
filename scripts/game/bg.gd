@@ -28,6 +28,14 @@ var cometT := 4.0
 var shipT := 6.0
 var _spike: Texture2D
 var _size := Vector2.ZERO
+## Godot: туманность считается в уменьшенном буфере (доля пикселей окна по качеству) и растягивается на экран —
+## шумовой шейдер работает в 4–10 раз меньше раз за кадр; облака мягкие, на глаз разницы нет
+const NEB_SCALE := [0.3, 0.4, 0.5]
+var _nvp: SubViewport
+var _nprev: ColorRect
+var _ncur: ColorRect
+var _nodd := false
+var neb_direct := false   # проверка: рисовать шейдер прямо на экран, как раньше
 
 
 ## звёзды и пыль под размер экрана (при смене размера окна)
@@ -241,15 +249,48 @@ func update(dt: float, speedMul := 1.0) -> void:
 # ════════════════════════════════════════════════════════════
 # ОТРИСОВКА
 # ════════════════════════════════════════════════════════════
-func _drawNebula(ctx: Ctx, m: ShaderMaterial, a: float, quality: int) -> void:
+func _drawNebulaBuf(ctx: Ctx, fading: bool, quality: int) -> void:
+	if _nvp == null:
+		_nvp = SubViewport.new()
+		_nvp.disable_3d = true
+		_nvp.transparent_bg = false
+		_nvp.gui_disable_input = true
+		add_child(_nvp)
+		_nprev = ColorRect.new()
+		_ncur = ColorRect.new()
+		_nvp.add_child(_nprev)
+		_nvp.add_child(_ncur)
+	var px := Vector2(get_tree().root.size)
+	var k: float = NEB_SCALE[clampi(quality, 0, 2)]
+	var sz := Vector2i(maxi(8, ceili(px.x * k)), maxi(8, ceili(px.y * k)))
+	if _nvp.size != sz:
+		_nvp.size = sz
+		_nprev.size = Vector2(sz)
+		_ncur.size = Vector2(sz)
+	_nebLayer(_nprev, prev.neb if fading else null, 1.0, quality)
+	_nebLayer(_ncur, cur.neb, fade if fading else 1.0, quality)
+	# на высоком качестве и в форсаж буфер обновляется каждый кадр, иначе — через кадр (облака плывут медленно)
+	if quality >= 2 or warp > 0.01 or fading:
+		_nvp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	else:
+		_nodd = not _nodd
+		_nvp.render_target_update_mode = SubViewport.UPDATE_ONCE if _nodd else SubViewport.UPDATE_DISABLED
+	if neb_direct:
+		ctx.shader_rect(cur.neb, 0, 0, G.W, G.H)
+		return
+	ctx.draw_tex(_nvp.get_texture(), 0, 0, G.W, G.H)
+
+
+func _nebLayer(r: ColorRect, m, a: float, quality: int) -> void:
+	r.visible = m != null and a > 0.0
+	if not r.visible: return
+	if r.material != m: r.material = m
 	var H := G.H
 	m.set_shader_parameter("scroll1", fmod(scroll * 7.0, H) / H)
 	m.set_shader_parameter("scroll2", fmod(scroll * 14.0, H) / H)
 	m.set_shader_parameter("aspect", G.W / H)
 	m.set_shader_parameter("layers", 2.0 if quality >= 2 else 1.0)
-	ctx.alpha = a
-	ctx.shader_rect(m, 0, 0, G.W, H)
-	ctx.alpha = 1.0
+	r.modulate.a = a
 
 
 ## планета или деталь; за краем экрана не рисуется
@@ -330,8 +371,7 @@ func draw(ctx: Ctx, quality := 2) -> void:
 	var H := G.H
 	var fading: bool = prev != null and fade < 1
 	ctx.save()
-	if fading: _drawNebula(ctx, prev.neb, 1.0, quality)
-	_drawNebula(ctx, cur.neb, fade if fading else 1.0, quality)
+	_drawNebulaBuf(ctx, fading, quality)
 	# при смене сектора старая планета и детали гаснут, новые проявляются
 	if fading: _drawSet(ctx, prev, 1 - fade, quality)
 	_drawSet(ctx, cur, fade if fading else 1.0, quality)

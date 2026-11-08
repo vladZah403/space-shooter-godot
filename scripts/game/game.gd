@@ -499,11 +499,16 @@ func frame(rdt: float) -> void:
 
 ## Godot: аномалия «Затмение» — тьма поверх фона и врагов (assets/shaders/dark.gdshader); свет дают корабль,
 ## взрывы, свежие выстрелы и вражеские снаряды. Пули, корабль и вспышки рисуются уже поверх тьмы
-func drawDark(ctx: Ctx) -> void:
+func darkMat() -> ShaderMaterial:
 	if _dark_mat == null:
 		_dark_mat = ShaderMaterial.new()
 		_dark_mat.shader = load("res://assets/shaders/dark.gdshader")
 		_dark_l.resize(20)
+	return _dark_mat
+
+
+func drawDark(ctx: Ctx) -> void:
+	darkMat()
 	var S := G.S
 	# прямоугольник с запасом на тряску и наезд камеры; огни — в его координатах
 	var rx := -G.FX - 40.0

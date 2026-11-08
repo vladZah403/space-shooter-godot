@@ -16,6 +16,8 @@ const MAX := 6
 var layer: CanvasLayer
 var rect: ColorRect
 var mat: ShaderMaterial
+var mat_full: ShaderMaterial   # со свечением и размытием (копия экрана с мип-уровнями — дорого)
+var mat_lite: ShaderMaterial   # только волны, воронки, аберрация, щиты, цвет
 var waves: Array = []        # { x, y (экран), t, dur, r1 (доли высоты), k }
 var lenses: Array = []       # Vector4(x, y (экран), r, k) — на один кадр
 var bubbles: Array = []      # [Vector4(x, y (UV), r, k), Color(цвет, удар)] — на один кадр
@@ -40,8 +42,11 @@ func _ready() -> void:
 	rect = ColorRect.new()
 	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	mat = ShaderMaterial.new()
-	mat.shader = load("res://assets/shaders/post.gdshader")
+	mat_full = ShaderMaterial.new()
+	mat_full.shader = load("res://assets/shaders/post.gdshader")
+	mat_lite = ShaderMaterial.new()
+	mat_lite.shader = load("res://assets/shaders/post_lite.gdshader")
+	mat = mat_lite
 	rect.material = mat
 	rect.visible = false
 	layer.add_child(rect)
@@ -51,8 +56,11 @@ func _ready() -> void:
 	_bc.resize(MAXB)
 
 
+var _off := "--nopost" in OS.get_cmdline_user_args()   # проверки: без постобработки
+
+
 func level() -> int:
-	if not M.s.settings.get("post", true): return 0
+	if _off or not M.s.settings.get("post", true): return 0
 	return Main.quality
 
 
@@ -121,13 +129,15 @@ func frame(dt: float) -> void:
 		_bc[i] = Vector4(c.r, c.g, c.b, c.a)
 	bubbles.clear()
 	aberr = maxf(0.0, aberr - dt * 0.012)
-	var bl := bloom if lv >= 2 else 0.0
+	var bl := bloom if lv >= 2 and Main.bloom_ok() else 0.0
 	var wp := warp if lv > 0 else 0.0
 	warp = 0.0
 	_mood(dt)
 	var on := lv > 0 and (bl > 0 or n > 0 or ln > 0 or bn > 0 or aberr > 0.0004 or wp > 0.005 or blur > 0.01 or sat < 0.99 or not grade.is_equal_approx(Vector3.ONE))
 	rect.visible = on
 	if not on: return
+	mat = mat_full if bl > 0 or blur > 0.01 else mat_lite
+	if rect.material != mat: rect.material = mat
 	mat.set_shader_parameter("aspect", G.W / G.H)
 	mat.set_shader_parameter("waves", _wv)
 	mat.set_shader_parameter("wave_n", n)

@@ -26,8 +26,22 @@ var _items: Array = []      # [{ rid, add, mat, clip, xf }]
 var _idx := -1
 var _xf := Transform2D.IDENTITY
 var _stack: Array = []
-var _subpaths: Array = []   # Array[PackedVector2Array]
+var _subpaths: Array = []   # Array[PackedVector2Array] — завершённые подпути
 var _closed: Array = []
+## текущий подпуть дописывается в отдельный массив: «_subpaths[-1].append()» копировал бы весь массив на каждой точке
+var _cur := PackedVector2Array()
+var _cur_closed := false
+var _has_cur := false
+## Godot: готовая триангуляция подпутей-фигур (скруглённый прямоугольник) — заливка без повторной разбивки
+var _tris: Array = []                 # к каждому из _subpaths: PackedInt32Array (пусто — разбивать заново)
+var _cur_tri := PackedInt32Array()
+## заготовки фигур: точки дуг и скруглённых прямоугольников считаются один раз (в GDScript каждая точка дорогая)
+static var _arc_cache := {}           # Vector2i(шаг дуги, n) → точки единичной дуги от 0
+static var _rr_cache := {}            # Vector3(w, h, r) → [точки от (0, 0), треугольники]
+## счётчик «многоугольных» команд за всё время (каждая — свой буфер на видеокарте; --prof печатает за кадр)
+static var stat_poly := 0
+static var stat_kind := {}   # проверки: сколько каких (--prof)
+static var stats_on := false   # --prof: считать stat_kind
 var _clip = null            # Rect2 в координатах холста или null
 var _break := false         # после embed следующая команда начинает новый слой (поверх встроенного)
 static var _white_tex: Texture2D
@@ -182,29 +196,80 @@ func fill_rect(x: float, y: float, w: float, h: float) -> void:
 func fill_circle(x: float, y: float, r: float) -> void:
 	if alpha <= 0.0 or r <= 0.0:
 		return
-	RenderingServer.canvas_item_add_circle(_item(), Vector2(x, y), r, _mod(fill))
+	# Godot: круг — картинкой (прямоугольник с текстурой собирается в общий пакет), а не многоугольником:
+	# каждый многоугольник — свой буфер на видеокарте, создаваемый и удаляемый каждый кадр
+	RenderingServer.canvas_item_add_texture_rect(_item(), Rect2(x - r, y - r, r * 2.0, r * 2.0), _disc(r).get_rid(), false, _mod(fill))
+
+
+static var _discs := {}
+
+## белый круг со сглаженным краем; размер текстуры — под радиус (с запасом на плотность экрана ×3)
+static func _disc(r: float) -> Texture2D:
+	var size := 16
+	while size < r * 6.0 and size < 256: size *= 2
+	var t: Texture2D = _discs.get(size)
+	if t: return t
+	var g := Gradient.new()
+	var edge := 1.0 - 2.0 / size
+	g.offsets = PackedFloat32Array([0.0, edge, 1.0])
+	g.colors = PackedColorArray([Color.WHITE, Color.WHITE, Color(1, 1, 1, 0)])
+	var gt := GradientTexture2D.new()
+	gt.gradient = g
+	gt.width = size
+	gt.height = size
+	gt.fill = GradientTexture2D.FILL_RADIAL
+	gt.fill_from = Vector2(0.5, 0.5)
+	gt.fill_to = Vector2(1.0, 0.5)
+	_discs[size] = gt
+	return gt
 
 
 # ── пути ──
 func begin_path() -> void:
 	_subpaths.clear()
 	_closed.clear()
+	_tris.clear()
+	_cur = PackedVector2Array()
+	_cur_tri = PackedInt32Array()
+	_has_cur = false
+
+
+## текущий подпуть — в список завершённых
+func _flush() -> void:
+	if not _has_cur: return
+	_subpaths.append(_cur)
+	_closed.append(_cur_closed)
+	_tris.append(_cur_tri)
+	_cur = PackedVector2Array()
+	_cur_tri = PackedInt32Array()
+	_has_cur = false
 
 
 func move_to(x: float, y: float) -> void:
-	_subpaths.append(PackedVector2Array([Vector2(x, y)]))
-	_closed.append(false)
+	_flush()
+	_cur.append(Vector2(x, y))
+	_cur_closed = false
+	_has_cur = true
 
 
 func line_to(x: float, y: float) -> void:
-	if _subpaths.is_empty():
-		move_to(x, y)
-		return
-	_subpaths[-1].append(Vector2(x, y))
+	if not _has_cur:
+		if _subpaths.is_empty():
+			move_to(x, y)
+			return
+		# путь уже отрисован (fill_path) — продолжаем последний подпуть, как раньше
+		_cur = _subpaths.pop_back()
+		_cur_closed = _closed.pop_back()
+		_tris.pop_back()
+		_has_cur = true
+	_cur.append(Vector2(x, y))
+	_cur_tri = PackedInt32Array()
 
 
 func close_path() -> void:
-	if not _closed.is_empty():
+	if _has_cur:
+		_cur_closed = true
+	elif not _closed.is_empty():
 		_closed[-1] = true
 
 
@@ -222,26 +287,34 @@ func ellipse(cx: float, cy: float, rx: float, ry: float, rot: float, a0: float, 
 	if absf(span) >= TAU - 0.0001:
 		span = -TAU if ccw else TAU
 	var n := clampi(int(absf(span) * maxf(rx, ry) / 4.0), 8, 64)
-	var cr := cos(rot)
-	var sr := sin(rot)
-	for i in n + 1:
-		var a := a0 + span * i / n
-		var px := cos(a) * rx
-		var py := sin(a) * ry
-		var p := Vector2(cx + px * cr - py * sr, cy + px * sr + py * cr)
-		if i == 0:
-			if _subpaths.is_empty():
-				move_to(p.x, p.y)
-			else:
-				line_to(p.x, p.y)
-		else:
-			line_to(p.x, p.y)
+	# Godot: единичная дуга [0, span] (span округлён до 1/1024 оборота) из заготовки, на место — одним преобразованием:
+	# p = центр + поворот(rot) · масштаб(rx, ry) · поворот(a0) · (cos θ, sin θ)
+	var q := int(round(span / TAU * 1024.0))
+	var key := Vector2i(q, n)
+	var unit: PackedVector2Array = _arc_cache.get(key, PackedVector2Array())
+	if unit.is_empty():
+		var sp := q / 1024.0 * TAU
+		unit.resize(n + 1)
+		for i in n + 1:
+			var a := sp * i / n
+			unit[i] = Vector2(cos(a), sin(a))
+		if _arc_cache.size() > 2048: _arc_cache.clear()
+		_arc_cache[key] = unit
+	var pts: PackedVector2Array = (Transform2D(rot, Vector2(rx, ry), 0.0, Vector2(cx, cy)) * Transform2D(a0, Vector2.ZERO)) * unit
+	if not _has_cur and _subpaths.is_empty():
+		move_to(pts[0].x, pts[0].y)
+		pts.remove_at(0)
+	elif not _has_cur:
+		line_to(pts[0].x, pts[0].y)
+		pts.remove_at(0)
+	_cur.append_array(pts)
+	_cur_tri = PackedInt32Array()
 
 
 func quadratic_curve_to(cpx: float, cpy: float, x: float, y: float) -> void:
-	if _subpaths.is_empty():
+	if not _has_cur and _subpaths.is_empty():
 		move_to(cpx, cpy)
-	var p0: Vector2 = _subpaths[-1][-1]
+	var p0: Vector2 = _cur[-1] if _has_cur else _subpaths[-1][-1]
 	for i in range(1, 11):
 		var t := i / 10.0
 		var q := p0.lerp(Vector2(cpx, cpy), t).lerp(Vector2(cpx, cpy).lerp(Vector2(x, y), t), t)
@@ -251,6 +324,30 @@ func quadratic_curve_to(cpx: float, cpy: float, x: float, y: float) -> void:
 ## прямоугольник со скруглёнными углами (ctx.roundRect)
 func round_rect(x: float, y: float, w: float, h: float, r: float) -> void:
 	r = minf(r, minf(w, h) / 2.0)
+	if w <= 0.0 or h <= 0.0: return
+	# Godot: та же фигура (размеры с шагом 1/4 пикселя) берётся из заготовки вместе с треугольниками
+	var key := Vector3(snappedf(w, 0.25), snappedf(h, 0.25), snappedf(r, 0.25))
+	var shape: Array = _rr_cache.get(key, [])
+	if shape.is_empty():
+		shape = _rr_build(key.x, key.y, key.z)
+		if _rr_cache.size() > 512: _rr_cache.clear()
+		_rr_cache[key] = shape
+	_flush()
+	_cur = Transform2D(0.0, Vector2(x, y)) * (shape[0] as PackedVector2Array)
+	_cur_closed = true
+	_cur_tri = shape[1]
+	_has_cur = true
+
+
+static func _rr_build(w: float, h: float, r: float) -> Array:
+	var c := Ctx.new(RID())
+	c._rr_points(0.0, 0.0, w, h, r)
+	c._flush()
+	var pts: PackedVector2Array = c._subpaths[0]
+	return [pts, Geometry2D.triangulate_polygon(pts)]
+
+
+func _rr_points(x: float, y: float, w: float, h: float, r: float) -> void:
 	move_to(x + r, y)
 	line_to(x + w - r, y)
 	arc(x + w - r, y + r, r, -PI / 2, 0)
@@ -274,6 +371,7 @@ func rect(x: float, y: float, w: float, h: float) -> void:
 func stroke_path() -> void:
 	if alpha <= 0.0:
 		return
+	_flush()
 	var item := _item()
 	var c := _mod(stroke)
 	for i in _subpaths.size():
@@ -286,10 +384,14 @@ func stroke_path() -> void:
 		if dash.size() >= 2:
 			_dashed(item, pts, c)
 		else:
+			stat_poly += 1
+			if stats_on: stat_kind["polyline"] = stat_kind.get("polyline", 0) + 1
 			RenderingServer.canvas_item_add_polyline(item, pts, PackedColorArray([c]), line_width, true)
 
 
 func _dashed(item: RID, pts: PackedVector2Array, c: Color) -> void:
+	# Godot: все штрихи — одной командой (раньше каждый штрих был отдельным многоугольником)
+	var segs := PackedVector2Array()
 	var on := true
 	var di := 0
 	var left := dash[0]
@@ -301,29 +403,40 @@ func _dashed(item: RID, pts: PackedVector2Array, c: Color) -> void:
 		while pos < seg:
 			var step := minf(left, seg - pos)
 			if on:
-				RenderingServer.canvas_item_add_line(item, a.lerp(b, pos / seg), a.lerp(b, (pos + step) / seg), c, line_width, true)
+				segs.append(a.lerp(b, pos / seg))
+				segs.append(a.lerp(b, (pos + step) / seg))
 			pos += step
 			left -= step
 			if left <= 0.0001:
 				on = not on
 				di = (di + 1) % dash.size()
 				left = dash[di]
+	if segs.is_empty(): return
+	stat_poly += 1
+	if stats_on: stat_kind["dash"] = stat_kind.get("dash", 0) + 1
+	RenderingServer.canvas_item_add_multiline(item, segs, PackedColorArray([c]), line_width, true)
 
 
 func fill_path() -> void:
 	if alpha <= 0.0:
 		return
+	_flush()
 	var item := _item()
 	var c := _mod(fill)
-	for pts in _subpaths:
+	for si in _subpaths.size():
+		var pts: PackedVector2Array = _subpaths[si]
 		if pts.size() < 3:
 			continue
-		var idx := Geometry2D.triangulate_polygon(pts)
+		var idx: PackedInt32Array = _tris[si]
+		if idx.is_empty():
+			idx = Geometry2D.triangulate_polygon(pts)
 		if idx.is_empty():
 			continue
 		var cols := PackedColorArray()
 		cols.resize(pts.size())
 		cols.fill(c)
+		stat_poly += 1
+		if stats_on: stat_kind["fill"] = stat_kind.get("fill", 0) + 1
 		RenderingServer.canvas_item_add_triangle_array(item, idx, pts, cols)
 
 
@@ -336,12 +449,16 @@ func fill_poly(pts: PackedVector2Array, cols: PackedColorArray) -> void:
 	c.resize(cols.size())
 	for i in cols.size():
 		c[i] = _mod(cols[i])
+	stat_poly += 1
+	if stats_on: stat_kind["poly"] = stat_kind.get("poly", 0) + 1
 	RenderingServer.canvas_item_add_polygon(_item(), pts, c)
 
 
 func stroke_line(x0: float, y0: float, x1: float, y1: float) -> void:
 	if alpha <= 0.0:
 		return
+	stat_poly += 1
+	if stats_on: stat_kind["line"] = stat_kind.get("line", 0) + 1
 	RenderingServer.canvas_item_add_line(_item(), Vector2(x0, y0), Vector2(x1, y1), _mod(stroke), line_width, true)
 
 

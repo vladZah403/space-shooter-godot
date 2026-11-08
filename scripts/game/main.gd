@@ -12,6 +12,12 @@ var _slow := 0
 var _fast := 0
 var _downs := 0
 var _upgraded := false
+## Godot (браузер): потолок плотности пикселей холста по качеству. На айфоне devicePixelRatio = 3 — холст в 9 раз
+## больше точек вёрстки; ×2 на глаз почти не отличить, а видеокарте вдвое с лишним меньше работы.
+## Сам потолок — в index.html (export_presets.cfg, html/head_include: window.ssDprCap)
+const DPR_CAP := [1.5, 2.0, 2.0]
+const DPR_HIGH := 3.0     # «Высокое», выбранное вручную, — без потолка (на айфоне ×3)
+var _dpr_force := -1.0   # проверки: -- --dpr=N (0 — без потолка)
 
 
 func _ready() -> void:
@@ -21,13 +27,17 @@ func _ready() -> void:
 
 func applyQuality() -> void:
 	var q: String = M.s.settings.get("quality", "auto")
+	# проверки: -- --quality=high|medium|low (без автоподбора)
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--quality="): q = a.substr(10)
+		elif a.begins_with("--dpr="): _dpr_force = float(a.substr(6))
 	autoQ = q == "auto"
 	match q:
 		"high": quality = 2
 		"medium": quality = 1
 		"low": quality = 0
 		_: quality = 1 if OS.get_processor_count() <= 2 else 2
-	FX.set_quality(quality)
+	_setQ(quality)
 	FX.shake_on = M.s.settings.get("shake", true)
 
 
@@ -54,6 +64,27 @@ func measure(dt: float) -> void:
 	else:
 		_slow = 0; _fast = 0
 	if _slow >= 4 and quality > 0:
-		quality -= 1; _slow = 0; _downs += 1; FX.set_quality(quality)
+		_slow = 0; _downs += 1; _setQ(quality - 1)
 	if _fast >= 60 and quality < 2 and _downs < 2 and not _upgraded:
-		quality += 1; _fast = 0; _upgraded = true; FX.set_quality(quality)
+		_fast = 0; _upgraded = true; _setQ(quality + 1)
+
+
+## телефон (приложение или браузер на телефоне)
+func is_mobile() -> bool:
+	return OS.has_feature("mobile") or OS.has_feature("web_android") or OS.has_feature("web_ios")
+
+
+## свечение (bloom) — самая дорогая часть постобработки: на телефоне только если «Высокое» выбрано вручную
+func bloom_ok() -> bool:
+	return not is_mobile() or M.s.settings.get("quality", "auto") == "high"
+
+
+func _setQ(q: int) -> void:
+	if q != quality: print("[quality] Q%d → Q%d (%.0f FPS)" % [quality, q, fps])
+	quality = q
+	FX.set_quality(q)
+	if OS.has_feature("web"):
+		var cap: float = DPR_CAP[clampi(q, 0, 2)]
+		if q >= 2 and M.s.settings.get("quality", "auto") == "high": cap = DPR_HIGH
+		if _dpr_force >= 0: cap = _dpr_force if _dpr_force > 0 else 99.0
+		JavaScriptBridge.eval("window.ssDprCap = %s" % cap)
