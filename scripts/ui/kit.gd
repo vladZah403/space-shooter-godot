@@ -68,6 +68,19 @@ static func box(bg: Color, border := Color(0, 0, 0, 0), radius := 12, bw := 1, p
 	return s
 
 
+## рамка в духе концепта (NeoBox): срезанные углы, заливка с бликом, кромка edge, уголки accent, свечение glow
+static func neo(bg: Color, edge := Color(0, 0, 0, 0), accent := Color(0, 0, 0, 0), cut := 10.0, pad := 0, glow := 0.0, bw := 1.0) -> NeoBox:
+	var s := NeoBox.new()
+	s.bg = bg
+	s.edge = edge
+	s.accent = accent
+	s.cut = cut
+	s.glow = glow
+	s.bw = bw
+	s.set_content_margin_all(pad)
+	return s
+
+
 static func theme() -> Theme:
 	if _theme: return _theme
 	var t := Theme.new()
@@ -79,13 +92,13 @@ static func theme() -> Theme:
 	t.set_color("font_pressed_color", "Button", TEXT)
 	t.set_color("font_focus_color", "Button", TEXT)
 	t.set_color("font_disabled_color", "Button", Color(TEXT, 0.4))
-	t.set_stylebox("normal", "Button", box(PANEL2, LINE2, 12, 1, 8))
-	t.set_stylebox("hover", "Button", box(PANEL2.lightened(0.08), LINE2, 12, 1, 8))
-	t.set_stylebox("pressed", "Button", box(PANEL2.darkened(0.15), LINE2, 12, 1, 8))
-	t.set_stylebox("disabled", "Button", box(Color(PANEL2, 0.3), Color(LINE2, 0.15), 12, 1, 8))
+	t.set_stylebox("normal", "Button", neo(PANEL2, LINE2, Color(CYAN, 0.7), 9, 8))
+	t.set_stylebox("hover", "Button", neo(PANEL2.lightened(0.08), LINE2, Color(CYAN, 0.7), 9, 8))
+	t.set_stylebox("pressed", "Button", neo(PANEL2.darkened(0.15), LINE2, CYAN, 9, 8))
+	t.set_stylebox("disabled", "Button", neo(Color(PANEL2, 0.3), Color(LINE2, 0.15), Color(0, 0, 0, 0), 9, 8))
 	t.set_stylebox("focus", "Button", StyleBoxEmpty.new())
-	t.set_stylebox("panel", "PanelContainer", box(PANEL, LINE, 16, 1, 12))
-	t.set_stylebox("panel", "Panel", box(PANEL, LINE, 16, 1, 0))
+	t.set_stylebox("panel", "PanelContainer", neo(PANEL, LINE, Color(0, 0, 0, 0), 12, 12))
+	t.set_stylebox("panel", "Panel", neo(PANEL, LINE, Color(0, 0, 0, 0), 12, 0))
 	# прокрутка: тонкая полоса
 	var grab := box(Color(LINE2, 0.6), Color(0, 0, 0, 0), 3)
 	t.set_stylebox("grabber", "VScrollBar", grab)
@@ -130,11 +143,19 @@ static func button(text: String, on_press: Callable, kind := "", size := "") -> 
 		"gold": bg = Color("#ffbf4a"); border = Color(0, 0, 0, 0); fc = Color("#2b1700")
 		"danger": bg = Color(1, 77 / 255.0, 94 / 255.0, 0.08); border = Color(1, 77 / 255.0, 94 / 255.0, 0.35); fc = Color("#ff8a96")
 		"ghost": bg = Color(0, 0, 0, 0); border = Color(0, 0, 0, 0); fc = MUTED
-	var r := 10 if size == "sm" else 12
-	b.add_theme_stylebox_override("normal", box(bg, border, r, 1, 8))
-	b.add_theme_stylebox_override("hover", box(bg.lightened(0.08), border, r, 1, 8))
-	b.add_theme_stylebox_override("pressed", box(bg.darkened(0.12), border, r, 1, 8))
-	b.add_theme_stylebox_override("disabled", box(Color(bg, bg.a * 0.4), Color(border, border.a * 0.4), r, 1, 8))
+	# рамка в стиле концепта: срезанные углы, уголки-скобы, у главных кнопок — свечение
+	var cut := 7.0 if size == "sm" else (12.0 if size == "big" else 10.0)
+	var acc := Color(CYAN, 0.7)
+	var glow := 0.0
+	match kind:
+		"primary": acc = Color("#e2f6ff"); glow = 0.6; border = Color("#9fdcff")
+		"gold": acc = Color("#fff3cc"); glow = 0.55; border = Color("#ffe08a")
+		"danger": acc = Color(1, 0.55, 0.62, 0.8)
+		"ghost": acc = Color(0, 0, 0, 0)
+	b.add_theme_stylebox_override("normal", neo(bg, border, acc, cut, 8, glow))
+	b.add_theme_stylebox_override("hover", neo(bg.lightened(0.08), border, acc, cut, 8, glow))
+	b.add_theme_stylebox_override("pressed", neo(bg.darkened(0.12), border, acc.lightened(0.3), cut, 8, glow * 0.4))
+	b.add_theme_stylebox_override("disabled", neo(Color(bg, bg.a * 0.4), Color(border, border.a * 0.4), Color(0, 0, 0, 0), cut, 8))
 	for k in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]: b.add_theme_color_override(k, fc)
 	b.add_theme_color_override("font_disabled_color", Color(fc, 0.4))
 	b.pressed.connect(func():
@@ -215,9 +236,14 @@ static func _first_panel(c: Node) -> PanelContainer:
 	return null
 
 
+## панель-рамка: у заметной (цветной) кромки — уголки-скобы, у обычной — только срез и блик
 static func panel(pad := 12, bg := PANEL, border := LINE, radius := 16) -> PanelContainer:
 	var p := PanelContainer.new()
-	p.add_theme_stylebox_override("panel", box(bg, border, radius, 1, pad))
+	var acc := border.lightened(0.35) if border.a >= 0.35 else Color(0, 0, 0, 0)
+	if acc.a > 0: acc.a = minf(1.0, border.a + 0.3)
+	var nb := neo(bg, border, acc, radius * 0.75, pad)
+	nb.notch = acc.a > 0
+	p.add_theme_stylebox_override("panel", nb)
 	return p
 
 
@@ -407,6 +433,9 @@ static func toggle(on: bool, on_change: Callable) -> Button:
 ## карточка-кнопка с содержимым: PanelContainer, нажатие — on_tap
 static func card(col: Color, selected: bool, on_tap: Callable, pad := 10) -> PanelContainer:
 	var p := panel(pad, Color(col, 0.14) if selected else Color(PANEL_SOLID, 0.9), col if selected else Color(col, 0.3), 14)
+	if selected:
+		var nb: NeoBox = p.get_theme_stylebox("panel")
+		nb.glow = 0.45
 	p.mouse_filter = Control.MOUSE_FILTER_STOP
 	p.gui_input.connect(func(e: InputEvent):
 		if e is InputEventMouseButton and not e.pressed and e.button_index == MOUSE_BUTTON_LEFT and Rect2(Vector2.ZERO, p.size).has_point(e.position):

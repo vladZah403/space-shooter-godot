@@ -103,14 +103,17 @@ func _open(t: String, s: String) -> void:
 func _card(col: String, icon: Control, name_: String, desc: String, tag: String, extra: Array, on_pick: Callable, poor := false) -> void:
 	var cc := U.col(col)
 	var c := PanelContainer.new()
-	var st_n := Kit.box(Color(Kit.PANEL_SOLID, 0.92), Color(cc, 0.55), 18, 1, 14)
-	var st_p := Kit.box(Color(Kit.PANEL_SOLID.lightened(0.08), 0.95), cc, 18, 1, 14)
+	# карточка-рамка цвета редкости (NeoBox): уголки и риски; при нажатии — свечение
+	var st_n := Kit.neo(Color(Kit.PANEL_SOLID, 0.92), Color(cc, 0.55), Color(cc.lightened(0.3), 0.95), 13, 14)
+	st_n.notch = true
+	var st_p := Kit.neo(Color(Kit.PANEL_SOLID.lightened(0.08), 0.95), cc, Color.WHITE, 13, 14, 0.5)
+	st_p.notch = true
 	c.add_theme_stylebox_override("panel", st_n)
 	c.mouse_filter = Control.MOUSE_FILTER_STOP
 	var row := Kit.hbox(14)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var ib := PanelContainer.new()
-	ib.add_theme_stylebox_override("panel", Kit.box(Color(cc, 0.16), Color(cc, 0.45), 16, 1, 6))
+	ib.add_theme_stylebox_override("panel", Kit.neo(Color(cc, 0.16), Color(cc, 0.45), Color(0, 0, 0, 0), 10, 6))
 	ib.custom_minimum_size = Vector2(56, 56)
 	ib.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	ib.mouse_filter = Control.MOUSE_FILTER_IGNORE

@@ -119,6 +119,10 @@ class MenuView extends Control:
 	## плитка раздела (.tile в JS): значок цвета раздела, название, подпись
 	func _tile(icon: String, title: String, sub: String, col: Color, id: String) -> Button:
 		var b := Kit.button("", func(): open_screen(id), "", "")
+		# рамка цвета раздела: уголки и риски — его цвет, при нажатии вспыхивает
+		b.add_theme_stylebox_override("normal", Kit.neo(Kit.PANEL2, Color(col, 0.4), Color(col, 0.9), 12, 4, 0.15))
+		b.add_theme_stylebox_override("hover", Kit.neo(Kit.PANEL2.lightened(0.06), Color(col, 0.5), col, 12, 4, 0.25))
+		b.add_theme_stylebox_override("pressed", Kit.neo(Color(col, 0.22), col, Color.WHITE, 12, 4, 0.6))
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.custom_minimum_size = Vector2(10, 84)
 		var v := Kit.vbox(4)
@@ -140,7 +144,8 @@ class MenuView extends Control:
 	func _bar_btn(icon: String, text: String, col: Color, id: String) -> Button:
 		var b := Kit.button("", func(): open_screen(id), "ghost", "")
 		for st in ["normal", "hover", "pressed"]:
-			b.add_theme_stylebox_override(st, Kit.box(Color(10 / 255.0, 16 / 255.0, 40 / 255.0, 0.45 if st != "pressed" else 0.7), Color(1, 1, 1, 0.06), 14, 1, 4))
+			b.add_theme_stylebox_override(st, Kit.neo(Color(10 / 255.0, 16 / 255.0, 40 / 255.0, 0.5 if st != "pressed" else 0.75),
+				Color(col, 0.18 if st != "pressed" else 0.6), Color(col, 0.45 if st != "pressed" else 1.0), 8, 4, 0.0 if st != "pressed" else 0.4))
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.custom_minimum_size = Vector2(10, 56)
 		var v := Kit.vbox(3)
@@ -741,7 +746,9 @@ class TipView extends Control:
 
 	func open(t: Dictionary) -> void:
 		var col: String = t.get("color", "#3de0ff")
-		panel.add_theme_stylebox_override("panel", Kit.box(Kit.PANEL, Color(U.col(col), 0.6), 16, 1, 18))
+		var tb := Kit.neo(Kit.PANEL, Color(U.col(col), 0.6), U.col(col).lightened(0.3), 14, 18)
+		tb.notch = true
+		panel.add_theme_stylebox_override("panel", tb)
 		kind.text = t.get("kind", "")
 		var ic: String = t.get("ico", "")
 		ico.text = "" if ic.begins_with("<") else ic

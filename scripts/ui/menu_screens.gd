@@ -317,48 +317,71 @@ static func _effText(up: Dictionary, lvl: int) -> String:
 	return "+%s%s" % [str(int(v)) if v == int(v) else str(v), up.get("unit", "")]
 
 
+## Арсенал (Godot, новый вид): стойка «В бою» на три слота, сетка оружия по 4 в ряд, витрина выбранного
+## (живое демо, характеристики 2×2, урон в секунду), крупная кнопка действия и прокачка карточками
 func _render_arsenal() -> void:
 	var s: Dictionary = M.s
 	var lo: Array = s.weapons.loadout
 	if not D.WEAPONS.has(ars): ars = lo[0] if not lo.is_empty() else "laser"
-	body.add_child(Kit.para("В бою %d из 3. Нажмите на оружие, чтобы прокачать его или взять в бой. В игре оружие переключается кнопками внизу экрана." % lo.size(), 12, Kit.MUTED))
-	var g := _grid(3)
-	for id in D.WEAPON_ORDER:
-		var d: Dictionary = D.WEAPONS[id]
-		var own: bool = id in s.weapons.owned
-		var sl: int = lo.find(id)
-		var wid: String = id
-		var st := ("✓ В БОЮ %d" % (sl + 1) if sl >= 0 else "Куплено") if own else "🔒 " + U.fmt(d.price)
-		_item(g, func(c, sz, _t): HudView.weaponIcon(c, wid, sz.x / 2, sz.y / 2, minf(sz.x, sz.y) * 0.9), d.name, "", st, Kit.GREEN if sl >= 0 else Kit.MUTED, id == ars, not own, func():
-			ars = wid; A.play("click"); Haptic.select(); render(), U.col(d.color))
-	# подробности выбранного
+	# ── стойка «В бою» ──
+	body.add_child(_secLabel("В БОЮ  %d / 3" % lo.size(), Kit.GREEN))
+	var rack := Kit.hbox(6)
+	for i in 3:
+		rack.add_child(_rackSlot(lo[i] if i < lo.size() else "", i))
+	body.add_child(rack)
+	# ── всё оружие ──
+	body.add_child(_secLabel("ОРУЖИЕ", Kit.CYAN))
+	var g := _grid(4)
+	g.add_theme_constant_override("h_separation", 6)
+	g.add_theme_constant_override("v_separation", 6)
+	for id in D.WEAPON_ORDER: g.add_child(_weaponChip(id))
+	# ── витрина выбранного ──
 	var w: Dictionary = D.WEAPONS[ars]
 	var wc := U.col(w.color)
-	var p := Kit.panel(12, Color(Kit.PANEL_SOLID, 0.9), Color(wc, 0.5), 16)
+	var own: bool = ars in s.weapons.owned
+	var slot: int = lo.find(ars)
+	var p := Kit.panel(12, Color(Kit.PANEL_SOLID, 0.94), Color(wc, 0.6), 16)
 	var v := Kit.vbox(8)
 	p.add_child(v)
 	body.add_child(p)
-	var own: bool = ars in s.weapons.owned
-	var slot: int = lo.find(ars)
-	v.add_child(Kit.label(w.name + ("   · В БОЮ • %d" % (slot + 1) if slot >= 0 else ""), 18, wc, 900))
-	if w.get("tags") is Array and not w.tags.is_empty(): v.add_child(Kit.label("  ".join(w.tags), 11, Kit.MUTED, 700))
+	var top := Kit.hbox(8)
+	var nm := Kit.label(w.name, 22, wc, 900)
+	nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(nm)
+	if slot >= 0: top.add_child(_pill("В БОЮ • %d" % (slot + 1), Kit.GREEN))
+	elif own: top.add_child(_pill("КУПЛЕНО", Kit.MUTED))
+	else: top.add_child(_pill("◆ " + U.fmt(w.price), Kit.GOLD))
+	v.add_child(top)
+	if w.get("tags") is Array and not w.tags.is_empty():
+		var tg := Kit.hbox(5)
+		for t in w.tags: tg.add_child(_pill(t, Color(wc, 0.85), true))
+		v.add_child(tg)
+	# живая демонстрация в рамке
+	var dv := Kit.demo_view(Demo.weapon(ars), Vector2(0, 180))
+	var dp := PanelContainer.new()
+	dp.add_theme_stylebox_override("panel", Kit.neo(Color(0.01, 0.02, 0.06, 0.9), Color(wc, 0.3), Color(wc, 0.7), 10, 2))
+	dp.add_child(dv)
+	v.add_child(dp)
 	v.add_child(Kit.para(w.desc, 13, Kit.TEXT))
-	# живая демонстрация: как оружие стреляет (demo.gd)
-	v.add_child(Kit.demo_view(Demo.weapon(ars), Vector2(0, 160)))
+	# характеристики 2×2
 	var r: Dictionary = w.get("rate", {})
-	for x in [["Урон", "dmg"], ["Скорострельность", "speed"], ["Площадь", "area"], ["Дальность", "range"]]:
-		var h := Kit.hbox(8)
-		var l := Kit.label(x[0], 12, Kit.MUTED, 700); l.custom_minimum_size.x = 130
-		h.add_child(l); h.add_child(Kit.segs(int(r.get(x[1], 0)), 5, wc))
-		v.add_child(h)
-	v.add_child(Kit.label("Урон в секунду по цели с вашей прокачкой  ≈ " + U.fmt(round(M.weaponDps(ars))), 13, Kit.GOLD, 800))
+	var sg := GridContainer.new()
+	sg.columns = 2
+	sg.add_theme_constant_override("h_separation", 12)
+	sg.add_theme_constant_override("v_separation", 6)
+	for x in [["УРОН", "dmg"], ["ТЕМП", "speed"], ["ПЛОЩАДЬ", "area"], ["ДАЛЬНОСТЬ", "range"]]:
+		var cell := Kit.vbox(3)
+		cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cell.add_child(Kit.label(x[0], 10, Kit.MUTED, 800))
+		cell.add_child(_statBar(int(r.get(x[1], 0)), wc))
+		sg.add_child(cell)
+	v.add_child(sg)
+	var dps := Kit.hbox(6)
+	dps.add_child(Icons.rect("bolt", Kit.GOLD, 16))
+	dps.add_child(Kit.label("≈ %s урона в секунду" % U.fmt(round(M.weaponDps(ars))), 13, Kit.GOLD, 800))
+	v.add_child(dps)
+	# главное действие — сразу под витриной
 	if own:
-		var total := 0
-		var got := 0
-		for up in w.ups:
-			total += int(up.max); got += M.weaponLevel(ars, up.id)
-		v.add_child(Kit.label("ПРОКАЧКА  %d из %d" % [got, total], 12, Kit.CYAN, 900))
-		for up in w.ups: v.add_child(_upRow(ars, up))
 		var wid2 := ars
 		v.add_child(Kit.button("✓ В БОЮ • УБРАТЬ" if slot >= 0 else "+ ВЗЯТЬ В БОЙ", func(): _loadout(wid2), "" if slot >= 0 else "primary"))
 	else:
@@ -370,35 +393,150 @@ func _render_arsenal() -> void:
 					A.play("buy"); Haptic.success(); _toast("⚔️", "НОВОЕ ОРУЖИЕ", w.name + (" • уже в бою" if wid3 in M.s.weapons.loadout else ""))
 				else: A.play("error")
 				_rerender()
-			Ui.dialog({"ico": "⚔️", "title": w.name, "text": w.desc + "\n\nЦена: " + U.fmt(w.price) + " кредитов", "ok": "КУПИТЬ", "onOk": ok}), "gold")
+			Ui.dialog({"ico": "⚔️", "title": w.name, "text": w.desc + "\n\nЦена: " + U.fmt(w.price) + " кредитов", "ok": "КУПИТЬ", "onOk": ok}), "gold", "big")
 		bb.disabled = poor
 		v.add_child(bb)
-		if poor: v.add_child(Kit.para("🔒 Не хватает %s кредитов. Кредиты падают с врагов и даются за задания дня." % U.fmt(w.price - s.coins), 12, Kit.MUTED))
+		if poor: v.add_child(Kit.para("Не хватает %s кредитов: они падают с врагов и даются за задания дня." % U.fmt(w.price - s.coins), 12, Kit.MUTED))
+	# ── прокачка ──
+	if own:
+		var total := 0
+		var got := 0
+		for up in w.ups:
+			total += int(up.max); got += M.weaponLevel(ars, up.id)
+		var hh := Kit.hbox(8)
+		var hl := _secLabel("ПРОКАЧКА  %d / %d" % [got, total], Kit.GOLD)
+		hl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		hh.add_child(hl)
+		body.add_child(hh)
+		body.add_child(Kit.bar(float(got) / maxf(1, total), Kit.GOLD, 4))
+		for up in w.ups: body.add_child(_upRow(ars, up, wc))
 
 
-func _upRow(wid: String, up: Dictionary) -> Control:
+## подпись раздела: цветная чёрточка и заглавные
+func _secLabel(text: String, col: Color) -> Control:
+	var h := Kit.hbox(6)
+	var bar := ColorRect.new()
+	bar.color = col
+	bar.custom_minimum_size = Vector2(3, 14)
+	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	h.add_child(bar)
+	h.add_child(Kit.label(text, 12, col, 900))
+	return h
+
+
+## плашка-метка: «В БОЮ», цена, теги оружия
+func _pill(text: String, col: Color, soft := false) -> Control:
+	var pc := PanelContainer.new()
+	var st := Kit.neo(Color(col, 0.12 if soft else 0.18), Color(col, 0.5), Color(0, 0, 0, 0), 5, 0)
+	st.content_margin_left = 7; st.content_margin_right = 7; st.content_margin_top = 2; st.content_margin_bottom = 2
+	st.sheen = 0.0
+	pc.add_theme_stylebox_override("panel", st)
+	pc.add_child(Kit.label(text, 10 if soft else 11, col.lightened(0.25), 800))
+	pc.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	return pc
+
+
+## шкала характеристики: 5 делений
+func _statBar(v: int, col: Color) -> Control:
+	var h := Kit.hbox(3)
+	for i in 5:
+		var r := ColorRect.new()
+		r.color = col if i < v else Color(1, 1, 1, 0.08)
+		r.custom_minimum_size = Vector2(10, 6)
+		r.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		h.add_child(r)
+	return h
+
+
+## слот стойки: оружие в бою (значок, имя, номер) или пустое место
+func _rackSlot(id: String, i: int) -> Control:
+	var empty := id == ""
+	var col := U.col(D.WEAPONS[id].color) if not empty else Kit.DIM
+	var c := Kit.card(col, not empty and id == ars, func():
+		if empty: return
+		ars = id; A.play("click"); Haptic.select(); render(), 6)
+	c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var h := Kit.hbox(4)
+	h.add_child(Kit.label(str(i + 1), 16, Color(col, 0.9), 900))
+	if empty:
+		h.add_child(Kit.label("пусто", 11, Kit.DIM, 700))
+	else:
+		var wid := id
+		h.add_child(Kit.ctx_view(func(cx, sz, _t): HudView.weaponIcon(cx, wid, sz.x / 2, sz.y / 2, minf(sz.x, sz.y) * 0.95), Vector2(30, 30)))
+		var nl := Kit.label(D.WEAPONS[id].name, 10, Kit.TEXT, 800)
+		nl.clip_text = true
+		nl.custom_minimum_size.x = 10
+		nl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		h.add_child(nl)
+	h.custom_minimum_size.y = 32
+	c.add_child(h)
+	Kit.passthrough(c)
+	return c
+
+
+## клетка сетки оружия: значок, имя, состояние (в бою / куплено / цена)
+func _weaponChip(id: String) -> Control:
+	var s: Dictionary = M.s
+	var d: Dictionary = D.WEAPONS[id]
+	var col := U.col(d.color)
+	var own: bool = id in s.weapons.owned
+	var sl: int = s.weapons.loadout.find(id)
+	var wid := id
+	var c := Kit.card(col, id == ars, func():
+		ars = wid; A.play("click"); Haptic.select(); render(), 5)
+	c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if not own: c.modulate = Color(1, 1, 1, 0.75)
+	var v := Kit.vbox(1)
+	var pv := Kit.ctx_view(func(cx, sz, _t): HudView.weaponIcon(cx, wid, sz.x / 2, sz.y / 2, minf(sz.x, sz.y) * 0.95), Vector2(44, 40))
+	pv.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	v.add_child(pv)
+	var nl := Kit.label(d.name, 10, Kit.TEXT, 900, HORIZONTAL_ALIGNMENT_CENTER)
+	nl.clip_text = true
+	nl.custom_minimum_size.x = 10
+	v.add_child(nl)
+	var st := ("В БОЮ %d" % (sl + 1)) if sl >= 0 else ("✓" if own else "◆ " + U.fmt(d.price))
+	v.add_child(Kit.label(st, 10, Kit.GREEN if sl >= 0 else (Kit.MUTED if own else Kit.GOLD), 800, HORIZONTAL_ALIGNMENT_CENTER))
+	c.add_child(v)
+	Kit.passthrough(c)
+	return c
+
+
+## карточка улучшения: значок, имя и деления уровня, «сейчас › дальше», кнопка с ценой
+func _upRow(wid: String, up: Dictionary, wc := Kit.CYAN) -> Control:
 	var lvl := M.weaponLevel(wid, up.id)
 	var mx: bool = lvl >= up.max
 	var cost: int = 0 if mx else int(up.costs[lvl])
 	var poor: bool = not mx and M.s.coins < cost and not M.DEV
-	var h := Kit.hbox(8)
-	var v := Kit.vbox(2)
+	var p := Kit.panel(10, Color(Kit.PANEL_SOLID, 0.9), Color(wc, 0.22), 12)
+	var h := Kit.hbox(10)
+	p.add_child(h)
+	if up.get("ico", "") != "": h.add_child(Kit.icon("", up.ico, 30))
+	var v := Kit.vbox(3)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	v.add_child(Kit.label(up.get("ico", "") + " " + up.name + "  %d/%d" % [lvl, up.max], 13, Kit.TEXT, 800))
+	var nh := Kit.hbox(6)
+	var nl := Kit.label(up.name, 13, Kit.TEXT, 900)
+	nh.add_child(nl)
+	nh.add_child(Kit.label("%d/%d" % [lvl, up.max], 11, Kit.GOLD if mx else Kit.MUTED, 800))
+	v.add_child(nh)
 	var eff := (_effText(up, lvl) + " • максимум") if mx else (((_effText(up, lvl)) if lvl else "Сейчас нет") + "  ›  " + _effText(up, lvl + 1))
-	v.add_child(Kit.label(eff, 12, Kit.MUTED, 600))
+	var el := Kit.label(eff, 11, Kit.CYAN if not mx else Kit.MUTED, 700)
+	el.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	el.custom_minimum_size.x = 10
+	v.add_child(el)
 	v.add_child(Kit.segs(lvl, int(up.max), Kit.GOLD))
 	h.add_child(v)
 	var upid: String = up.id
-	var b := Kit.button("✓ MAX" if mx else "◆ " + U.fmt(cost), func():
+	var b := Kit.button("MAX" if mx else "◆ " + U.fmt(cost), func():
 		if M.buyWeaponUp(wid, upid):
 			A.play("buy"); Haptic.light()
 		else: A.play("error")
 		_rerender(), "" if mx or poor else "gold", "sm")
 	b.disabled = mx or poor
-	b.custom_minimum_size.x = 92
+	b.custom_minimum_size.x = 84
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	h.add_child(b)
-	return h
+	return p
 
 
 func _loadout(id: String) -> void:
