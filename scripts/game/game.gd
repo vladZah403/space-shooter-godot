@@ -1580,7 +1580,7 @@ func flushDmgNums() -> void:
 		var crit := e.dmgCrit
 		e.dmgSum = 0.0
 		e.dmgCrit = false
-		if n > 0: FX.dmg_num(e.x + U.rand(-8, 8) * G.S, e.y - (e.ry if e.ry != 0.0 else e.r) * 0.5, n, crit)
+		if n > 0: FX.dmg_num(e.x + U.rand(-8, 8) * G.S, e.y - (e.ry if e.ry != 0.0 else e.r) * 0.5, n, crit, e.boss and n >= e.maxHp * 0.04)
 
 
 func nearestOther(e: En, range_: float) -> En:

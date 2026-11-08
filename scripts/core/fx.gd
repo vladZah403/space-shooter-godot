@@ -218,8 +218,18 @@ func text(x: float, y: float, s: String, color := "#ffffff", size := 13.0, dur :
 	texts.append({"x": x, "y": y, "s": s, "c": color, "size": size, "life": dur, "max": dur, "vy": vy})
 
 
-func dmg_num(x: float, y: float, n: int, crit: bool) -> void:
-	text(x, y, (str(n) + "!") if crit else str(n), "#ffd23d" if crit else "#ffffff", 15 if crit else 11, 0.65 if crit else 0.45, -70)
+## Godot: «сочные» цифры — крит крупнее, с рывком и дрожью; крупный удар по боссу — отдельной большой строкой
+func dmg_num(x: float, y: float, n: int, crit: bool, big := false) -> void:
+	if big:
+		text(x, y - 10, U.fmt(n) + ("!" if crit else ""), "#ff7a45", 22, 0.95, -60)
+		texts[-1].shake = 5.0
+		texts[-1].pop = 1.8
+	elif crit:
+		text(x, y, U.fmt(n) + "!", "#ffd23d", 17, 0.7, -80)
+		texts[-1].shake = 3.0
+		texts[-1].pop = 1.5
+	else:
+		text(x, y, U.fmt(n), "#ffffff", 11, 0.45, -70)
 
 
 ## спрайт листа эффектов: ширина растёт от w0 до w1, после доли hold — затухание
@@ -423,13 +433,16 @@ func draw_front(ctx: Ctx) -> void:
 func draw_texts(ctx: Ctx) -> void:
 	for t in texts:
 		var k: float = t.life / t.max
-		var pop := 1.0 + (k - 0.85) * 2.5 if k > 0.85 else 1.0
+		var pop: float = 1.0 + (k - 0.85) * 2.5 * float(t.get("pop", 1.0)) if k > 0.85 else 1.0
 		ctx.alpha = minf(1.0, k * 2.2)
 		ctx.fill = U.col(t.c)
 		var size := int(round(t.size * pop * 1.15))
 		# надпись у края поля (подобранный бонус, «УКЛОНЕНИЕ» у прижатого к краю корабля) не обрезается
 		var hw := ctx.text_width(t.s, size) / 2.0 + 4.0
 		var x: float = clampf(t.x, hw, maxf(hw, G.FW - hw))
+		# дрожь в первые доли секунды (криты, крупные удары)
+		var sh: float = t.get("shake", 0.0) * maxf(0.0, (k - 0.7) / 0.3)
+		if sh > 0: x += sin(t.life * 90.0) * sh
 		ctx.fill_text(t.s, x, t.y + size * 0.35, size, 1, 4, Color(0, 0, 0.04, 0.85))
 	ctx.alpha = 1.0
 

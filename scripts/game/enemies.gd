@@ -1340,6 +1340,19 @@ func matter(e: En) -> String:
 	return "metal"
 
 
+## Godot: последний враг волны — короткое замедление и наезд камеры на взрыв (не в выживании и не от бомбы)
+func _lastOfWave(e: En, src: String) -> void:
+	var w = Game.wave
+	if w == null or not w.get("done", false) or w.get("cleared", false) or Game.boss != null or Game.mode == "survival": return
+	if src == "bomb" or src == "nova" or e.def.prop: return
+	for o: En in Game.enemies:
+		if o != e and o.alive and not o.leaving and not o.def.prop: return
+	Game.slowT = maxf(Game.slowT, 0.55)
+	Game.camFocus(e.x, e.y, 1.12, 0.5)
+	FX.ring(e.x, e.y, 10 * G.S, 120 * G.S, "#ffffff", 0.5, 2.0)
+	A.play("explodeM", {"rate": 0.8, "vol": 0.6, "x": e.x})
+
+
 ## подбитый враг (меньше 40% прочности, не одноразовый): металл дымит и искрит, живой — сочится, кристалл мерцает
 func _damaged(e: En, dt: float) -> void:
 	if FX.quality == 0 or e.maxHp < 3.0 or e.hp > e.maxHp * 0.4 or e.y < 0: return
@@ -1406,6 +1419,7 @@ func kill(e: En, src: String) -> void:
 	if e.mini:
 		FX.flash("#ffd9a0", 0.25)
 		Haptic.heavy()
+	_lastOfWave(e, src)
 	# посмертные эффекты: осколки кристалла, кольцо орбиты, выводок роя и паразита
 	# (бомба и нова их гасят, чтобы зачистка экрана оставалась зачисткой)
 	var quiet := src == "bomb" or src == "nova"
