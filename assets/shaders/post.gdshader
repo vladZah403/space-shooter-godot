@@ -1,7 +1,7 @@
 shader_type canvas_item;
 // Постобработка поля боя (слой между миром и интерфейсом, scripts/game/post.gd):
 // ударные волны от взрывов, линзы-воронки чёрных дыр, хроматическая аберрация при попадании,
-// радиальный «форсаж» при прыжке в сектор, мягкое свечение ярких мест (bloom по мип-уровням экрана),
+// пузыри щитов (преломление у кромки, светящийся край, рябь от удара), радиальный «форсаж» при прыжке в сектор, мягкое свечение ярких мест (bloom по мип-уровням экрана),
 // размытие игры под окнами (пауза, выбор, итоги) и цветокоррекция (последняя жизнь, заморозка, замедление).
 // Все расстояния — в долях высоты экрана (по x домножаем на aspect = W/H, чтобы круги были круглыми).
 
@@ -11,6 +11,9 @@ uniform vec4 waves[6];      // x, y (UV), радиус, сила
 uniform int wave_n = 0;
 uniform vec4 lenses[6];     // x, y (UV), радиус, сила (закрутка + вытягивание)
 uniform int lens_n = 0;
+uniform vec4 bubbles[4];    // x, y (UV), радиус, сила преломления
+uniform vec4 bubble_col[4]; // цвет кромки, удар 0…1
+uniform int bubble_n = 0;
 uniform float aberr = 0.0;
 uniform float bloom = 0.0;
 uniform float bloom_thr = 0.3;
@@ -57,6 +60,23 @@ void fragment() {
 			off += (nd - d) / asp;
 		}
 	}
+	// пузыри щитов: у кромки картинка стягивается к центру (выпуклое стекло), по краю бежит рябь от удара
+	vec3 rim_glow = vec3(0.0);
+	for (int i = 0; i < bubble_n; i++) {
+		vec4 b = bubbles[i];
+		vec4 bc = bubble_col[i];
+		vec2 d = (uv - b.xy) * asp;
+		float dist = length(d);
+		float x = dist / b.z;
+		if (x < 1.15 && dist > 0.0001) {
+			float rim = smoothstep(0.55, 1.0, x) * (1.0 - smoothstep(1.0, 1.15, x));
+			float wob = sin(x * 26.0 - TIME * 24.0 + atan(d.y, d.x) * 3.0) * bc.a * smoothstep(0.2, 1.0, x);
+			off -= (d / dist) / asp * b.z * b.w * (rim * 0.16 + wob * 0.05);
+			ca += rim * b.w * 0.003;
+			float edge = pow(smoothstep(0.82, 1.0, x), 3.0) * (1.0 - smoothstep(1.0, 1.06, x));
+			rim_glow += bc.rgb * (edge * (0.22 + bc.a * 0.6) + rim * bc.a * 0.15) * min(b.w, 1.0);
+		}
+	}
 	vec2 suv = clamp(uv + off, vec2(0.0), vec2(1.0));
 	vec3 col;
 	if (ca > 0.0004) {
@@ -67,6 +87,7 @@ void fragment() {
 	} else {
 		col = textureLod(screen_tex, suv, 0.0).rgb;
 	}
+	col += rim_glow;
 	// форсаж: размытие по лучам к точке прыжка
 	if (warp > 0.005) {
 		// шаги со случайным сдвигом на пиксель — вместо «лесенки» копий получается гладкий шлейф

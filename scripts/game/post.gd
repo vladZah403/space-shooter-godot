@@ -4,6 +4,7 @@ extends Node
 ##   Post.wave(x, y, сила)  — ударная волна (координаты поля, как у FX)
 ##   Post.lens(x, y, r, k)  — воронка чёрной дыры на этот кадр (вызывать из отрисовки каждый кадр)
 ##   Post.hurt(k)           — вспышка хроматической аберрации (попадание по игроку)
+##   Post.bubble(x, y, r, k, цвет, удар) — пузырь щита на этот кадр: преломление у кромки, светящийся край, рябь от удара
 ##   Post.warp, Post.warp_at — форсаж прыжка (выставляет Game.draw на этот кадр)
 ## Сам следит за игрой: под окнами (пауза, выбор, подсказка, итоги) игра размывается; на последней жизни
 ## цвета блекнут, при заморозке — холодный тон, при замедлении времени — синеватый.
@@ -17,6 +18,7 @@ var rect: ColorRect
 var mat: ShaderMaterial
 var waves: Array = []        # { x, y (экран), t, dur, r1 (доли высоты), k }
 var lenses: Array = []       # Vector4(x, y (экран), r, k) — на один кадр
+var bubbles: Array = []      # [Vector4(x, y (UV), r, k), Color(цвет, удар)] — на один кадр
 var aberr := 0.0
 var warp := 0.0
 var warp_at := Vector2.ZERO
@@ -26,6 +28,9 @@ var sat := 1.0
 var grade := Vector3.ONE
 var _wv := PackedVector4Array()
 var _lv := PackedVector4Array()
+var _bv := PackedVector4Array()
+var _bc := PackedVector4Array()
+const MAXB := 4
 
 
 func _ready() -> void:
@@ -42,6 +47,8 @@ func _ready() -> void:
 	layer.add_child(rect)
 	_wv.resize(MAX)
 	_lv.resize(MAX)
+	_bv.resize(MAXB)
+	_bc.resize(MAXB)
 
 
 func level() -> int:
@@ -59,14 +66,32 @@ func wave(x: float, y: float, power := 1.0) -> void:
 			if waves[i].k * (1.0 - waves[i].t / waves[i].dur) < waves[wi].k * (1.0 - waves[wi].t / waves[wi].dur): wi = i
 		if waves[wi].k > 0.012 * power: return
 		waves.remove_at(wi)
-	waves.append({"x": x + G.FX + FX.shake_x, "y": y + FX.shake_y, "t": 0.0, "dur": 0.42 + 0.28 * minf(power, 2.0),
+	var sp := Game.toScreen(x, y)
+	waves.append({"x": sp.x, "y": sp.y, "t": 0.0, "dur": 0.42 + 0.28 * minf(power, 2.0),
 		"r1": 0.16 + 0.34 * minf(power, 2.2), "k": 0.012 * minf(power, 2.2)})
+
+
+## пузырь щита на этот кадр (вызывать из отрисовки каждый кадр): r — радиус в пикселях поля, k ≈ 0.5…1.2 — сила
+## преломления, hit 0…1 — рябь и вспышка от попадания. Больше MAXB — берутся самые крупные
+func bubble(x: float, y: float, r: float, k: float, col: Color, hit := 0.0) -> void:
+	if r < 4: return
+	var sp := Game.toScreen(x, y)
+	if sp.y < -r or sp.y > G.H + r: return
+	var it := [Vector4(sp.x / G.W, sp.y / G.H, r * Game.cam.z / G.H, k), Color(col, clampf(hit, 0, 1))]
+	if bubbles.size() < MAXB:
+		bubbles.append(it)
+		return
+	var wi := 0
+	for i in bubbles.size():
+		if bubbles[i][0].z < bubbles[wi][0].z: wi = i
+	if bubbles[wi][0].z < it[0].z: bubbles[wi] = it
 
 
 ## воронка на этот кадр: r — радиус ядра в пикселях поля, k ≈ 0.3…1 — сила закрутки
 func lens(x: float, y: float, r: float, k := 0.6) -> void:
 	if lenses.size() >= MAX or r < 2: return
-	lenses.append(Vector4((x + G.FX + FX.shake_x) / G.W, (y + FX.shake_y) / G.H, r / G.H, k))
+	var sp := Game.toScreen(x, y)
+	lenses.append(Vector4(sp.x / G.W, sp.y / G.H, r * Game.cam.z / G.H, k))
 
 
 func hurt(k := 1.0) -> void:
@@ -89,12 +114,18 @@ func frame(dt: float) -> void:
 	var ln := mini(lenses.size(), MAX) if lv > 0 else 0
 	for i in ln: _lv[i] = lenses[i]
 	lenses.clear()
+	var bn := mini(bubbles.size(), MAXB) if lv > 0 else 0
+	for i in bn:
+		var c: Color = bubbles[i][1]
+		_bv[i] = bubbles[i][0]
+		_bc[i] = Vector4(c.r, c.g, c.b, c.a)
+	bubbles.clear()
 	aberr = maxf(0.0, aberr - dt * 0.012)
 	var bl := bloom if lv >= 2 else 0.0
 	var wp := warp if lv > 0 else 0.0
 	warp = 0.0
 	_mood(dt)
-	var on := lv > 0 and (bl > 0 or n > 0 or ln > 0 or aberr > 0.0004 or wp > 0.005 or blur > 0.01 or sat < 0.99 or not grade.is_equal_approx(Vector3.ONE))
+	var on := lv > 0 and (bl > 0 or n > 0 or ln > 0 or bn > 0 or aberr > 0.0004 or wp > 0.005 or blur > 0.01 or sat < 0.99 or not grade.is_equal_approx(Vector3.ONE))
 	rect.visible = on
 	if not on: return
 	mat.set_shader_parameter("aspect", G.W / G.H)
@@ -102,6 +133,9 @@ func frame(dt: float) -> void:
 	mat.set_shader_parameter("wave_n", n)
 	mat.set_shader_parameter("lenses", _lv)
 	mat.set_shader_parameter("lens_n", ln)
+	mat.set_shader_parameter("bubbles", _bv)
+	mat.set_shader_parameter("bubble_col", _bc)
+	mat.set_shader_parameter("bubble_n", bn)
 	mat.set_shader_parameter("aberr", aberr)
 	mat.set_shader_parameter("bloom", bl)
 	mat.set_shader_parameter("warp", wp)
@@ -137,6 +171,7 @@ func _mood(dt: float) -> void:
 func clear() -> void:
 	waves.clear()
 	lenses.clear()
+	bubbles.clear()
 	aberr = 0.0
 	warp = 0.0
 	blur = 0.0

@@ -46,6 +46,9 @@ var coinK := 1.0
 var t := 0.0
 var timeScale := 1.0
 var slowT := 0.0
+## камера (Godot): наезд на точку поля — смерть босса, его появление. z — текущее увеличение, tz — цель,
+## hold — сколько ещё держать (с, по реальному времени: замедление мира камеру не тормозит)
+var cam := {"x": 0.0, "y": 0.0, "z": 1.0, "tz": 1.0, "hold": 0.0}
 var stopT := 0.0
 var player: Pl = null
 var bullets: Array[Bl] = []
@@ -171,6 +174,7 @@ func start(newDiffId: String, o := {}) -> void:
 	buffs = {}
 	wave = null
 	t = 0.0; timeScale = 1.0; slowT = 0.0; stopT = 0.0
+	cam = {"x": 0.0, "y": 0.0, "z": 1.0, "tz": 1.0, "hold": 0.0}
 	Bg.setSector(0, true)
 	Bg.warp = 0.6
 	state = "play"
@@ -465,6 +469,7 @@ func frame(rdt: float) -> void:
 		Bus.emit("tip", tip)
 		return
 	if state == "play" or state == "dying" or state == "cutscene":
+		updateCam(rdt)
 		# хитстоп: мир замирает на пару кадров (кадр при этом рисуется)
 		if stopT > 0:
 			stopT -= rdt
@@ -483,6 +488,26 @@ func frame(rdt: float) -> void:
 	else:
 		# пауза / выбор улучшения / экран итогов — фон слегка живёт
 		Bg.update(rdt, 0.4 if state == "over" else 0.05)
+
+
+## наезд камеры на точку поля (x, y — координаты поля): увеличение z, держится hold секунд, потом плавно назад.
+## Выключается вместе с тряской экрана (настройка «Тряска»)
+func camFocus(x: float, y: float, z: float, hold: float) -> void:
+	if not FX.shake_on: return
+	cam.x = x; cam.y = y; cam.tz = z; cam.hold = hold
+
+
+## точка поля → точка экрана: сдвиг поля, тряска и наезд камеры — как в draw (для Post и частиц Vfx)
+func toScreen(x: float, y: float) -> Vector2:
+	var z: float = cam.z
+	return Vector2(cam.x + (x - cam.x) * z + G.FX + FX.shake_x, cam.y + (y - cam.y) * z + FX.shake_y)
+
+
+func updateCam(rdt: float) -> void:
+	if cam.hold > 0: cam.hold -= rdt
+	else: cam.tz = 1.0
+	# наезд быстрый, отъезд мягкий
+	cam.z = U.damp(cam.z, cam.tz, 7.0 if cam.tz > cam.z else 2.5, rdt)
 
 
 ## 4.2.2: короткий стоп-кадр — убийство элиты, смена фазы босса; не копится, берётся самый длинный
@@ -521,6 +546,7 @@ func update(dt: float, rdt: float) -> void:
 	p.vxs = U.damp(p.vxs, 0, 14, rdt)
 	updateTimers(dt)
 	runTimers(dt)
+	if run.get("shieldFxT", 0.0) > 0: run.shieldFxT = maxf(0.0, run.shieldFxT - rdt * 1.6)
 	# заряд серпа копится от движения корабля (только в бою), без движения стекает
 	if "arc" in p.weapons:
 		var ab: Dictionary = D.WEAPONS.arc.base
@@ -1626,6 +1652,7 @@ func heal(n: int, label := "") -> void:
 func shieldFx() -> void:
 	var p := player
 	FX.sprite("fx_sh_restore", 0, 0, {"follow": p, "w0": p.w * 2.2, "w1": p.w * 1.2, "dur": 0.5, "hold": 0.4})
+	run.shieldFxT = 1.0   # рябь по пузырю щита (Post.bubble)
 
 
 func playerDown() -> void:
@@ -2695,7 +2722,9 @@ func onBossDefeated(bs: En) -> void:
 	if relic("r_starheart") and player.alive:
 		if not perk("glass"): player.maxLives += 1
 		heal(1, "🌟 СЕРДЦЕ ЗВЕЗДЫ")
-	slowT = 1.0
+	# Godot: замедление и наезд камеры на гибнущего босса
+	slowT = 1.5
+	camFocus(bs.x, bs.y, 1.22, 1.1)
 	for b in ebullets: b.dead = true
 	Bus.emit("bossDefeated", {"def": bs.bdef, "pts": pts})
 	after(2.2, func():
@@ -3121,6 +3150,9 @@ func draw(ctx: Ctx) -> void:
 	if scene != null: drawSceneDim(ctx)
 	ctx.save()
 	ctx.translate(G.FX + FX.shake_x, FX.shake_y)
+	if cam.z > 1.001:
+		# наезд: точка фокуса стоит на месте, всё вокруг раздвигается (фон не увеличивается — даёт глубину)
+		ctx.translate(cam.x, cam.y); ctx.scale(cam.z, cam.z); ctx.translate(-cam.x, -cam.y)
 	FX.draw_back(ctx)
 	drawPickups(ctx)
 	Events.drawBack(ctx)
@@ -3410,6 +3442,8 @@ func drawPlayer(ctx: Ctx) -> void:
 		ctx.alpha = 0.18 + sin(t * 6) * 0.05
 		ctx.draw_tex(G.soft(col, 64), p.x - r * 1.2, p.y - r * 1.2, r * 2.4, r * 2.4)
 		var bw := r * 2.25 * (1 + sin(t * 4) * 0.025)
+		# Godot: стеклянный пузырь — преломление и светящаяся кромка (постобработка)
+		Post.bubble(p.x, p.y, r * 1.1, 1.0, U.col(col), run.get("shieldFxT", 0.0))
 		ctx.alpha = 0.4 + sin(t * 6) * 0.08
 		if barrier: G.draw_canvas(ctx, G.tinted("fx_sh_bubble", {"hue": 46}), p.x, p.y, bw)
 		else: G.draw(ctx, "fx_sh_bubble", p.x, p.y, bw)

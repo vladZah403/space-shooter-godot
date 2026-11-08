@@ -80,6 +80,8 @@ func spawnBoss(n: int) -> void:
 	Game.enemies.append(b)
 	Game.run.bossDamaged = false
 	FX.sprite("fx_warp", G.FW / 2, Hud.top_inset() + 50 * S, {"w0": 120 * S, "w1": 230 * S, "dur": 1.5, "hold": 0.45, "fadeIn": 0.15, "alpha": 0.8, "hue": G.hue_of(bdef.color)})
+	# Godot: лёгкий наезд камеры туда, где босс встанет, — пока он выходит из варпа
+	Game.camFocus(G.FW / 2, b.baseY, 1.06, 1.0)
 	# в кат-сцене рёв и тряска — вместе с карточкой имени (Game.sceneName)
 	if Game.state != "cutscene":
 		A.play("bossRoar"); FX.shake(0.4)
@@ -733,6 +735,7 @@ func drawBoss(ctx: Ctx, b: En) -> void:
 	if b.shield > 0:
 		var k := b.shield / b.shieldMax
 		var r := maxf(b.w, b.h) * 0.6
+		Post.bubble(b.x, b.y, r * 1.08, 0.6 + 0.6 * k, U.col("#7fd8ff"), b.shieldHitT / 0.15)
 		ctx.additive = true
 		ctx.alpha = 0.12 + k * 0.18 + (0.3 if b.shieldHitT > 0 else 0.0)
 		if G.has("fx_sh_bubble"): G.draw(ctx, "fx_sh_bubble", b.x, b.y, r * 2.2)

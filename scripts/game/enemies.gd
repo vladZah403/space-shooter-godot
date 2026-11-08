@@ -1368,6 +1368,7 @@ func drawAll(ctx: Ctx) -> void:
 		# энергобарьер Редута
 		if e.barrier > 0:
 			var r := e.w * 0.62
+			Post.bubble(e.x, e.y, r * 1.1, 0.8, U.col("#b06bff"), e.shieldHitT / 0.12)
 			_lighter(ctx, 0.3 + 0.15 * sin(e.age * 14) + (0.35 if e.shieldHitT > 0 else 0.0))
 			if bubble: G.draw_canvas(ctx, G.tinted("fx_sh_bubble", {"hue": 275}), e.x, e.y, r * 2.25, 0)
 			else: ctx.draw_tex(G.soft("#b06bff", 64), e.x - r * 1.2, e.y - r * 1.2, r * 2.4, r * 2.4)
@@ -1379,6 +1380,7 @@ func drawAll(ctx: Ctx) -> void:
 		if e.shield > 0:
 			var r := e.w * 0.66
 			var k := e.shield / e.shieldMax
+			Post.bubble(e.x, e.y, r * 1.1, 0.5 + 0.4 * k, U.col("#7fd8ff"), e.shieldHitT / 0.15)
 			_lighter(ctx, 0.18 + k * 0.2 + (0.4 if e.shieldHitT > 0 else 0.0))
 			if bubble: G.draw(ctx, "fx_sh_bubble", e.x, e.y, r * 2.25)
 			else: ctx.draw_tex(G.soft("#4cb8ff", 64), e.x - r * 1.15, e.y - r * 1.15, r * 2.3, r * 2.3)

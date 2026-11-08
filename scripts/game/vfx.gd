@@ -104,7 +104,7 @@ func _make_burst() -> CPUParticles2D:
 func wake(ctx: Ctx, x: float, y: float, w: float, color: String, boost := 1.0) -> void:
 	if root == null or Main.quality == 0: return
 	var S := G.S
-	_wake.position = Vector2(x + G.FX + FX.shake_x, y + FX.shake_y)
+	_wake.position = Game.toScreen(x, y)
 	_wake.emission_rect_extents = Vector2(w * 0.1, 2 * S)
 	_wake.initial_velocity_min = 70 * S * boost
 	_wake.initial_velocity_max = 120 * S * boost
@@ -126,7 +126,7 @@ func burst(x: float, y: float, color: String, power := 1.0) -> void:
 	var b := _bursts[_bi]
 	_left[_bi] = 0.6 + 0.25 * power
 	_bi = (_bi + 1) % BURSTS
-	b.position = Vector2(x + G.FX + FX.shake_x, y + FX.shake_y)
+	b.position = Game.toScreen(x, y)
 	b.amount = int(clampf(36.0 * power, 16, 150) * (1.0 if Main.quality >= 2 else 0.6))
 	b.lifetime = 0.45 + 0.2 * power
 	b.emission_sphere_radius = 6 * S * sqrt(power)
