@@ -235,9 +235,20 @@ func _boss_kraken(b: En) -> void:
 	if ph != 2 and active and timer(b, "tent", 0.15 if ph >= 3 else 0.2):
 		var sw := 1.9 if ph >= 3 else 1.4
 		for sd in [-1.0, 1.0]:
+			# Godot: завеса летит с кончика щупальца этой стороны; отрубленное щупальце не стреляет
+			var tip = tentTip(b, sd)
+			if tip == null: continue
 			var a: float = PI / 2 + sd * (0.2 + 0.6 * (0.5 + 0.5 * sin(b.age * sw + (PI if sd > 0 else 0.0))))
 			var s := Game.bspd(160)
-			Game.ebullet(b.x + sd * b.w * 0.34, b.y + b.h * 0.36, cos(a) * s, sin(a) * s, "violet")
+			Game.ebullet(tip.x, tip.y, cos(a) * s, sin(a) * s, "violet")
+	# Godot: хватка щупальцем — кончик краснеет, потом хлещет в сторону корабля
+	if timer(b, "lash", bcd(b, 4.4 if ph == 1 else 3.2), 3.0):
+		var best = null
+		for tn: Dictionary in b.pt.get("tents", []):
+			if tn.pts.size() > 4 and (best == null or tn.pts.size() > best.pts.size()): best = tn
+		if best != null:
+			best.warn = 0.55
+			A.play("bossRoar", {"vol": 0.3, "rate": 1.7})
 	if ph <= 2 and timer(b, "ink", bcd(b, 3.2), 1.8):
 		var n := 1 + ph
 		for i in n:
@@ -251,6 +262,173 @@ func _boss_kraken(b: En) -> void:
 		b.dash = {"t": 0.0, "x0": b.x, "y0": b.y, "tx": U.clamp(Game.player.x, b.w * 0.45, G.FW - b.w * 0.45), "dy": 50 * S}
 		A.play("bossRoar", {"vol": 0.4, "rate": 1.3})
 	if ph >= 3 and timer(b, "spawn", bcd(b, 7), 2.5): E.brood(b.x, b.y + b.h * 0.3, 3, false, 24)
+
+
+# ── Godot: щупальца Кракена — цепочки звеньев с физикой (интегрирование Верле): висят под корпусом,
+#    колышутся, хлещут в корабль, задевают его; пули рубят их с кончика кусками по 3 звена ──
+const TENT_N := 11
+
+
+func growTents(b: En) -> void:
+	var tents: Array = []
+	for sd in [-1.0, 1.0]:
+		var a := tentAnchor(b, sd)
+		var pts: Array = []
+		for i in TENT_N: pts.append({"x": a.x + sd * i * 3 * G.S, "y": a.y + i * 14 * G.S, "px": a.x, "py": a.y + i * 14 * G.S})
+		tents.append({"sd": sd, "pts": pts, "hp": b.maxHp * 0.025, "warn": 0.0, "lash": 0.0, "flash": 0.0})
+	b.pt["tents"] = tents
+
+
+func tentAnchor(b: En, sd: float) -> Vector2:
+	return Vector2(b.x + sd * b.w * 0.3, b.y + b.h * 0.3)
+
+
+## кончик щупальца стороны sd (−1 левое, 1 правое); null — отрублено
+func tentTip(b: En, sd: float):
+	for tn: Dictionary in b.pt.get("tents", []):
+		if tn.sd == sd and tn.pts.size() > 3: return tn.pts[tn.pts.size() - 1]
+	return null
+
+
+## толщина звена: у основания толще, к кончику тоньше
+func tentR(i: int, n: int) -> float:
+	return lerpf(11.0, 4.0, float(i) / maxf(1, n - 1)) * G.S
+
+
+func tentacles(b: En, dt: float) -> void:
+	var S := G.S
+	if not b.pt.has("tents"): growTents(b)
+	var p: Pl = Game.player
+	var seg := 15.0 * S
+	var h := minf(dt, 1.0 / 30)
+	for tn: Dictionary in b.pt.tents:
+		var pts: Array = tn.pts
+		tn.flash = maxf(0.0, tn.flash - dt)
+		if tn.warn > 0:
+			tn.warn -= dt
+			if tn.warn <= 0: tn.lash = 0.7
+		tn.lash = maxf(0.0, tn.lash - dt)
+		var a := tentAnchor(b, tn.sd)
+		var n := pts.size()
+		for i in n:
+			var q: Dictionary = pts[i]
+			if i == 0:
+				q.x = a.x; q.y = a.y; q.px = a.x; q.py = a.y
+				continue
+			var vx: float = (q.x - q.px) * 0.96
+			var vy: float = (q.y - q.py) * 0.96
+			q.px = q.x; q.py = q.y
+			var k := float(i) / maxf(1, n - 1)
+			var ax := sin(b.age * 2.1 + tn.sd * 1.7 + k * 3.0) * 260 * S * k   # колыхание
+			var ay := 420 * S                                                  # тяжесть
+			if tn.lash > 0 and p.alive:
+				var f := k * k * 2600 * S
+				var dx: float = p.x - q.x
+				var dy: float = p.y - q.y
+				var dl := maxf(1.0, sqrt(dx * dx + dy * dy))
+				ax += dx / dl * f; ay += dy / dl * f
+			q.x += vx + ax * h * h; q.y += vy + ay * h * h
+		# звенья держат длину (основание неподвижно)
+		for it in 4:
+			for i in range(1, n):
+				var q0: Dictionary = pts[i - 1]
+				var q1: Dictionary = pts[i]
+				var dx: float = q1.x - q0.x
+				var dy: float = q1.y - q0.y
+				var dl := maxf(0.001, sqrt(dx * dx + dy * dy))
+				var d := (dl - seg) / dl
+				if i == 1:
+					q1.x -= dx * d; q1.y -= dy * d
+				else:
+					q0.x += dx * d * 0.5; q0.y += dy * d * 0.5
+					q1.x -= dx * d * 0.5; q1.y -= dy * d * 0.5
+		# касание щупальцем — удар по кораблю
+		if p.alive and not b.entering:
+			for i in range(2, n):
+				var q: Dictionary = pts[i]
+				var rr := tentR(i, n) + p.r
+				if (q.x - p.x) * (q.x - p.x) + (q.y - p.y) * (q.y - p.y) < rr * rr:
+					Game.hitPlayer(q.x, q.y, "щупальце Кракена")
+					break
+
+
+## пуля игрока попала в щупальце? (с кончика) — урон куску, при обнулении кусок отрублен
+func hitTentacle(bl: Bl) -> bool:
+	var b: En = Game.boss
+	if b == null or b.entering or not b.pt.has("tents"): return false
+	for tn: Dictionary in b.pt.tents:
+		var pts: Array = tn.pts
+		for i in range(pts.size() - 1, 1, -1):
+			var q: Dictionary = pts[i]
+			var rr := tentR(i, pts.size()) + bl.r
+			if (q.x - bl.x) * (q.x - bl.x) + (q.y - bl.y) * (q.y - bl.y) > rr * rr: continue
+			tn.hp -= bl.dmg
+			tn.flash = 0.08
+			FX.hit(bl.x, bl.y, "#c89bff")
+			if tn.hp <= 0: cutTent(b, tn)
+			return true
+	return false
+
+
+func cutTent(b: En, tn: Dictionary) -> void:
+	var pts: Array = tn.pts
+	var tip: Dictionary = pts[pts.size() - 1]
+	FX.explode(tip.x, tip.y, 1.1, "#b06bff")
+	FX.debris(tip.x, tip.y, "#b06bff", 6, 160)
+	A.play("explodeS", {"x": tip.x})
+	pts.resize(maxi(2, pts.size() - 3))
+	tn.hp = b.maxHp * 0.025
+	tn.warn = 0.0; tn.lash = 0.0
+	Game.damageEnemy(b, b.maxHp * 0.015, {"src": "part"})
+	if pts.size() <= 3:
+		FX.text(tip.x, tip.y - 20 * G.S, "ЩУПАЛЬЦЕ ОТРУБЛЕНО!", "#ffc83d", 15, 1.0)
+		FX.shake(0.35)
+		Game.hitstop(0.05)
+		Haptic.medium()
+		Game.damageEnemy(b, b.maxHp * 0.04, {"src": "part"})
+
+
+func drawTentacles(ctx: Ctx, b: En) -> void:
+	# механические щупальца под стать корпусу: металлические кольца, по оси — светящаяся жила цвета босса
+	var glow := U.col(b.bdef.color)
+	for tn: Dictionary in b.pt.tents:
+		var pts: Array = tn.pts
+		var n := pts.size()
+		if n < 2: continue
+		for pass_ in 2:
+			var kk := 1.0 if pass_ == 1 else 1.3
+			for i in n:
+				var q: Dictionary = pts[i]
+				var r := tentR(i, n) * kk
+				if i > 0:
+					var q0: Dictionary = pts[i - 1]
+					ctx.fill = Color("#0b1016") if pass_ == 0 else Color("#2e3c47")
+					ctx.fill_circle((q.x + q0.x) * 0.5, (q.y + q0.y) * 0.5, (r + tentR(i - 1, n) * kk) * 0.45)
+				if pass_ == 0: ctx.fill = Color("#0b1016")
+				elif tn.flash > 0: ctx.fill = Color.WHITE
+				else: ctx.fill = Color("#5d7484") if i % 2 == 0 else Color("#8aa2b2")
+				ctx.fill_circle(q.x, q.y, r)
+		# жила
+		ctx.additive = true
+		ctx.stroke = glow
+		for k in 2:
+			ctx.alpha = 0.25 if k == 0 else 0.7
+			ctx.line_width = (5.0 if k == 0 else 1.6) * G.S
+			ctx.begin_path()
+			ctx.move_to(pts[0].x, pts[0].y)
+			for i in range(1, n): ctx.line_to(pts[i].x, pts[i].y)
+			ctx.stroke_path()
+		var tip: Dictionary = pts[n - 1]
+		var gs := 18 * G.S
+		ctx.alpha = 0.8
+		ctx.draw_tex(G.glow(b.bdef.color, 64), tip.x - gs / 2, tip.y - gs / 2, gs, gs)
+		# хватка вот-вот — кончик наливается красным
+		if tn.warn > 0 or tn.lash > 0:
+			ctx.alpha = 0.5 + 0.5 * absf(sin(b.age * 20))
+			gs = 36 * G.S
+			ctx.draw_tex(G.glow("#ff3d5a", 64), tip.x - gs / 2, tip.y - gs / 2, gs, gs)
+		ctx.additive = false
+		ctx.alpha = 1.0
 
 
 ## Феникс: кольца и перья → пикирует на корабль → огненный дождь и огненные кольца (и возрождение)
@@ -563,6 +741,10 @@ func phaseStart(b: En) -> void:
 	ring(b.x, b.y, 10 if b.num == 1 else 16, 160, "orb", U.random())
 	# энергощит Дредноута в новой фазе восстанавливается до половины
 	if b.shieldMax > 0: b.shield = maxf(b.shield, b.shieldMax * 0.5)
+	# Godot: Кракен в последней фазе отращивает отрубленные щупальца
+	if b.bdef.id == "kraken" and b.phase >= 3:
+		growTents(b)
+		FX.text(b.x, b.y + b.h * 0.5, "ЩУПАЛЬЦА ОТРОСЛИ", "#c89bff", 15, 1.0)
 
 
 ## 3.0: дополнительная атака из новых паттернов (E._fire_*): во 2-й фазе — по чётности номера босса, в 3-й — все
@@ -584,6 +766,7 @@ func updateBoss(b: En, edt: float, dt: float) -> void:
 	b._dt = edt
 	b.age += dt
 	b.lastX = b.x
+	if b.bdef.id == "kraken": tentacles(b, edt)
 	if b.entering:
 		b.y = U.damp(b.y, b.baseY, 2.2, dt) + 30 * S * dt
 		if b.y >= b.baseY - 4 * S:
@@ -729,6 +912,7 @@ func drawBoss(ctx: Ctx, b: En) -> void:
 			if G.has("fx_plasma2"): G.draw(ctx, "fx_plasma2", o.x, o.y, s * 1.7, t * 2)
 			else: G.draw(ctx, "eb_fire", o.x, o.y, s * 1.1, t * 3)
 		ctx.additive = false
+	if b.pt.has("tents"): drawTentacles(ctx, b)
 	ctx.save()
 	ctx.translate(b.x, b.y + sin(t * 1.6) * 3 * S)
 	# свечение ядра (у перегретого Хаоса — красное и пульсирующее)

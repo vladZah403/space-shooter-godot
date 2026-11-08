@@ -1229,10 +1229,16 @@ func darkBurst(b: Bl) -> void:
 # СТОЛКНОВЕНИЯ
 # ════════════════════════════════════════════════════════════
 func collide() -> void:
+	var kraken: bool = boss != null and boss.bdef.id == "kraken"
 	for b in bullets:
 		if b.dead or b.kind == "dark": continue
 		if b.kind == "wave":
 			waveHits(b)
+			continue
+		# Godot: щупальца Кракена прикрывают корпус и рубятся пулями
+		if kraken and B.hitTentacle(b):
+			run.hits += 1
+			b.dead = true
 			continue
 		for e in enemies:
 			if not e.alive or not e.hittable: continue
