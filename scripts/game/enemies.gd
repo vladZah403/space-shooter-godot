@@ -757,7 +757,7 @@ func _ai_redoubt(e: En, dt: float) -> void:
 	else: leave(e, dt)
 
 
-## Жук-дрон: рой с рывками; личинка паразита медленно ползёт к игроку
+## Жук-дрон: стая (Godot — boids, уворот от пуль, клещи); личинка паразита медленно ползёт к игроку
 func _ai_swarm(e: En, dt: float) -> void:
 	var S := G.S
 	var p: Pl = Game.player
@@ -769,9 +769,51 @@ func _ai_swarm(e: En, dt: float) -> void:
 		if e.age > 9 or e.y > G.H + e.h:
 			e.leaving = true; e.alive = false
 		return
-	e.y += e.spd * 0.85 * dt
-	e.jx = U.damp(e.jx, U.rand(-1, 1) * 26 * S, 3, dt)
-	e.x = U.clamp(e.baseX + sin(e.age * 3.1 + e.idx * 0.8) * e.amp + e.jx, e.w * 0.5, G.FW - e.w * 0.5)
+	# Godot: стая (boids) — жуки держатся вместе, не толкаются, уворачиваются от пуль и берут корабль в клещи
+	if e.vx == 0.0 and e.vy == 0.0: e.vy = e.spd * 0.85
+	var ax := 0.0
+	var ay := 0.0
+	var cx := 0.0
+	var cy := 0.0
+	var avx := 0.0
+	var avy := 0.0
+	var n := 0
+	var sep := 36.0 * S
+	for o: En in Game.enemies:
+		if o == e or not o.alive or o.ai != "swarm" or o.larva: continue
+		var dx := o.x - e.x
+		var dy := o.y - e.y
+		var d2 := dx * dx + dy * dy
+		if d2 > 6400.0 * S * S: continue
+		n += 1; cx += o.x; cy += o.y; avx += o.vx; avy += o.vy
+		if d2 < sep * sep and d2 > 0.01:
+			var d := sqrt(d2)
+			ax -= dx / d * (sep - d) * 9.0; ay -= dy / d * (sep - d) * 9.0
+	if n > 0:
+		# сплочённость (к центру соседей) и выравнивание (скорость как у соседей)
+		ax += (cx / n - e.x) * 0.45 + (avx / n - e.vx) * 1.2
+		ay += (cy / n - e.y) * 0.45 + (avy / n - e.vy) * 1.2
+	# цель: сверху — строй волной, как раньше; ниже трети экрана — клещи: чётные слева от корабля, нечётные справа
+	var side := -1.0 if e.idx % 2 == 0 else 1.0
+	var tx := e.baseX + sin(e.age * 1.6 + e.idx * 0.8) * e.amp * 0.6
+	if e.y > G.H * 0.2 and p.alive: tx = p.x + side * (60 + (e.idx % 3) * 22) * S
+	ax += (U.clamp(tx, e.w, G.FW - e.w) - e.x) * 2.2
+	ay += (e.spd * 0.85 - e.vy) * 2.0
+	# уворот: пуля игрока летит снизу прямо в жука — рывок в сторону (реакция у каждого своя)
+	var reflex := 0.5 + fmod(e.uid * 0.37, 0.5)
+	for b: Bl in Game.bullets:
+		var by := b.y - e.y
+		if b.vy >= 0 or by < 0 or by > 170 * S: continue
+		var bx := e.x - b.x
+		if absf(bx) > 30 * S: continue
+		ax += (signf(bx) if bx != 0.0 else side) * (30 * S - absf(bx)) * 60.0 * reflex
+	e.vx += ax * dt; e.vy += ay * dt
+	var vmax := e.spd * 1.6
+	var v := sqrt(e.vx * e.vx + e.vy * e.vy)
+	if v > vmax: e.vx *= vmax / v; e.vy *= vmax / v
+	e.vy = maxf(e.vy, e.spd * 0.35)   # не зависают и не уходят вверх
+	e.x = U.clamp(e.x + e.vx * dt, e.w * 0.5, G.FW - e.w * 0.5)
+	e.y += e.vy * dt
 
 
 ## Таран: целится, показывает полосу удара и проносится вниз
