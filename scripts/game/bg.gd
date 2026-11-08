@@ -35,7 +35,11 @@ var _nvp: SubViewport
 var _nprev: ColorRect
 var _ncur: ColorRect
 var _nodd := false
-var neb_direct := false   # проверка: рисовать шейдер прямо на экран, как раньше
+var neb_direct := false
+## Godot: погода сектора — лёгкие частицы над фоном (снег у ледяных лун, пепел и искры у красного гиганта,
+## споры в изумрудных полях, пыль пояса, порывы ветра…); на низком качестве нет
+var weather: Array = []    # { x, y, vx, vy, s, a, ph, c (цвет), add (светится) }
+var _wk := ""   # проверка: рисовать шейдер прямо на экран, как раньше
 
 
 ## звёзды и пыль под размер экрана (при смене размера окна)
@@ -96,6 +100,7 @@ func setSector(idx: int, instant := false) -> void:
 	sector = idx
 	sec = D.SECTORS[si]
 	cur = {"neb": makeNebula(sec), "planet": makePlanet(sec), "feats": makeFeats(sec, si)}
+	_make_weather(str(sec.get("mech", "")))
 
 
 func makeNebula(s: Dictionary) -> ShaderMaterial:
@@ -110,6 +115,103 @@ func makeNebula(s: Dictionary) -> ShaderMaterial:
 	m.set_shader_parameter("seed", U.rand(0, 50))
 	m.set_shader_parameter("style", STYLES.get(s.get("mech", ""), 0))
 	return m
+
+
+## частица погоды по механике сектора: скорость, размер, цвет, светится ли
+func _wp(kind: String, anywhere := true) -> Dictionary:
+	var W := G.W
+	var H := G.H
+	var p := {"x": U.random() * W, "y": U.random() * H if anywhere else -10.0, "vx": 0.0, "vy": 0.0, "s": 2.0, "a": 0.6, "ph": U.random() * TAU, "c": "#ffffff", "add": false, "line": 0.0}
+	match kind:
+		"ice":       # снег: падает и покачивается
+			p.vy = U.rand(30, 70); p.vx = U.rand(-12, 6); p.s = U.rand(1.6, 3.6); p.a = U.rand(0.45, 0.9); p.c = "#eaf8ff"
+		"lava":      # пепел вниз, искры вверх
+			if U.random() < 0.6:
+				p.vy = U.rand(18, 40); p.vx = U.rand(-8, 8); p.s = U.rand(1.5, 3.2); p.a = U.rand(0.35, 0.6); p.c = "#3a2a2a"
+			else:
+				p.vy = U.rand(-55, -25); p.vx = U.rand(-10, 10); p.s = U.rand(1.5, 2.8); p.a = U.rand(0.5, 0.9); p.c = "#ff8a3d"; p.add = true
+				if not anywhere: p.y = H + 10
+		"toxic":     # споры всплывают и мерцают
+			p.vy = U.rand(-30, -12); p.vx = U.rand(-6, 6); p.s = U.rand(2.5, 5.5); p.a = U.rand(0.35, 0.7); p.c = "#7dff6b"; p.add = true
+			if not anywhere: p.y = H + 10
+		"asteroids": # пыль пояса — быстрые тусклые штрихи
+			p.vy = U.rand(140, 220); p.vx = U.rand(-20, 0); p.s = 1.0; p.a = U.rand(0.12, 0.25); p.c = "#c9b79c"; p.line = U.rand(10, 22)
+		"wind":      # звёздный ветер — горизонтальные порывы
+			p.vx = U.rand(220, 340) * (1 if U.random() < 0.7 else -1); p.vy = U.rand(10, 30); p.s = 1.0; p.a = U.rand(0.12, 0.28); p.c = "#bfe3ff"; p.line = U.rand(18, 40)
+			if not anywhere: p.x = -40.0 if p.vx > 0 else W + 40; p.y = U.random() * H
+		"prism":     # блёстки радужных искр
+			p.vy = U.rand(8, 20); p.s = U.rand(1.5, 3.0); p.a = 0.8; p.c = U.pick(["#7fe7ff", "#ff7ad9", "#ffe066", "#7dff6b"]); p.add = true
+		"pillars":   # золотые пылинки в лучах
+			p.vy = U.rand(10, 24); p.vx = U.rand(-4, 4); p.s = U.rand(1.5, 3.0); p.a = U.rand(0.4, 0.8); p.c = "#ffd27a"; p.add = true
+		"eye":       # красные угольки вверх
+			p.vy = U.rand(-40, -18); p.vx = U.rand(-8, 8); p.s = U.rand(1.5, 3.0); p.a = U.rand(0.4, 0.8); p.c = "#ff3d5a"; p.add = true
+			if not anywhere: p.y = H + 10
+		"hive":      # пыльца улья
+			p.vy = U.rand(6, 20); p.vx = U.rand(-14, 14); p.s = U.rand(2.0, 4.0); p.a = U.rand(0.3, 0.6); p.c = "#d8ff5c"; p.add = true
+		"portals":   # фиолетовые искры кружат
+			p.vy = U.rand(-10, 10); p.vx = U.rand(-10, 10); p.s = U.rand(1.5, 3.0); p.a = U.rand(0.5, 0.9); p.c = "#c77dff"; p.add = true
+		"gravity":   # пылинки затягивает к центру
+			p.s = U.rand(1.2, 2.4); p.a = U.rand(0.3, 0.7); p.c = "#ffd9a0"; p.add = true
+		"nebula":    # клочья тумана
+			p.vy = U.rand(6, 14); p.s = U.rand(60, 120); p.a = U.rand(0.04, 0.08); p.c = str(sec.neb[1 % sec.neb.size()]); p.add = true
+		_:           # орбита: редкие искорки мусора
+			p.vy = U.rand(20, 40); p.vx = U.rand(-6, 6); p.s = U.rand(1.0, 2.0); p.a = U.rand(0.25, 0.5); p.c = "#cfe6ff"
+	return p
+
+
+func _make_weather(kind: String) -> void:
+	_wk = kind
+	weather.clear()
+	var n: int = {"ice": 46, "lava": 40, "toxic": 26, "asteroids": 26, "wind": 18, "prism": 30, "pillars": 30, "eye": 26, "hive": 24, "portals": 26, "gravity": 40, "nebula": 7}.get(kind, 12)
+	for i in n: weather.append(_wp(kind))
+
+
+func _update_weather(dt: float, sp: float) -> void:
+	if weather.is_empty(): return
+	var W := G.W
+	var H := G.H
+	var c := Vector2(W / 2, H * 0.35)
+	for i in weather.size():
+		var p: Dictionary = weather[i]
+		p.ph += dt
+		if _wk == "gravity":
+			var d := c - Vector2(p.x, p.y)
+			var l := maxf(20.0, d.length())
+			var tang := Vector2(-d.y, d.x) / l
+			p.vx = lerpf(p.vx, (d.x / l * 40.0 + tang.x * 70.0), dt * 2.0)
+			p.vy = lerpf(p.vy, (d.y / l * 40.0 + tang.y * 70.0), dt * 2.0)
+			if l < 24.0: weather[i] = _wp(_wk); continue
+		var sway: float = sin(p.ph * 1.7) * 10.0 if _wk == "ice" or _wk == "hive" else 0.0
+		p.x += (p.vx + sway) * dt
+		p.y += p.vy * dt * (1.0 if p.vy < 0 else sp)
+		if p.y > H + 20 or p.y < -30 or p.x < -60 or p.x > W + 60:
+			weather[i] = _wp(_wk, false)
+
+
+func _draw_weather(ctx: Ctx, quality: int) -> void:
+	var n := weather.size() if quality >= 2 else weather.size() * 2 / 3
+	for i in n:
+		var p: Dictionary = weather[i]
+		var tw: float = 0.65 + 0.35 * sin(p.ph * 3.0) if p.add else 1.0
+		ctx.alpha = p.a * tw
+		ctx.additive = p.add
+		if p.line > 0:
+			# штрих — тонким прямоугольником (без многоугольника на видеокарте): пыль вертикально, ветер горизонтально
+			ctx.fill = U.col(p.c)
+			if absf(p.vx) > absf(p.vy): ctx.fill_rect(p.x - (p.line if p.vx > 0 else 0.0), p.y, p.line, 1.0)
+			else: ctx.fill_rect(p.x, p.y - p.line, 1.0, p.line)
+		elif p.s > 20:
+			ctx.draw_tex(G.soft(p.c, 64), p.x - p.s, p.y - p.s, p.s * 2, p.s * 2)
+		elif p.add:
+			var g: float = p.s * 3.0
+			ctx.draw_tex(G.soft(p.c, 32), p.x - g, p.y - g, g * 2, g * 2)
+			ctx.fill = U.col(p.c)
+			ctx.fill_rect(p.x - p.s * 0.35, p.y - p.s * 0.35, p.s * 0.7, p.s * 0.7)
+		else:
+			ctx.fill = U.col(p.c)
+			ctx.fill_circle(p.x, p.y, p.s * 0.5)
+	ctx.alpha = 1.0
+	ctx.additive = false
 
 
 ## планета: шейдер-шар; кольца (у половины планет) — дугами поверх
@@ -222,6 +324,7 @@ func update(dt: float, speedMul := 1.0) -> void:
 		if f.y - f.s / 2 > H:
 			f.y = -f.s / 2 - (U.random() * H * 0.5 if f.get("rock") else H * U.rand(1, 2))
 			if f.get("rock"): f.x = U.random() * W
+	_update_weather(dt, sp)
 	cometT -= dt
 	if cometT <= 0:
 		cometT = U.rand(6, 13)
@@ -422,4 +525,5 @@ func draw(ctx: Ctx, quality := 2) -> void:
 			ctx.fill_rect(d.x, d.y - len * 0.4, 1, len * 0.4)
 			ctx.alpha = d.a * 1.1 * k
 			ctx.fill_rect(d.x, d.y - len, 1, len * 0.6)
+	if quality > 0: _draw_weather(ctx, quality)
 	ctx.restore()

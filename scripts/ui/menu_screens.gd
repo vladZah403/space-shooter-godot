@@ -15,6 +15,11 @@ var coins: Label
 var body: VBoxContainer
 var scroll: ScrollContainer
 var preview = null          # { model, skin, trail } — что показывать в ангаре
+## Godot: корабль в ангаре можно крутить пальцем — поворот вокруг продольной оси (псевдо-3D), с инерцией
+var _yaw := 0.0
+var _yawV := 0.0
+var _spinT := -1.0
+var _dragging := false
 var ars := ""               # выбранное оружие в арсенале
 var sk_sel := ""            # выбранный имплант
 var relic_sel := ""
@@ -148,13 +153,73 @@ static func _draw_look(c: Ctx, model: String, skin: String, sz: Vector2, k := 0.
 # ════════════════════════════════════════════════════════════
 # АНГАР: корабли, дроны, раскраски, двигатели, пилоты; престиж
 # ════════════════════════════════════════════════════════════
+## витрина ангара: платформа с вращающимся кольцом, корабль поворачивается вокруг продольной оси
+## (ширина ~ cos угла, обратная сторона — темнее), по корпусу скользит блик; без касаний — лёгкое покачивание
+func _draw_showcase(c: Ctx, sz: Vector2, t: float) -> void:
+	var dt := 0.016 if _spinT < 0.0 else clampf(t - _spinT, 0.0, 0.05)
+	_spinT = t
+	if not _dragging:
+		_yaw += _yawV * dt
+		_yawV *= exp(-dt * 1.6)
+		if absf(_yawV) < 0.4:
+			# остановился — мягко к ближайшему «лицом вверх» и лёгкое покачивание
+			var target := roundf(_yaw / TAU) * TAU + sin(t * 0.9) * 0.22
+			_yaw = lerpf(_yaw, target, minf(1.0, dt * 2.0))
+	var p = preview if preview else M.s.ship
+	var cx := sz.x / 2
+	var w := minf(sz.y * 0.5, 120.0)
+	var cy := sz.y * 0.44 + sin(t * 1.6) * 5
+	# платформа
+	c.save(); c.translate(cx, sz.y * 0.88); c.scale(1.0, 0.26)
+	c.additive = true
+	c.alpha = 0.4; c.draw_tex(G.soft("#3de0ff", 64), -w * 1.1, -w * 1.1, w * 2.2, w * 2.2)
+	c.alpha = 0.7; c.stroke = Kit.CYAN; c.line_width = 2.0
+	c.rotate(t * 0.6)
+	c.dash = PackedFloat32Array([10, 8]); c.begin_path(); c.arc(0, 0, w * 0.85, 0, TAU); c.stroke_path(); c.dash = PackedFloat32Array()
+	c.additive = false; c.alpha = 1.0
+	c.restore()
+	# корабль
+	var cs := cos(_yaw)
+	c.save(); c.translate(cx, cy); c.scale(signf(cs if cs != 0.0 else 1.0) * maxf(absf(cs), 0.07), 1.0)
+	c.alpha = 1.0 if cs >= 0 else 0.62
+	Game.drawShip(c, p.model, p.skin, p.trail, 0, 0, w, 0.0, t, 1.15)
+	c.alpha = 1.0
+	c.restore()
+	# блик по корпусу при повороте
+	var sh := absf(sin(_yaw))
+	if sh > 0.05:
+		c.additive = true
+		c.alpha = 0.35 * sh
+		var bx := cx + sin(_yaw) * w * 0.3 * absf(cs)
+		c.draw_tex(G.soft("#ffffff", 64), bx - w * 0.22, cy - w * 0.55, w * 0.44, w * 1.1)
+		c.additive = false
+		c.alpha = 1.0
+	# подсказка в первые секунды
+	if t < 4.0:
+		c.alpha = clampf(1.0 - (t - 2.5) / 1.5, 0.0, 0.8)
+		c.font = Kit.font(700)
+		c.fill = Kit.MUTED
+		c.fill_text(Lang.t("◀ покрутите пальцем ▶"), cx, sz.y - 6, 11, 1)
+		c.alpha = 1.0
+
+
 func _render_hangar() -> void:
 	if tab == "": tab = "models"
 	var s: Dictionary = M.s
 	var pv = preview if preview else s.ship
-	var big := Kit.ctx_view(func(c: Ctx, sz: Vector2, t: float):
-		var p = preview if preview else M.s.ship
-		Game.drawShip(c, p.model, p.skin, p.trail, sz.x / 2, sz.y * 0.46 + sin(t * 1.6) * 5, minf(sz.y * 0.5, 120), sin(t * 0.9) * 0.08, t, 1.15), Vector2(0, 190))
+	var big := Kit.ctx_view(func(c: Ctx, sz: Vector2, t: float): _draw_showcase(c, sz, t), Vector2(0, 200))
+	big.mouse_filter = Control.MOUSE_FILTER_STOP
+	big.gui_input.connect(func(e: InputEvent):
+		var dx := 0.0
+		if e is InputEventScreenDrag: dx = e.relative.x
+		elif e is InputEventMouseMotion and (e.button_mask & MOUSE_BUTTON_MASK_LEFT): dx = e.relative.x
+		elif (e is InputEventScreenTouch or e is InputEventMouseButton) and e.pressed: _dragging = true; _yawV = 0.0
+		elif (e is InputEventScreenTouch or e is InputEventMouseButton) and not e.pressed: _dragging = false
+		if dx != 0.0:
+			_dragging = true
+			_yaw += dx * 0.014
+			_yawV = lerpf(_yawV, dx * 0.014 * 60.0, 0.5)
+			big.accept_event())
 	body.add_child(big)
 	var sh: Dictionary = D.SHIPS[s.ship.model]
 	body.add_child(Kit.label(sh.name, 18, Kit.TEXT, 900, HORIZONTAL_ALIGNMENT_CENTER))
