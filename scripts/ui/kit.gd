@@ -220,10 +220,15 @@ static func appear(c: Control, slide := false) -> void:
 	else:
 		var p := _first_panel(c)
 		if p:
-			# размер панели может быть ещё не посчитан — центр берём на каждом шаге
-			tw.tween_method(func(k: float):
+			# размер панели может быть ещё не посчитан — центр берём на каждом шаге.
+			# Анимация — на самой панели: экран перестроили (панель удалена) — она останавливается вместе с ней
+			var oldp = p.get_meta("_appear_p") if p.has_meta("_appear_p") else null
+			if oldp is Tween and oldp.is_valid(): oldp.kill()
+			var tp := p.create_tween()
+			tp.tween_method(func(k: float):
 				p.pivot_offset = p.size / 2
 				p.scale = Vector2.ONE * lerpf(0.94, 1.0, k), 0.0, 1.0, 0.26).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			p.set_meta("_appear_p", tp)
 	c.set_meta("_appear", tw)
 
 

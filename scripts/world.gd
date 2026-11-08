@@ -21,6 +21,11 @@ var _clock := 0.0
 var _shot_i := 0
 var _bot_t := 0.0
 var prof := false
+## бот: «--mode=bossrush|survival», «--diff=easy|hard|…», «--challenge» (испытание дня), «--mortal» — корабль не бессмертный
+var bot_mode := "normal"
+var bot_diff := "normal"
+var bot_challenge := false
+var bot_mortal := false
 var _prof := {"frame": 0.0, "draw": 0.0, "ui": 0.0, "n": 0, "max": 0.0, "t": 0.0}
 
 
@@ -32,6 +37,10 @@ func _ready() -> void:
 		if a == "--autoplay": autoplay = true
 		elif a.begins_with("--shots="): shots_dir = a.substr(8)
 		elif a.begins_with("--seconds="): max_seconds = float(a.substr(10))
+		elif a.begins_with("--mode="): bot_mode = a.substr(7)
+		elif a.begins_with("--diff="): bot_diff = a.substr(7)
+		elif a == "--challenge": bot_challenge = true
+		elif a == "--mortal": bot_mortal = true
 		elif a == "--prof":
 			prof = true
 			Ctx.stats_on = true
@@ -46,7 +55,7 @@ func _ready() -> void:
 	if autoplay:
 		print("[bot] автоигра")
 		M.s.seenIntro = true
-		Ui.startRun("normal")
+		_bot_start()
 
 
 func _on_resize() -> void:
@@ -140,15 +149,28 @@ func _notification(what: int) -> void:
 # ════════════════════════════════════════════════════════════
 # БОТ-ТЕСТИРОВЩИК
 # ════════════════════════════════════════════════════════════
+func _bot_start() -> void:
+	if bot_challenge: Ui.startRun(M.challenge().get("diff", "normal"), {"challenge": M.challenge()})
+	else: Ui.startRun(bot_diff, {"mode": bot_mode})
+
+
 func _bot(dt: float) -> void:
 	_bot_t += dt
 	var p: Pl = Game.player
 	if p:
-		p.inv = maxf(p.inv, 5.0)
+		if not bot_mortal: p.inv = maxf(p.inv, 5.0)
 		if Game.state == "play": p.x = G.FW / 2 + sin(_bot_t * 0.8) * G.FW * 0.35
 	match Game.state:
 		"tip": Game.closeTip()
 		"cutscene": if fmod(_bot_t, 3.0) < dt: Game.skipScene()
 		"perk": Ui.botPick()
+		# смертный бот: через раз воскресает за кредиты (если хватает), иначе — конец забега
+		"revive":
+			if fmod(_bot_t, 2.0) < dt:
+				if int(_bot_t) % 4 >= 2 or not Game.revive():
+					Ui.revive.close()
+					Game.gameOver()
 		"over":
-			if fmod(_bot_t, 4.0) < dt: Ui.startRun("normal")
+			if fmod(_bot_t, 4.0) < dt:
+				print("[bot] забег окончен: волна %s, очки %d" % [Game.wave.n if Game.wave else "-", Game.run.get("score", 0) if Game.run else 0])
+				_bot_start()
