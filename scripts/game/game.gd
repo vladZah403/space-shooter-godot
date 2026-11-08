@@ -68,7 +68,7 @@ var buffs := {}
 var blasts: Array = []
 var keys := {}
 var pointer := {"id": -1, "x": 0.0, "y": 0.0, "downT": 0.0, "downX": 0.0, "downY": 0.0, "moved": 0.0, "lastTap": 0.0, "lastTapX": 0.0, "lastTapY": 0.0}
-var ov := {"rail": null, "hole": null, "beams": [], "lasers": [], "fire": []}
+var ov := {"rail": null, "hole": null, "beams": [], "lasers": [], "fire": [], "refl": []}
 var attract := {"t": 0.0}
 var hudDirty := true
 var timers: Array = []
@@ -202,7 +202,7 @@ func clearWorld() -> void:
 	if scene != null:
 		scene = null
 		Bus.emit("cinema", false)
-	ov = {"rail": null, "hole": null, "beams": [], "lasers": [], "fire": []}
+	ov = {"rail": null, "hole": null, "beams": [], "lasers": [], "fire": [], "refl": []}
 	E.corpses.clear()
 	E.burns.clear()
 	Events.reset()
@@ -1956,11 +1956,12 @@ func updateOverlays(dt: float) -> void:
 		# луч гаснет, если стрелок погиб до выстрела, и после окончания
 		var owner = bm.owner
 		if (owner != null and not owner.alive and bm.t < bm.warn) or bm.t >= bm.warn + bm.dur: beams.remove_at(i)
-	# вертикальные лучи (дредноут, ионный, инквизитор) ранят один раз
+	# вертикальные лучи (дредноут, ионный, инквизитор) ранят один раз; Godot: щит отражает луч обратно вверх
 	for bm in beams:
 		if bm.t >= bm.warn and not bm.hitDone and p.alive and absf(p.x - bm.x) < bm.w * 0.75 + p.r and p.y > bm.y0:
 			bm.hitDone = true
-			hitPlayer(bm.x, bm.y0, boss.bdef.name + ", луч" if boss else "Луч")
+			if shielded(): reflectBeam(bm)
+			else: hitPlayer(bm.x, bm.y0, boss.bdef.name + ", луч" if boss else "Луч")
 		# столпы света Цитадели бьют и по врагам
 		if bm.get("foes", false) and bm.t >= bm.warn and not bm.get("foesDone", false):
 			bm.foesDone = true
@@ -1993,7 +1994,59 @@ func updateOverlays(dt: float) -> void:
 			var qx := o.x + dx * tt
 			var qy := o.y + dy * tt
 			if sqrt((p.x - qx) * (p.x - qx) + (p.y - qy) * (p.y - qy)) < L.w * 0.45 + p.r:
-				hitPlayer(o.x, o.y, (owner.bdef.name + ", " if owner != null and owner.boss else "") + "лазер")
+				# Godot: щит держит поворотный лазер до 1,2 с и отражает его в стрелка, потом ломается
+				if shielded() and L.get("reflT", 0.0) < 1.2: reflectLaser(L, o, Vector2(qx, qy), edt)
+				else: hitPlayer(o.x, o.y, (owner.bdef.name + ", " if owner != null and owner.boss else "") + "лазер")
+	var refl: Array = ov.refl
+	for i in range(refl.size() - 1, -1, -1):
+		refl[i].t += dt
+		if refl[i].t >= refl[i].dur: refl.remove_at(i)
+
+
+## щит или «Барьер» — от них вражеские лучи отражаются
+func shielded() -> bool:
+	return player.alive and (player.shield or run.skillFx.get("sk_barrier", 0.0) > 0)
+
+
+## Godot: вертикальный луч упёрся в щит — уходит обратно вверх и бьёт всех над кораблём, стрелка — сильнее
+func reflectBeam(bm: Dictionary) -> void:
+	var p := player
+	var x: float = bm.x
+	var w: float = bm.w
+	bm.stopY = p.y - p.r   # дальше щита луч не идёт
+	ov.refl.append({"x0": x, "y0": p.y - p.r, "x1": x, "y1": -40.0, "t": 0.0, "dur": maxf(0.35, bm.dur), "w": w * 1.1, "color": "#7fe7ff"})
+	var owner = bm.owner
+	for e: En in enemies:
+		if not e.alive or not e.hittable or e.y > p.y or absf(e.x - x) > w * 0.75 + e.r: continue
+		var dm := e.maxHp * (0.03 if e.boss else (0.25 if e.mini else 0.6)) + 30 * dmgMul()
+		if e == owner and not e.boss: dm = e.maxHp
+		damageEnemy(e, dm, {"src": "reflect"})
+	FX.text(p.x, p.y - p.w * 0.9, "ОТРАЖЕНО!", "#7fe7ff", 16, 0.9)
+	FX.ring(p.x, p.y, p.r, p.w * 1.6, "#7fe7ff", 0.35, 4)
+	FX.flash("#bff4ff", 0.25)
+	Post.wave(p.x, p.y, 0.5)
+	A.play("shieldHit", {"rate": 0.8})
+	Haptic.medium()
+
+
+## Godot: поворотный лазер на щите — отражённый луч бьёт обратно в стрелка (тиками), щит копит нагрев
+func reflectLaser(L: Dictionary, o: Vector2, at: Vector2, dt: float) -> void:
+	L.reflT = L.get("reflT", 0.0) + dt
+	L.reflTick = L.get("reflTick", 0.0) - dt
+	ov.refl.append({"x0": at.x, "y0": at.y, "x1": o.x, "y1": o.y, "t": 0.0, "dur": 0.06, "w": L.w * 0.8, "color": "#7fe7ff"})
+	if L.reflTick <= 0:
+		L.reflTick = 0.15
+		var owner = L.owner
+		if owner != null and owner.alive and owner.hittable:
+			damageEnemy(owner, owner.maxHp * (0.006 if owner.boss else 0.25), {"src": "reflect"})
+		FX.sparks(at.x, at.y, "#7fe7ff", 4, 200)
+		if not L.get("reflShown", false):
+			L.reflShown = true
+			FX.text(at.x, at.y - 30 * G.S, "ОТРАЖЕНО!", "#7fe7ff", 14, 0.7)
+			A.play("shieldHit", {"rate": 1.2, "vol": 0.6})
+	if L.reflT >= 1.2 and not L.get("hotShown", false):
+		L.hotShown = true
+		FX.text(at.x, at.y - 30 * G.S, "ЩИТ ПЕРЕГРЕТ", "#ff8a96", 13, 0.8)
 
 
 ## L: { owner, ox, oy — доли размера владельца, ang, spin, track, warn, dur, w, len, color }
@@ -3653,7 +3706,13 @@ func drawOverlays(ctx: Ctx) -> void:
 			ctx.dash = PackedFloat32Array()
 		else:
 			var k: float = 1 - (bm.t - bm.warn) / bm.dur
-			drawBeamV(ctx, bm.x, bm.y0, G.H, bm.w * (0.7 + 0.3 * k), bm.color, minf(1.0, k * 1.6), 1, bm.y0)
+			drawBeamV(ctx, bm.x, bm.y0, bm.get("stopY", G.H), bm.w * (0.7 + 0.3 * k), bm.color, minf(1.0, k * 1.6), 1, bm.y0)
+	# Godot: отражённые щитом лучи
+	for r in ov.refl:
+		var k: float = 1.0 - r.t / r.dur
+		ctx.alpha = 0.35 * k; ctx.stroke = U.col(r.color); ctx.line_width = r.w * 2.2; ctx.stroke_line(r.x0, r.y0, r.x1, r.y1)
+		ctx.alpha = 0.85 * k; ctx.line_width = r.w * 0.9; ctx.stroke_line(r.x0, r.y0, r.x1, r.y1)
+		ctx.alpha = k; ctx.stroke = Color.WHITE; ctx.line_width = r.w * 0.3; ctx.stroke_line(r.x0, r.y0, r.x1, r.y1)
 	# поворотные лазеры
 	for L in ov.lasers:
 		var o := laserOrigin(L)
