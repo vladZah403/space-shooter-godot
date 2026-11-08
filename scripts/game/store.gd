@@ -1,6 +1,6 @@
 extends Node
 ## Сохранение и мета-прогрессия (автозагрузка M) — перенос store.js: SS.store (хранение) и SS.meta
-## (покупки, опыт корабля, навыки, сундуки и реликвии, достижения, задания, испытание дня, награда за вход).
+## (покупки, опыт корабля, импланты, контейнеры и реликвии, достижения, задания, испытание дня, награда за вход).
 ## Хранение: user://save.json (на вебе — IndexedDB браузера). Пишем через временный файл и переименование —
 ## сбой посреди записи не портит профиль. Облака Telegram и переноса со старой версии 1.x здесь нет.
 
@@ -51,7 +51,7 @@ func defaults() -> Dictionary:
 		"pilot": "kai",
 		"bossSeen": [],   # боссы, чью полную кат-сцену уже показали
 		"notes": [],
-		# 4.1: коллекция реликвий { id: 1 }, взятые в забег, и закрытые сундуки ["bronze", ...] — открываются после забега
+		# 4.1: коллекция реликвий { id: 1 }, взятые в забег, и закрытые контейнеры ["bronze", ...] — открываются после забега
 		"relics": {}, "relicLoadout": [], "chests": [],
 		"tips": {},       # 4.3.2: какие окна-подсказки уже показаны (Game.tipOnce)
 		"patch": 42,
@@ -181,7 +181,7 @@ func patchNotes(data: Dictionary) -> void:
 		if played and not has_note.call("v30"): s.notes.append({"type": "v30", "coins": refund})
 	if patch >= 30 and patch < 31 and played and not has_note.call("v31"): s.notes.append({"type": "v31"})
 	if patch >= 30 and patch < 40 and played and not has_note.call("v40"): s.notes.append({"type": "v40"})
-	# 4.1: реликвии — коллекция из сундуков; тем, кто уже играл, — серебряный сундук в подарок
+	# 4.1: реликвии — коллекция из контейнеров; тем, кто уже играл, — серебряный контейнер в подарок
 	if patch < 41 and played and not has_note.call("v41"):
 		s.notes.append({"type": "v41"})
 		s.chests.append("silver")
@@ -198,7 +198,7 @@ func reset() -> void:
 	save()
 
 
-## старые сохранения: ранги в пределах, навыки без пути к ним по древу (3.1) и лишние активные снимаются —
+## старые сохранения: ранги в пределах, импланты без пути к ним по древу (3.1) и лишние активные снимаются —
 ## очки возвращаются сами (считаются от изученного)
 func fixSkillSlots() -> void:
 	for id in s.skills:
@@ -212,7 +212,7 @@ func fixSkillSlots() -> void:
 		while byType[t].size() > limit[t]: s.skills.erase(byType[t].pop_back())
 
 
-## снять навыки, к которым больше нет пути по древу; → снятые
+## снять импланты, к которым больше нет пути по древу; → снятые
 func _dropOrphans() -> Array:
 	var removed: Array = []
 	var changed := true
@@ -406,7 +406,7 @@ func compUp(id: String) -> bool:
 
 
 # ════════════════════════════════════════════════════════════
-# НАВЫКИ
+# ИМПЛАНТЫ
 # ════════════════════════════════════════════════════════════
 func skillPointsTotal() -> int:
 	return maxi(0, s.shipLvl - 1) + int(s.spBonus)
@@ -430,7 +430,7 @@ func skillCount(type: String) -> int:
 	return n
 
 
-## 3.1: у навыка бывает несколько рангов; req — нужен хотя бы один из списка
+## 3.1: у импланта бывает несколько рангов; req — нужен хотя бы один из списка
 func skillState(id: String) -> Dictionary:
 	var sk: Dictionary = D.SKILLS[id]
 	var rank := int(s.skills.get(id, 0))
@@ -455,7 +455,7 @@ func learnSkill(id: String) -> bool:
 	return true
 
 
-## снять все навыки — бесплатно: навыки это выбор стиля, а не вложение
+## снять все импланты — бесплатно: импланты это выбор стиля, а не вложение
 func resetSkills() -> int:
 	var n: int = s.skills.size()
 	s.skills = {}
@@ -463,7 +463,7 @@ func resetSkills() -> int:
 	return n
 
 
-## снимает навык и все зависящие от него
+## снимает имплант и все зависящие от него
 func forgetSkill(id: String) -> Array:
 	if not s.skills.get(id): return []
 	s.skills.erase(id)
@@ -493,7 +493,7 @@ func addShipXP(n: float) -> Dictionary:
 
 
 # ════════════════════════════════════════════════════════════
-# 4.1: СУНДУКИ И КОЛЛЕКЦИЯ РЕЛИКВИЙ
+# 4.1: КОНТЕЙНЕРЫ И КОЛЛЕКЦИЯ РЕЛИКВИЙ
 # ════════════════════════════════════════════════════════════
 func relicSlots() -> int:
 	var n := 0
@@ -507,21 +507,21 @@ func relicCount() -> int:
 	return s.relics.size()
 
 
-## сундук получен в забеге — сразу в сохранение (закрытым): забег может оборваться
+## контейнер получен в забеге — сразу в сохранение (закрытым): забег может оборваться
 func addChest(tier: String) -> void:
 	if not D.CHESTS.has(tier): return
 	s.chests.append(tier)
 	soon()
 
 
-## какая реликвия выпадет: вес — по редкости сундука, у уже собранных вдвое меньше
+## какая реликвия выпадет: вес — по редкости контейнера, у уже собранных вдвое меньше
 func rollRelic(tier: String) -> String:
 	var w: Dictionary = D.CHESTS[tier].w
 	var ids: Array = D.RELICS.keys().filter(func(id): return w.get(D.RELICS[id].rar, 0) > 0)
 	return U.pick_weighted(ids, func(id): return w[D.RELICS[id].rar] * (0.5 if s.relics.get(id) else 1.0))
 
 
-## открыть первый закрытый сундук → { tier, id, dupe, coins }
+## открыть первый закрытый контейнер → { tier, id, dupe, coins }
 func openChest():
 	if s.chests.is_empty(): return null
 	var tier: String = s.chests.pop_front()
@@ -572,7 +572,7 @@ func prestigeBonus() -> Dictionary:
 func doPrestige() -> bool:
 	if not canPrestige(): return false
 	s.prestige += 1
-	# прокачка оружия и корабля сохраняется — сбрасываются только уровень и навыки
+	# прокачка оружия и корабля сохраняется — сбрасываются только уровень и импланты
 	s.shipLvl = 1; s.shipXP = 0; s.skills = {}
 	unlock("prestige1")
 	save()
@@ -729,7 +729,7 @@ func weaponDps(wid: String, full := false) -> float:
 	return dps * rate
 
 
-## Боевая мощь (3.0): урон лучшего оружия × живучесть × навыки. Новичок ≈ 120, всё на максимуме ≈ 850
+## Боевая мощь (3.0): урон лучшего оружия × живучесть × импланты. Новичок ≈ 120, всё на максимуме ≈ 850
 func power() -> int:
 	var ship: Dictionary = D.SHIPS[s.ship.model].stats
 	var dps := 0.0

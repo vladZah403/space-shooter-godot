@@ -71,14 +71,14 @@ func _wire() -> void:
 		if inRun():
 			runEvents.append({"ico": "📋", "text": M.missionText(m)})
 			return
-		toast({"ico": "📋", "title": "ЗАДАНИЕ ВЫПОЛНЕНО", "text": M.missionText(m), "rew": "+%d" % m.reward}))
+		toast({"ico": "📋", "title": "КОНТРАКТ ВЫПОЛНЕН", "text": M.missionText(m), "rew": "+%d" % m.reward}))
 	Bus.on("missionBonus", func(n):
-		if inRun(): runEvents.append({"ico": "🏅", "text": "Все задания дня: +%d" % n})
-		else: toast({"ico": "🏅", "title": "ВСЕ ЗАДАНИЯ ДНЯ", "text": "Бонус", "rew": "+%d" % n}))
+		if inRun(): runEvents.append({"ico": "🏅", "text": "Все ежедневные контракты: +%d" % n})
+		else: toast({"ico": "🏅", "title": "ВСЕ КОНТРАКТЫ ДНЯ", "text": "Бонус", "rew": "+%d" % n}))
 	Bus.on("skinUnlocked", func(sk):
 		if inRun(): runEvents.append({"ico": "🎨", "text": "Раскраска «" + sk.name + "»"})
 		else: toast({"ico": "🎨", "title": "НОВАЯ РАСКРАСКА", "text": sk.name}))
-	Bus.on("shipLevel", func(lvl, _r): toast({"ico": "🚀", "title": "УРОВЕНЬ КОРАБЛЯ %d" % lvl, "text": "+1 очко навыков"}))
+	Bus.on("shipLevel", func(lvl, _r): toast({"ico": "🚀", "title": "УРОВЕНЬ КОРАБЛЯ %d" % lvl, "text": "+1 очко имплантов"}))
 	Bus.on("waveStart", func(w): waveBanner(w))
 	Bus.on("waveEvent", func(d): banner([[d.ico + " " + d.name, 2], [d.get("desc", ""), 3]], d.color, 2600))
 	Bus.on("waveClear", func(w):
@@ -147,12 +147,12 @@ func _checkLogin() -> void:
 		var got = M.claimLogin()
 		if got:
 			A.play("buy"); Haptic.success()
-			toast({"ico": "🎁", "title": "НАГРАДА", "text": "+%d кредитов%s" % [got.coins, " и +1 очко навыка" if got.get("sp", 0) else ""]})
+			toast({"ico": "🎁", "title": "НАГРАДА", "text": "+%d кредитов%s" % [got.coins, " и +1 очко импланта" if got.get("sp", 0) else ""]})
 			menu.refresh()
 	var streak := ("Серия: %d %s подряд!" % [st.streak, U.plural(st.streak, "день", "дня", "дней")]) if st.streak > 1 else "Заходите каждый день — награда растёт!"
 	dialog({"ico": "🎁", "title": "НАГРАДА ЗА ВХОД · ДЕНЬ %d" % (st.day + 1), "text": "+%d кредитов%s
 
-%s" % [r.coins, " и +1 очко навыка" if r.get("sp", 0) else "", streak], "ok": "ЗАБРАТЬ", "noCancel": true, "onOk": claim})
+%s" % [r.coins, " и +1 очко импланта" if r.get("sp", 0) else "", streak], "ok": "ЗАБРАТЬ", "noCancel": true, "onOk": claim})
 
 
 func startRun(diffId: String, opts = null) -> void:

@@ -1,21 +1,21 @@
 extends Node
 ## Карта сектора и реликвии (автозагрузка RunMap) — перенос map.js.
 ##  Сектор: 4 шага по 2–3 узла и босс. Перед каждой обычной волной (кроме самой первой в забеге) игрок
-##  выбирает узел, связанный с прошлым: бой, элита, торговец, ремонт, тайник, событие. После волны — награда узла.
-##  4.1: реликвии больше не выдаются в забеге — вместо них сундуки (элита, босс, тайник, события, торговец);
+##  выбирает узел, связанный с прошлым: бой, элита, контрабандист, ремонт, тайник, событие. После волны — награда узла.
+##  4.1: реликвии больше не выдаются в забеге — вместо них контейнеры (элита, босс, тайник, события, контрабандист);
 ##  открываются на экране итогов, реликвия — в коллекцию, в забег берутся из коллекции (startRelics).
-##  4.2: эскорт — Торговец идёт через волну, враги бьют по нему огненными шарами.
+##  4.2: эскорт — Контрабандист идёт через волну, враги бьют по нему огненными шарами.
 
 const STEPS := 4
 const LANES := 3
 const ESCORT := {"hp": 10, "w": 84.0, "cut": 0.7, "shotCd": 2.0}
 ## сцены узлов: 2,4 с — что происходит, до окна выбора (тап — пропустить)
 const VISIT := {
-	"shop": {"cap": "УЗЕЛ КАРТЫ", "name": "ТОРГОВЕЦ", "sub": "Лавка пристыковалась — заглянем", "color": "#ffc83d"},
+	"shop": {"cap": "УЗЕЛ КАРТЫ", "name": "КОНТРАБАНДИСТ", "sub": "Лавка пристыковалась — заглянем", "color": "#ffc83d"},
 	"cache": {"cap": "УЗЕЛ КАРТЫ", "name": "ТАЙНИК", "sub": "Контейнер с добычей", "color": "#b06bff"},
 	"repair": {"cap": "УЗЕЛ КАРТЫ", "name": "РЕМОНТ", "sub": "Ремонтный корабль чинит обшивку", "color": "#3dffa2"},
-	"elite": {"cap": "ТРЕВОГА", "name": "ЭЛИТНЫЙ ПАТРУЛЬ", "sub": "Врагов больше — награда: сундук", "color": "#ff3d5a"},
-	"escort": {"cap": "УЗЕЛ КАРТЫ", "name": "ЭСКОРТ", "sub": "Доведите Торговца живым — скидка и сундук", "color": "#ffc83d"},
+	"elite": {"cap": "ТРЕВОГА", "name": "ЭЛИТНЫЙ ПАТРУЛЬ", "sub": "Врагов больше — награда: контейнер", "color": "#ff3d5a"},
+	"escort": {"cap": "УЗЕЛ КАРТЫ", "name": "ЭСКОРТ", "sub": "Доведите Контрабандиста живым — скидка и контейнер", "color": "#ffc83d"},
 }
 
 
@@ -116,7 +116,7 @@ func choose(step: int, r: int) -> bool:
 
 
 ## узел меняет саму волну: элита — больше врагов и элита чаще (как опасный путь), тайник — волна полегче,
-## эскорт — в волне летит Торговец
+## эскорт — в волне летит Контрабандист
 func apply(w: Dictionary) -> void:
 	var run: Dictionary = Game.run
 	w.node = "boss" if w.boss else (run.mapNode if run.mapNode != null else "fight")
@@ -127,7 +127,7 @@ func apply(w: Dictionary) -> void:
 	if w.node == "cache": w.budget *= 0.8
 	if w.node == "escort":
 		run.escort = {"x": G.FW / 2, "y": G.H * 0.66, "hp": ESCORT.hp, "t": 0.0, "cd": 2.5, "flash": 0.0}
-		Game.after(w.intro + 0.8, func(): Game.hintOnce("escort", "ПОДСКАЗКА", "Враги бьют по Торговцу огненными шарами — сбивайте их выстрелами. Довезёте живым — скидка в лавке и сундук"))
+		Game.after(w.intro + 0.8, func(): Game.hintOnce("escort", "ПОДСКАЗКА", "Враги бьют по Контрабандисту огненными шарами — сбивайте их выстрелами. Довезёте живым — скидка в лавке и контейнер"))
 
 
 ## награда узла после волны; true — показано окно, волна начнётся после выбора
@@ -139,7 +139,7 @@ func reward(w: Dictionary) -> bool:
 	if node == "elite":
 		chestScene("silver" if U.random() < 0.25 else "bronze", "ЭЛИТА ПОВЕРЖЕНА", func(): Game.nextWave())
 		return true
-	# торговец, тайник, ремонт и событие — сначала короткая сцена, награда в её конце
+	# контрабандист, тайник, ремонт и событие — сначала короткая сцена, награда в её конце
 	if node in ["shop", "cache", "repair", "event"]:
 		var ev = U.pick(D.MAP_EVENTS) if node == "event" else null
 		visit(node, ev, func(): if not nodeReward(w, ev): Game.nextWave())
@@ -153,7 +153,7 @@ func nodeReward(w: Dictionary, ev) -> bool:
 	match w.node:
 		"shop":
 			var o := Game.merchantOffer()
-			# вместо реликвии — закрытый сундук (откроется после забега); значок рисует интерфейс по полю chest
+			# вместо реликвии — закрытый контейнер (откроется после забега); значок рисует интерфейс по полю chest
 			o.cards.insert(o.cards.size() - 1, {"id": "chest:silver", "chest": "silver", "ico": "📦", "name": D.CHESTS.silver.name,
 				"desc": "Откроется после забега: ксенотех в коллекцию", "rar": "epic", "price": roundf((300 + w.n * 25) * o.cut / 10) * 10})
 			return show(o)
@@ -191,9 +191,9 @@ func show(o: Dictionary) -> bool:
 
 
 # ════════════════════════════════════════════════════════════
-# 4.2: ЭСКОРТ — Торговец идёт через волну снизу вверх, враги по очереди бьют по нему огненными снарядами.
+# 4.2: ЭСКОРТ — Контрабандист идёт через волну снизу вверх, враги по очереди бьют по нему огненными снарядами.
 #  Его ранят только они (пули в игрока пролетают мимо), и их можно сбить своими выстрелами.
-#  Довели живым — скидка в следующей лавке и сундук; сбили — без награды (и без штрафа)
+#  Довели живым — скидка в следующей лавке и контейнер; сбили — без награды (и без штрафа)
 # ════════════════════════════════════════════════════════════
 func updateEscort(dt: float) -> void:
 	var es = Game.run.get("escort") if Game.run else null
@@ -207,7 +207,7 @@ func updateEscort(dt: float) -> void:
 	var tx := G.FW / 2 + sin(es.t * 0.45) * G.FW * 0.2
 	es.x = U.damp(es.x, tx, 1.2, dt); es.y = U.damp(es.y, ty, 0.8, dt)
 	if Game.state != "play" or w.intro > 0: return
-	# время от времени кто-то из врагов выше Торговца бьёт по нему
+	# время от времени кто-то из врагов выше Контрабандиста бьёт по нему
 	es.cd -= dt
 	if es.cd <= 0:
 		es.cd = ESCORT.shotCd * U.rand(0.7, 1.3)
@@ -217,7 +217,7 @@ func updateEscort(dt: float) -> void:
 			var a := atan2(es.y - e.y, es.x - e.x)
 			var sp := Game.bspd(150)
 			Game.ebullet(e.x, e.y, cos(a) * sp, sin(a) * sp, "fire", {"escort": true})
-	# снаряды, летящие в Торговца, сбиваются выстрелами игрока
+	# снаряды, летящие в Контрабандиста, сбиваются выстрелами игрока
 	for b: Eb in Game.ebullets:
 		if b.dead or not b.escort: continue
 		for pb: Bl in Game.bullets:
@@ -229,7 +229,7 @@ func updateEscort(dt: float) -> void:
 				break
 
 
-## снаряд, пущенный в Торговца, попал в него (из Game.updateEBullets); true — снаряд погас
+## снаряд, пущенный в Контрабандиста, попал в него (из Game.updateEBullets); true — снаряд погас
 func escortHit(b: Eb) -> bool:
 	var run: Dictionary = Game.run
 	var es = run.get("escort") if run else null
@@ -243,7 +243,7 @@ func escortHit(b: Eb) -> bool:
 		run.escort = null
 		FX.explode(es.x, es.y, 1.6, "#ffc83d"); FX.shake(0.25)
 		A.play("explodeL", {"vol": 0.7})
-		Bus.emit("toast", {"ico": "💥", "title": "ЭСКОРТ", "text": "Торговца сбили — награды не будет", "info": true, "dur": 2600})
+		Bus.emit("toast", {"ico": "💥", "title": "ЭСКОРТ", "text": "Контрабандиста сбили — награды не будет", "info": true, "dur": 2600})
 	return true
 
 
@@ -268,7 +268,7 @@ func drawEscort(ctx: Ctx) -> void:
 	ctx.fill = U.col("#3dffa2" if k > 0.5 else ("#ffc83d" if k > 0.25 else "#ff3d5a")); ctx.fill_rect(bx, by, bw * k, bh)
 
 
-## волна зачищена: Торговец уходит в прыжок, скидка в следующей лавке и сундук
+## волна зачищена: Контрабандист уходит в прыжок, скидка в следующей лавке и контейнер
 func escortDone() -> bool:
 	var run: Dictionary = Game.run
 	var es = run.escort
@@ -278,15 +278,15 @@ func escortDone() -> bool:
 	run.shopCut = ESCORT.cut
 	FX.ring(es.x, es.y, 10 * S, 120 * S, "#ffc83d", 0.5, 4); FX.glow_puff(es.x, es.y, "#ffc83d", 140 * S, 0.5)
 	A.play("teleport", {"rate": 1.2, "vol": 0.5})
-	Bus.emit("toast", {"ico": "🛡", "title": "ЭСКОРТ", "text": "Торговец доставлен: −30% в следующей лавке", "info": true, "dur": 2600})
-	chestScene("silver" if U.random() < 0.35 else "bronze", "ТОРГОВЕЦ ДОСТАВЛЕН", func(): Game.nextWave())
+	Bus.emit("toast", {"ico": "🛡", "title": "ЭСКОРТ", "text": "Контрабандист доставлен: −30% в следующей лавке", "info": true, "dur": 2600})
+	chestScene("silver" if U.random() < 0.35 else "bronze", "КОНТРАБАНДИСТ ДОСТАВЛЕН", func(): Game.nextWave())
 	return true
 
 
 # ════════════════════════════════════════════════════════════
-# 4.1: СУНДУКИ — сразу в сохранение (закрытыми), в забеге только счётчик
+# 4.1: КОНТЕЙНЕРЫ — сразу в сохранение (закрытыми), в забеге только счётчик
 # ════════════════════════════════════════════════════════════
-## Звёздная карта и высокие сложности иногда улучшают сундук на ступень
+## Звёздная карта и высокие сложности иногда улучшают контейнер на ступень
 func giveChest(tier: String, quiet := false) -> String:
 	var run: Dictionary = Game.run
 	var up := (0.3 if Game.relic("r_chart") else 0.0) + (0.2 if Game.diffId in ["nightmare", "god", "hell"] else 0.0)
@@ -295,26 +295,26 @@ func giveChest(tier: String, quiet := false) -> String:
 	run.get_or_add("chests", []).append(tier)
 	if not quiet:
 		A.play("perk", {"rate": 0.8})
-		Bus.emit("toast", {"ico": "chest", "title": "СУНДУК", "text": D.CHESTS[tier].short + " — откроется после забега", "info": true, "dur": 2200})
+		Bus.emit("toast", {"ico": "chest", "title": "КОНТЕЙНЕР", "text": D.CHESTS[tier].short + " — откроется после забега", "info": true, "dur": 2200})
 	Bus.emit("chest", tier)
 	Game.hudDirty = true
 	return tier
 
 
-## сундук босса: первые боссы — серебро, дальше всё чаще золото
+## контейнер босса: первые боссы — серебро, дальше всё чаще золото
 func bossChest() -> String:
 	var n: int = Game.run.bosses
 	return "gold" if U.random() < minf(0.75, maxf(0, n - 1) * 0.2) else "silver"
 
 
-## сцена: сундук падает в кадр, рвётся открыться и улетает в трюм; дальше onEnd
+## сцена: контейнер падает в кадр, рвётся открыться и улетает в трюм; дальше onEnd
 func chestScene(tier: String, cap: String, onEnd: Callable) -> void:
 	if Game.state != "play":
 		giveChest(tier); onEnd.call()
 		return
 	tier = giveChest(tier, true)
 	var def: Dictionary = D.CHESTS[tier]
-	Game.startScene({"kind": "visit", "node": "chest", "tier": tier, "color": def.color, "v": {"cap": cap, "name": def.short + " СУНДУК", "sub": "Откроется после забега"},
+	Game.startScene({"kind": "visit", "node": "chest", "tier": tier, "color": def.color, "v": {"cap": cap, "name": def.short + " КОНТЕЙНЕР", "sub": "Откроется после забега"},
 		"end": 2.3, "cardT": 0.55, "onEnd": onEnd, "done": false})
 	A.play("teleport", {"rate": 1.1, "vol": 0.5})
 
@@ -367,7 +367,7 @@ func drawVisit(ctx: Ctx, sc: Dictionary) -> void:
 	Scenes.draw(ctx, sc)
 
 
-## вращающиеся лучи за наградой (сундук в бою и при открытии): веер клиньев с прозрачным краем
+## вращающиеся лучи за наградой (контейнер в бою и при открытии): веер клиньев с прозрачным краем
 func rays(ctx: Ctx, x: float, y: float, r: float, col: String, t: float, a: float, n := 10) -> void:
 	var c0 := U.col(col, 0.9)
 	var c1 := U.col(col, 0.0)

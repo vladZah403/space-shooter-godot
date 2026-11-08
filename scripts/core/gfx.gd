@@ -369,7 +369,7 @@ func _bolt_into(img: Image) -> void:
 
 
 # ════════════════════════════════════════════════════════════
-# 4.1: СУНДУК — пиксель-арт в коде (грузовой контейнер с крышкой-«крыльями»), как gfx.chest в JS
+# 4.1: КОНТЕЙНЕР — пиксель-арт в коде (грузовой контейнер с крышкой-«крыльями»), как gfx.chest в JS
 # ════════════════════════════════════════════════════════════
 const CHEST_PAL := {
 	"bronze": {"hull": "#4a3a33", "hullL": "#6b5447", "hullD": "#2a201d", "trim": "#d0894a", "trimL": "#ffc58a", "trimD": "#7a4a22", "neon": "#ff9a4d"},
@@ -401,7 +401,7 @@ func _pixel_art(w: int, h: int, paint: Callable) -> Image:
 	return o
 
 
-## { body, lid, icon (Texture2D), hinge } — кадры сундука ступени tier
+## { body, lid, icon (Texture2D), hinge } — кадры контейнера ступени tier
 func chest(tier: String) -> Dictionary:
 	var key := "chest_" + tier
 	if _proc.has(key): return _proc[key]
@@ -410,7 +410,7 @@ func chest(tier: String) -> Dictionary:
 	var silver := tier == "silver"
 	var body := _pixel_art(32, 16, _paint_chest_body.bind(P, gold, silver))
 	var lid := _pixel_art(32, 11, _paint_chest_lid.bind(P, gold))
-	# закрытый сундук целиком — для значков в окнах
+	# закрытый контейнер целиком — для значков в окнах
 	var hinge := lid.get_height() - PX * 3
 	var icon := Image.create(body.get_width(), body.get_height() + hinge, false, Image.FORMAT_RGBA8)
 	icon.blend_rect(body, Rect2i(Vector2i.ZERO, body.get_size()), Vector2i(0, hinge))
@@ -420,7 +420,7 @@ func chest(tier: String) -> Dictionary:
 	return res
 
 
-## сундук на холсте: центр (x, y), ширина w; open 0..1 — створки раскрываются, shake — дрожь крышки.
+## контейнер на холсте: центр (x, y), ширина w; open 0..1 — створки раскрываются, shake — дрожь крышки.
 ## → { mouth, top, bottom }: mouth — y щели между крышкой и корпусом (оттуда бьёт свет)
 func draw_chest(ctx: Ctx, tier: String, x: float, y: float, w: float, open := 0.0, shake := 0.0) -> Dictionary:
 	var c := chest(tier)
@@ -448,7 +448,7 @@ func draw_chest(ctx: Ctx, tier: String, x: float, y: float, w: float, open := 0.
 
 
 func _paint_chest_body(r: Callable, P: Dictionary, gold: bool, silver: bool) -> void:
-	# проём под створками (виден, когда они раскрыты): изнутри светится цветом сундука
+	# проём под створками (виден, когда они раскрыты): изнутри светится цветом контейнера
 	r.call(1, 0, 30, 2, P.hullD); r.call(3, 1, 26, 1, P.neon)
 	# корпус и верхний обод
 	r.call(0, 2, 32, 13, P.hull)

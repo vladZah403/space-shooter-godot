@@ -837,7 +837,7 @@ func updateBoss(b: En, edt: float, dt: float) -> void:
 	b.fx = U.damp(b.fx, E.horizFlip(b), 7, dt)
 	if b.flashTele > 0: b.flashTele -= dt
 	if b.frozen > 0: b.frozen -= dt
-	# ЭМИ (навык) глушит атаки босса, двигаться он продолжает
+	# ЭМИ (имплант) глушит атаки босса, двигаться он продолжает
 	if b.emp > 0: b.emp -= dt
 	elif Game.player.alive: call("_boss_" + b.bdef.id, b)
 	# искры повреждённого босса

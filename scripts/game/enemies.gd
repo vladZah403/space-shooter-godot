@@ -1290,7 +1290,7 @@ func updateAll(edt: float, dt: float) -> void:
 		if e.frozen > 0:
 			e.frozen -= dt
 			edt2 *= 0.15
-		# ЭМИ (навык): враг замирает и молчит
+		# ЭМИ (имплант): враг замирает и молчит
 		if e.emp > 0:
 			e.emp -= dt
 			edt2 = 0.0

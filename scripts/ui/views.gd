@@ -1,7 +1,7 @@
 extends RefCounted
 ## Экраны интерфейса (перенос разделов index.html + ui.js): главное меню и выбор сложности, пауза, воскрешение,
-## итоги забега с сундуками, окно-подсказка, диалог, баннеры волн и предупреждение о боссе, плашки-уведомления.
-## Экраны меню (ангар, арсенал, навыки, реликвии, задания, настройки…) — scripts/ui/menu_screens.gd.
+## итоги забега с контейнерами, окно-подсказка, диалог, баннеры волн и предупреждение о боссе, плашки-уведомления.
+## Экраны меню (ангар, арсенал, импланты, реликвии, задания, настройки…) — scripts/ui/menu_screens.gd.
 
 const MenuScreens := preload("res://scripts/ui/menu_screens.gd")
 
@@ -211,15 +211,15 @@ class MenuView extends Control:
 		v.add_child(play_sub)
 		# как в JS: четыре крупные плитки, ниже — строка небольших значков; цвет значка у каждого раздела свой
 		var tiles := Kit.hbox(7)
-		for it in [["ship", "АНГАР", "Корабли", Kit.CYAN, "hangar"], ["swords", "АРСЕНАЛ", "Оружие", Kit.GOLD, "arsenal"],
-				["atom", "НАВЫКИ", "Древо", Kit.VIOLET, "skills"], ["target", "ЗАДАНИЯ", "", Kit.ORANGE, "missions"]]:
+		for it in [["ship", "ВЕРФЬ", "Корабли", Kit.CYAN, "hangar"], ["swords", "ОРУЖЕЙНАЯ", "Оружие", Kit.GOLD, "arsenal"],
+				["atom", "ИМПЛАНТЫ", "Нейросеть", Kit.VIOLET, "skills"], ["target", "КОНТРАКТЫ", "", Kit.ORANGE, "missions"]]:
 			var t := _tile(it[0], it[1], it[2], it[3], it[4])
 			tiles.add_child(t)
 			if it[4] == "missions": mission_sub = t.get_meta("sub")
 		v.add_child(tiles)
 		var bar := Kit.hbox(6)
-		for it in [["trophy", "Рекорды", Kit.PINK, "leaders"], ["medal", "Награды", Kit.GREEN, "achievements"],
-				["chest", "Ксенотех", Kit.GOLD, "relics"], ["list", "Справочник", Kit.CYAN, "codex"], ["gear", "Настройки", Color("#aab4d8"), "settings"]]:
+		for it in [["trophy", "Бортжурнал", Kit.PINK, "leaders"], ["medal", "Медали", Kit.GREEN, "achievements"],
+				["chest", "Ксенотех", Kit.GOLD, "relics"], ["list", "Банк данных", Kit.CYAN, "codex"], ["gear", "Настройки", Color("#aab4d8"), "settings"]]:
 			bar.add_child(_bar_btn(it[0], it[1], it[2], it[3]))
 		v.add_child(bar)
 		diff = DiffView.new()
@@ -589,7 +589,7 @@ class ReviveView extends Control:
 
 
 # ════════════════════════════════════════════════════════════
-# ИТОГИ ЗАБЕГА: счёт набегает, статистика, награды, опыт корабля, сундуки (открываются здесь)
+# ИТОГИ ЗАБЕГА: счёт набегает, статистика, награды, опыт корабля, контейнеры (открываются здесь)
 # ════════════════════════════════════════════════════════════
 class OverView extends Control:
 	var title: Label
@@ -714,7 +714,7 @@ class OverView extends Control:
 			var k := clampf((_t - c.at) / c.dur, 0, 1)
 			c.l.text = c.f.call(c.to * U.ease_out_cubic(k))
 
-	## 4.1: сундуки забега — открываются только здесь, по одному
+	## 4.1: контейнеры забега — открываются только здесь, по одному
 	func _render_chests() -> void:
 		Kit.clear(chests)
 		var n: int = M.s.chests.size()
@@ -723,7 +723,7 @@ class OverView extends Control:
 		h.alignment = BoxContainer.ALIGNMENT_CENTER
 		for i in mini(n, 6): h.add_child(Kit.tex_icon(G.chest(M.s.chests[i]).icon, 48))
 		chests.add_child(h)
-		chests.add_child(Kit.button("ОТКРЫТЬ СУНДУК (%d)" % n, func(): _open_chest(), "gold"))
+		chests.add_child(Kit.button("ОТКРЫТЬ КОНТЕЙНЕР (%d)" % n, func(): _open_chest(), "gold"))
 
 	func _open_chest() -> void:
 		var r = M.openChest()

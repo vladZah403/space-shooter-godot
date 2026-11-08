@@ -4,8 +4,8 @@ extends Control
 ## содержимое раздела строится заново при каждом изменении (как innerHTML в ui.js).
 
 const HudView := preload("res://scripts/ui/hud_view.gd")
-const TITLES := {"hangar": "АНГАР", "arsenal": "АРСЕНАЛ", "skills": "НАВЫКИ", "missions": "ЗАДАНИЯ", "relics": "КСЕНОТЕХ",
-	"achievements": "НАГРАДЫ", "codex": "СПРАВОЧНИК", "settings": "НАСТРОЙКИ", "leaders": "РЕКОРДЫ"}
+const TITLES := {"hangar": "ВЕРФЬ", "arsenal": "ОРУЖЕЙНАЯ", "skills": "ИМПЛАНТЫ", "missions": "КОНТРАКТЫ", "relics": "КСЕНОТЕХ",
+	"achievements": "МЕДАЛИ", "codex": "БАНК ДАННЫХ", "settings": "НАСТРОЙКИ", "leaders": "БОРТЖУРНАЛ"}
 const W_LETTER := {"laser": "Л", "shotgun": "Д", "rocket": "Р", "arc": "С", "plasma": "П", "lightning": "М", "darkmatter": "Т", "boomerang": "Б", "gravgun": "Г", "flail": "Ц"}
 
 var cur := ""
@@ -16,7 +16,7 @@ var body: VBoxContainer
 var scroll: ScrollContainer
 var preview = null          # { model, skin, trail } — что показывать в ангаре
 var ars := ""               # выбранное оружие в арсенале
-var sk_sel := ""            # выбранный навык
+var sk_sel := ""            # выбранный имплант
 var relic_sel := ""
 
 
@@ -211,13 +211,13 @@ func _render_hangar() -> void:
 			body.add_child(Kit.para(curp.ico + " " + curp.name + " — " + curp.desc, 13, Kit.TEXT))
 	# престиж
 	if M.canPrestige():
-		body.add_child(Kit.button("✦ ПРЕСТИЖ %d" % (int(s.prestige) + 1), func():
+		body.add_child(Kit.button("✦ ПЕРЕЗАГРУЗКА ЯДРА %d" % (int(s.prestige) + 1), func():
 			var ok := func():
 				if M.doPrestige():
-					A.play("levelup"); _toast("🌠", "ПРЕСТИЖ %d" % M.s.prestige, "Добро пожаловать в новый цикл!"); _rerender()
-			Ui.dialog({"ico": "star", "title": "ПРЕСТИЖ", "text": "Уровень корабля и навыки сбросятся.\nНавсегда: +8% кредитов и +4% урона за каждый престиж.\nПрокачка, оружие, корабли, раскраски и кредиты останутся.", "ok": "ПРЕСТИЖ", "onOk": ok}), "gold"))
+					A.play("levelup"); _toast("🌠", "ПЕРЕЗАГРУЗКА ЯДРА %d" % M.s.prestige, "Добро пожаловать в новый цикл!"); _rerender()
+			Ui.dialog({"ico": "star", "title": "ПЕРЕЗАГРУЗКА ЯДРА", "text": "Уровень корабля и импланты сбросятся.\nНавсегда: +8% кредитов и +4% урона за каждую перезагрузку.\nПрокачка, оружие, корабли, раскраски и кредиты останутся.", "ok": "ПЕРЕЗАГРУЗИТЬ", "onOk": ok}), "gold"))
 	elif s.shipLvl >= 10:
-		body.add_child(Kit.para("Престиж откроется на %d уровне корабля: постоянный бонус к кредитам и урону" % D.PRESTIGE_LVL, 12, Kit.MUTED, HORIZONTAL_ALIGNMENT_CENTER))
+		body.add_child(Kit.para("Перезагрузка ядра откроется на %d уровне корабля: постоянный бонус к кредитам и урону" % D.PRESTIGE_LVL, 12, Kit.MUTED, HORIZONTAL_ALIGNMENT_CENTER))
 
 
 func _ship_tap(id: String) -> void:
@@ -396,7 +396,7 @@ func _render_arsenal() -> void:
 			Ui.dialog({"ico": "⚔️", "title": w.name, "text": w.desc + "\n\nЦена: " + U.fmt(w.price) + " кредитов", "ok": "КУПИТЬ", "onOk": ok}), "gold", "big")
 		bb.disabled = poor
 		v.add_child(bb)
-		if poor: v.add_child(Kit.para("Не хватает %s кредитов: они падают с врагов и даются за задания дня." % U.fmt(w.price - s.coins), 12, Kit.MUTED))
+		if poor: v.add_child(Kit.para("Не хватает %s кредитов: они падают с врагов и даются за ежедневные контракты." % U.fmt(w.price - s.coins), 12, Kit.MUTED))
 	# ── прокачка ──
 	if own:
 		var total := 0
@@ -552,7 +552,7 @@ func _loadout(id: String) -> void:
 
 
 # ════════════════════════════════════════════════════════════
-# НАВЫКИ (3.1): ветки, ярусы, ранги, 2 слота активных
+# ИМПЛАНТЫ (3.1): ветки, ярусы, ранги, 2 слота активных
 # ════════════════════════════════════════════════════════════
 func _render_skills() -> void:
 	var s: Dictionary = M.s
@@ -562,8 +562,8 @@ func _render_skills() -> void:
 	for b in branches:
 		if b.id == tab: br = b
 	var bc := U.col(br.color)
-	body.add_child(Kit.label("Очков навыков: %d" % M.skillPoints(), 15, Kit.VIOLET, 900))
-	# слоты активных навыков и счётчик пассивных
+	body.add_child(Kit.label("Очков имплантов: %d" % M.skillPoints(), 15, Kit.VIOLET, 900))
+	# слоты активных имплантов и счётчик пассивных
 	var act: Array = s.skills.keys().filter(func(id): return D.SKILLS[id].type == "active")
 	var slots := Kit.hbox(6)
 	for i in int(D.MAX_ACTIVE):
@@ -612,7 +612,7 @@ func _render_skills() -> void:
 			Kit.passthrough(c)
 			h.add_child(c)
 		body.add_child(h)
-	# карточка выбранного навыка
+	# карточка выбранного импланта
 	var sk: Dictionary = D.SKILLS[sk_sel]
 	var st := M.skillState(sk_sel)
 	var p := Kit.panel(12, Color(Kit.PANEL_SOLID, 0.92), Color(bc, 0.5), 16)
@@ -632,20 +632,20 @@ func _render_skills() -> void:
 	hh.add_child(hv)
 	v.add_child(hh)
 	v.add_child(Kit.para(sk.desc, 13, Kit.TEXT))
-	# 4.3.2: у активного навыка — живой предпросмотр, как у оружия в арсенале
+	# 4.3.2: у активного импланта — живой предпросмотр, как у оружия в арсенале
 	if sk.type == "active": v.add_child(Kit.demo_view(Demo.skill(sk_sel), Vector2(0, 170)))
 	var why := ""
 	if not st.maxed:
-		if st.locked: why = "Сначала изучите " + " или ".join(req.map(func(r): return "«" + D.SKILLS[r].name + "»"))
-		elif st.slotsFull: why = "Уже два активных навыка — снимите один"
+		if st.locked: why = "Сначала установите " + " или ".join(req.map(func(r): return "«" + D.SKILLS[r].name + "»"))
+		elif st.slotsFull: why = "Уже два активных импланта — снимите один"
 		elif not st.afford: why = "Нужно %d %s, есть %d" % [sk.cost, U.plural(int(sk.cost), "очко", "очка", "очков"), M.skillPoints()]
 	if why != "": v.add_child(Kit.para(why, 12, Kit.ORANGE))
 	var bh := Kit.hbox(8)
 	var sid2 := sk_sel
 	if not st.maxed:
-		var lb := Kit.button(("РАНГ %d" % (st.rank + 1) if st.learned else "ИЗУЧИТЬ") + " · ✦%d" % sk.cost, func():
+		var lb := Kit.button(("РАНГ %d" % (st.rank + 1) if st.learned else "УСТАНОВИТЬ") + " · ✦%d" % sk.cost, func():
 			if M.learnSkill(sid2):
-				A.play("levelup"); Haptic.success(); _toast(sk.ico, "РАНГ %d" % (st.rank + 1) if st.learned else "НАВЫК ИЗУЧЕН", sk.name)
+				A.play("levelup"); Haptic.success(); _toast(sk.ico, "РАНГ %d" % (st.rank + 1) if st.learned else "ИМПЛАНТ УСТАНОВЛЕН", sk.name)
 			else: A.play("error")
 			_rerender(), "primary")
 		lb.disabled = not (st.canLearn or (M.DEV and not st.locked and not st.slotsFull))
@@ -655,18 +655,18 @@ func _render_skills() -> void:
 		var fb := Kit.button("СНЯТЬ", func():
 			var removed := M.forgetSkill(sid2)
 			A.play("back")
-			if removed.size() > 1: _toast("↩️", "НАВЫКИ СНЯТЫ", ", ".join(removed.map(func(x): return D.SKILLS[x].name)))
+			if removed.size() > 1: _toast("↩️", "ИМПЛАНТЫ СНЯТЫ", ", ".join(removed.map(func(x): return D.SKILLS[x].name)))
 			_rerender(), "ghost")
 		bh.add_child(fb)
 	v.add_child(bh)
 	body.add_child(p)
-	body.add_child(Kit.button("↺ СНЯТЬ ВСЕ НАВЫКИ", func():
+	body.add_child(Kit.button("↺ СНЯТЬ ВСЕ ИМПЛАНТЫ", func():
 		if M.s.skills.is_empty():
 			A.play("error")
 			return
 		var ok := func():
 			M.resetSkills(); A.play("back"); _rerender()
-		Ui.dialog({"ico": "↺", "title": "СНЯТЬ ВСЕ НАВЫКИ?", "text": "Все очки навыков вернутся — можно собрать пилота заново.", "ok": "СНЯТЬ", "onOk": ok}), "ghost", "sm"))
+		Ui.dialog({"ico": "↺", "title": "СНЯТЬ ВСЕ ИМПЛАНТЫ?", "text": "Все очки имплантов вернутся — можно собрать пилота заново.", "ok": "СНЯТЬ", "onOk": ok}), "ghost", "sm"))
 
 
 # ════════════════════════════════════════════════════════════
@@ -683,7 +683,8 @@ func _render_missions() -> void:
 	p.add_child(v)
 	var now := Time.get_datetime_dict_from_system()
 	var mins := maxi(1, (24 - int(now.hour)) * 60 - int(now.minute))
-	v.add_child(Kit.label("🎯 ЗАДАНИЯ ДНЯ   ·   новые через %s%d мин" % ["%d ч " % (mins / 60) if mins >= 60 else "", mins % 60], 13, Kit.TEXT, 900))
+	v.add_child(Kit.label("🎯 ЕЖЕДНЕВНЫЕ КОНТРАКТЫ", 13, Kit.TEXT, 900))
+	v.add_child(Kit.label("новые через %s%d мин" % ["%d ч " % (mins / 60) if mins >= 60 else "", mins % 60], 11, Kit.MUTED, 700))
 	for m in ms:
 		var k := minf(1, m.progress / m.goal)
 		var h := Kit.hbox(8)
@@ -697,7 +698,7 @@ func _render_missions() -> void:
 		h.add_child(mv)
 		h.add_child(Kit.label("◆ %d" % m.reward, 13, Kit.GOLD, 900))
 		v.add_child(h)
-	v.add_child(Kit.label(("✓ Бонус за все задания получен" if d.bonus else "🎁 Бонус за все три задания") + "   ◆ %d" % D.DAILY_BONUS, 13, Kit.GREEN if d.bonus else Kit.GOLD, 800))
+	v.add_child(Kit.label(("✓ Бонус за все контракты получен" if d.bonus else "🎁 Бонус за все три контракта") + "   ◆ %d" % D.DAILY_BONUS, 13, Kit.GREEN if d.bonus else Kit.GOLD, 800))
 	body.add_child(p)
 	body.add_child(Kit.para("Прогресс засчитывается во время игры, награда приходит сразу", 12, Kit.MUTED, HORIZONTAL_ALIGNMENT_CENTER))
 	var st := M.loginStatus()
@@ -724,7 +725,7 @@ func _render_missions() -> void:
 		lv.add_child(Kit.button("🎁 ЗАБРАТЬ НАГРАДУ", func():
 			var r = M.claimLogin()
 			if r:
-				A.play("buy"); Haptic.success(); Ui.toast({"ico": "🎁", "title": "НАГРАДА", "text": "+%d кредитов%s" % [r.coins, " и +1 очко навыка" if r.get("sp", 0) else ""]})
+				A.play("buy"); Haptic.success(); Ui.toast({"ico": "🎁", "title": "НАГРАДА", "text": "+%d кредитов%s" % [r.coins, " и +1 очко импланта" if r.get("sp", 0) else ""]})
 			_rerender(), "gold"))
 	else:
 		lv.add_child(Kit.para("Следующая награда завтра. Заходите каждый день, чтобы серия не прервалась", 12, Kit.MUTED))
@@ -732,7 +733,7 @@ func _render_missions() -> void:
 
 
 # ════════════════════════════════════════════════════════════
-# РЕЛИКВИИ (4.1): слоты «в забег» и коллекция из сундуков
+# РЕЛИКВИИ (4.1): слоты «в забег» и коллекция из контейнеров
 # ════════════════════════════════════════════════════════════
 func _render_relics() -> void:
 	var s: Dictionary = M.s
@@ -786,7 +787,7 @@ func _render_relics() -> void:
 		p.add_child(v)
 		v.add_child(Kit.label((rel.ico + " " + rel.name) if have else "??? · " + D.RELIC_RARITY[rel.rar].name, 16, col, 900))
 		v.add_child(Kit.label(D.RELIC_RARITY[rel.rar].name, 11, Color(col, 0.8), 800))
-		v.add_child(Kit.para(rel.desc if have else "Ещё не найден — выпадает из сундуков", 13, Kit.TEXT))
+		v.add_child(Kit.para(rel.desc if have else "Ещё не найден — выпадает из контейнеров", 13, Kit.TEXT))
 		if have:
 			var rid2 := relic_sel
 			var inLo := rid2 in lo
@@ -798,7 +799,7 @@ func _render_relics() -> void:
 				render(), "" if inLo else "primary"))
 		body.add_child(p)
 	if not s.chests.is_empty():
-		body.add_child(Kit.para("Закрытых сундуков: %d — откроются на экране итогов после забега" % s.chests.size(), 12, Kit.GOLD, HORIZONTAL_ALIGNMENT_CENTER))
+		body.add_child(Kit.para("Закрытых контейнеров: %d — откроются на экране итогов после забега" % s.chests.size(), 12, Kit.GOLD, HORIZONTAL_ALIGNMENT_CENTER))
 
 
 # ════════════════════════════════════════════════════════════
@@ -1017,11 +1018,11 @@ func _render_settings() -> void:
 			M.reset(); A.play("explodeM"); Ui.toast({"ico": "🗑️", "title": "ГОТОВО", "text": "Прогресс сброшен", "info": true}); _rerender()
 		var first := func():
 			Ui.dialog({"ico": "💀", "title": "ТОЧНО?", "text": "Последнее предупреждение.", "ok": "ДА, СБРОСИТЬ", "danger": true, "onOk": really})
-		Ui.dialog({"ico": "↺", "title": "СБРОС ПРОГРЕССА", "text": "Будут удалены кредиты, оружие, прокачка, корабли, навыки, рекорды и достижения.\nЭто нельзя отменить!", "ok": "УДАЛИТЬ ВСЁ", "danger": true, "onOk": first}), "danger", "sm")))
+		Ui.dialog({"ico": "↺", "title": "СБРОС ПРОГРЕССА", "text": "Будут удалены кредиты, оружие, прокачка, корабли, импланты, рекорды и достижения.\nЭто нельзя отменить!", "ok": "УДАЛИТЬ ВСЁ", "danger": true, "onOk": first}), "danger", "sm")))
 	if M.DEV:
 		v = sec.call("РАЗРАБОТЧИК").get_child(0)
 		v.add_child(_row("+10 000 кредитов", Kit.button("ДАТЬ", func():
 			M.addCoins(10000, false); A.play("buy"); refresh_wallet(), "", "sm")))
-		v.add_child(_row("+10 очков навыков", Kit.button("ДАТЬ", func():
+		v.add_child(_row("+10 очков имплантов", Kit.button("ДАТЬ", func():
 			M.s.spBonus += 10; M.save(); A.play("buy"), "", "sm")))
 	body.add_child(Kit.label("Space Shooter · Godot", 11, Kit.DIM, 700, HORIZONTAL_ALIGNMENT_CENTER))

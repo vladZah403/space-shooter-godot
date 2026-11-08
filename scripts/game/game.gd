@@ -1,6 +1,6 @@
 extends Node
 ## Игровая логика (автозагрузка Game) — перенос game.js: забег, характеристики, оружие, снаряды,
-## столкновения, урон, награды, бонусы, бомба и навыки, вражеские снаряды, улучшения забега, волны,
+## столкновения, урон, награды, бонусы, бомба и импланты, вражеские снаряды, улучшения забега, волны,
 ## кат-сцены, отрисовка мира. Имена функций и полей — как в JS-версии.
 ## run, wave, st, diff — словари (в JS у них много необязательных полей).
 
@@ -233,7 +233,7 @@ func quit() -> void:
 
 
 # ════════════════════════════════════════════════════════════
-# ХАРАКТЕРИСТИКИ ИГРОКА (мета-прокачка + навыки + улучшения забега)
+# ХАРАКТЕРИСТИКИ ИГРОКА (мета-прокачка + импланты + улучшения забега)
 # ════════════════════════════════════════════════════════════
 func perk(id: String) -> int:
 	return int(run.perks.get(id, 0)) if run else 0
@@ -243,7 +243,7 @@ func skill(id: String) -> bool:
 	return bool(M.s.skills.get(id, 0))
 
 
-## 3.1: ранг навыка (0 — не изучен)
+## 3.1: ранг импланта (0 — не изучен)
 func skillLv(id: String) -> int:
 	return int(M.s.skills.get(id, 0))
 
@@ -1647,7 +1647,7 @@ func onEnemyKilled(e: En, _src: String) -> void:
 	var chance: float = (0.028 + (e.def.coins if e.def.coins else 1.0) * 0.006) * luck * (1.5 if diffId == "zen" else 1.0) * (diff.drops if diff.drops else 1.0)
 	if U.random() < chance or e.mini: dropPowerup(e.x, e.y)
 	if e.mini: dropPowerup(e.x + 20 * S, e.y)
-	# навыки и улучшения
+	# импланты и улучшения
 	if (e.elite or e.mini) and skill("sk_jackpot"): dropCrate(e.x, e.y)
 	if e.elite: hitstop(0.04)
 	# реликвии: кровавый камень лечит, нестабильный реактор взрывает убитых
@@ -1737,7 +1737,7 @@ func hitPlayer(sx: float, sy: float, cause := "") -> bool:
 		wave.chrono = true
 		run.skillFx.sk_timewarp = maxf(run.skillFx.get("sk_timewarp", 0.0), 3)
 		FX.flash("#3d6bff", 0.25)
-		FX.text(p.x, p.y - p.w * 0.9, "🕰️ ХРОНОМЕТР", "#9fc8ff", 14, 1.2)
+		FX.text(p.x, p.y - p.w * 0.9, "🕰️ ХРОНОЯКОРЬ", "#9fc8ff", 14, 1.2)
 		A.play("teleport", {"rate": 0.5})
 	Bus.emit("playerHit", p.lives)
 	hudDirty = true
@@ -1780,17 +1780,17 @@ func shieldFx() -> void:
 
 func playerDown() -> void:
 	var p := player
-	# реликвия «Перо феникса»: воскрешение с 1 жизнью (раньше навыка — навык останется на потом)
+	# реликвия «Перо феникса»: воскрешение с 1 жизнью (раньше импланта — имплант останется на потом)
 	if relic("r_feather") and not run.featherUsed:
 		run.featherUsed = true
 		p.lives = 1; p.inv = 3.0
 		clearBulletsAround(p.x, p.y, 9999)
 		FX.flash("#ffd9a0", 0.5)
-		FX.text(p.x, p.y - p.w, "ПЕРО ФЕНИКСА!", "#ffc83d", 18, 1.3)
+		FX.text(p.x, p.y - p.w, "КАПСУЛА ВОЗРОЖДЕНИЯ!", "#ffc83d", 18, 1.3)
 		A.play("revive")
 		hudDirty = true
 		return
-	# навык «Феникс»
+	# имплант «Феникс»
 	if skill("sk_phoenix") and not run.phoenixUsed:
 		run.phoenixUsed = true
 		p.lives = mini(2, p.maxLives)
@@ -1799,9 +1799,9 @@ func playerDown() -> void:
 		FX.flash("#ffb03d", 0.6)
 		FX.explode(p.x, p.y, 2, "#ffb03d", {"kind": "crit"})
 		FX.sprite("fx_beam", 0, 0, {"follow": p, "oy": -p.w * 0.95, "w0": p.w * 1.25, "w1": p.w * 1.4, "dur": 1.1, "hold": 0.5, "fadeIn": 0.1, "hue": 30})
-		FX.text(p.x, p.y - p.w, "ФЕНИКС!", "#ffb03d", 20, 1.3)
+		FX.text(p.x, p.y - p.w, "ВОЗРОЖДЕНИЕ!", "#ffb03d", 20, 1.3)
 		A.play("revive")
-		Bus.emit("toast", {"ico": "🔥", "title": "НАВЫК", "text": "Феникс возродил корабль!", "info": true})
+		Bus.emit("toast", {"ico": "🔥", "title": "ИМПЛАНТ", "text": "Протокол возрождения поднял корабль!", "info": true})
 		hudDirty = true
 		return
 	p.alive = false
@@ -1858,7 +1858,7 @@ func gameOver() -> void:
 
 
 # ════════════════════════════════════════════════════════════
-# БОМБА И АКТИВНЫЕ НАВЫКИ
+# БОМБА И АКТИВНЫЕ ИМПЛАНТЫ
 # ════════════════════════════════════════════════════════════
 func useBomb() -> void:
 	var p := player
@@ -1924,7 +1924,7 @@ func useSkill(slot: int) -> void:
 	if skill("sk_overload"): run.overload = 4.0
 	A.play("skill")
 	Haptic.medium()
-	# 3.1: у каждого активного навыка — своя анимация запуска
+	# 3.1: у каждого активного импланта — своя анимация запуска
 	skillCast(id, sk)
 	M.trackMission("skills", 1)
 	hudDirty = true
@@ -2154,7 +2154,7 @@ func ebullet(x: float, y: float, vx: float, vy: float, type: String, o := {}) ->
 	b.redirT = o.get("redir", 0.0); b.redirSpd = o.get("redirSpd", 0.0)
 	b.burst = o.get("burst"); b.bounce = int(o.get("bounce", 0))
 	b.sine = o.get("sine")
-	b.escort = o.get("escort", false)   # 4.2: летит в Торговца (эскорт)
+	b.escort = o.get("escort", false)   # 4.2: летит в Контрабандиста (эскорт)
 	ebullets.append(b)
 	return b
 
@@ -2261,7 +2261,7 @@ func updateEBullets(dt: float) -> void:
 			b.dead = true
 			FX.hit(b.x, b.y, "#d8c3a5")
 			continue
-		# барьер (навык) отражает пули обратно во врагов, дрон-Страж их ловит
+		# барьер (имплант) отражает пули обратно во врагов, дрон-Страж их ловит
 		if barrier and Skills.reflect(b):
 			b.dead = true
 			continue
@@ -2686,7 +2686,7 @@ func nextWave() -> void:
 		RunMap.offer(n)
 		return
 	var isBoss := n % 5 == 0 and not surv
-	# 4.1: в выживании сундук за каждые 10 волн
+	# 4.1: в выживании контейнер за каждые 10 волн
 	if surv and n > 1 and (n - 1) % 10 == 0 and player.alive: RunMap.giveChest("silver" if n > 25 else "bronze")
 	var sector := (n - 1) / 5
 	var tn: float = n + diff.waveOffset
@@ -2777,14 +2777,14 @@ func waveCleared() -> void:
 	# собираем оставшиеся кредиты и кристаллы
 	for it in pickups: if it.kind != "pu" and it.kind != "crate": it.pull = true
 	Bus.emit("waveClear", {"n": w.n, "bonus": bonus, "perfect": perfect})
-	# 4.1: после босса — трофейный сундук (откроется после забега), потом станция; после обычной волны — награда узла карты
+	# 4.1: после босса — трофейный контейнер (откроется после забега), потом станция; после обычной волны — награда узла карты
 	if w.boss:
 		after(0.8, func(): if is_same(wave, w): RunMap.chestScene(RunMap.bossChest(), "ТРОФЕЙ БОССА", func(): offerModules("station")))
 	else:
 		after(1.2, func(): if is_same(wave, w) and not RunMap.reward(w): nextWave())
 
 
-## события между волнами: Развилка и Торговец. true — событие показано, волна начнётся после выбора
+## события между волнами: Развилка и Контрабандист. true — событие показано, волна начнётся после выбора
 var offer = null
 
 func waveEvent(w: Dictionary) -> bool:
@@ -2792,7 +2792,7 @@ func waveEvent(w: Dictionary) -> bool:
 	if state != "play" or not player.alive or w.n < WE.from or w.n - run.get("lastWaveEvent", 0) < 2: return false
 	var r: float = U.with_rng(run.waveRng, U.random)
 	if r > WE.chance: return false
-	# перед боссом развилки нет — только торговец
+	# перед боссом развилки нет — только контрабандист
 	var kind := "merchant" if (int(w.n) + 1) % 5 == 0 or r > WE.chance * WE.forkShare else "fork"
 	run.lastWaveEvent = w.n
 	offer = U.with_rng(run.waveRng, forkOffer if kind == "fork" else merchantOffer)
@@ -2835,7 +2835,7 @@ func merchantOffer() -> Dictionary:
 	var ep = U.pick(epic) if epic.size() and p.lives >= 2 else null
 	if ep: cards.append({"id": "deal:" + ep.id, "ico": "🩸", "name": "СДЕЛКА: " + ep.name, "desc": "−1 жизнь, взамен: " + ep.desc, "rar": "legendary"})
 	cards.append({"id": "pass", "ico": "👋", "name": "ПРОЙТИ МИМО", "desc": "Сберечь кредиты", "rar": "common"})
-	return {"title": "ТОРГОВЕЦ", "art": "p_merchant", "sub": ("Скидка за эскорт −%d%% · кредиты из кошелька" % int(round((1 - disc) * 100))) if disc < 1 else "Цены в кредитах — кредиты уходят из кошелька", "cards": cards, "cut": cut}
+	return {"title": "КОНТРАБАНДИСТ", "art": "p_merchant", "sub": ("Скидка за эскорт −%d%% · кредиты из кошелька" % int(round((1 - disc) * 100))) if disc < 1 else "Цены в кредитах — кредиты уходят из кошелька", "cards": cards, "cut": cut}
 
 
 func pickOffer(id: String) -> bool:
@@ -2873,7 +2873,7 @@ func pickOffer(id: String) -> bool:
 	offerKind = ""
 	state = "play"
 	player.inv = maxf(player.inv, 0.8)
-	# 4.1: торговец прощается и улетает, пока начинается волна
+	# 4.1: контрабандист прощается и улетает, пока начинается волна
 	if of.get("art", "") == "p_merchant": Scenes.leave("merchant", bool(card.get("price", 0)) or k == "deal")
 	var wait := 1.5 if of.get("art", "") == "p_merchant" else 0.4
 	if of.get("after", "") == "station": after(wait, func(): offerModules("station"))
@@ -2897,7 +2897,7 @@ func onBossDefeated(bs: En) -> void:
 	# реликвия «Сердце звезды»: +1 к максимуму жизней и +1 жизнь (со «Стеклянной пушкой» — только лечение)
 	if relic("r_starheart") and player.alive:
 		if not perk("glass"): player.maxLives += 1
-		heal(1, "🌟 СЕРДЦЕ ЗВЕЗДЫ")
+		heal(1, "🌟 ЯДРО ПУЛЬСАРА")
 	# Godot: замедление и наезд камеры на гибнущего босса
 	slowT = 1.5
 	camFocus(bs.x, bs.y, 1.22, 1.1)

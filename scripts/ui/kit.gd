@@ -316,7 +316,7 @@ static func ach_icon(a: Dictionary, size := 34) -> Control:
 	return c
 
 
-## значок из готовой текстуры (сундук, иконка оружия)
+## значок из готовой текстуры (контейнер, иконка оружия)
 static func tex_icon(tex: Texture2D, size := 32) -> TextureRect:
 	var r := TextureRect.new()
 	r.texture = tex
