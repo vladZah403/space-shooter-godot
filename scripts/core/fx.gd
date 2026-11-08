@@ -427,7 +427,10 @@ func draw_texts(ctx: Ctx) -> void:
 		ctx.alpha = minf(1.0, k * 2.2)
 		ctx.fill = U.col(t.c)
 		var size := int(round(t.size * pop * 1.15))
-		ctx.fill_text(t.s, t.x, t.y + size * 0.35, size, 1, 4, Color(0, 0, 0.04, 0.85))
+		# надпись у края поля (подобранный бонус, «УКЛОНЕНИЕ» у прижатого к краю корабля) не обрезается
+		var hw := ctx.text_width(t.s, size) / 2.0 + 4.0
+		var x: float = clampf(t.x, hw, maxf(hw, G.FW - hw))
+		ctx.fill_text(t.s, x, t.y + size * 0.35, size, 1, 4, Color(0, 0, 0.04, 0.85))
 	ctx.alpha = 1.0
 
 
