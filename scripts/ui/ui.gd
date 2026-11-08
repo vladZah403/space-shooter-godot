@@ -23,6 +23,7 @@ var ship: Control
 var toasts: VBoxContainer
 var tutor: TutorView       # Godot: обучение в первом забеге
 var chest_v: ChestOpenView # Godot: анимация открытия контейнера
+var _fader: ColorRect
 var banner_box: Control
 var cur := "menu"
 var runEvents: Array = []
@@ -59,7 +60,14 @@ func build(world: Node) -> void:
 	chest_v = ChestOpenView.new(); root.add_child(chest_v)
 	dialog_v = Views.DialogView.new(); root.add_child(dialog_v)
 	# окна появляются плавно (Tween), разделы меню въезжают сбоку
-	for v in [pause_v, revive, over, tip, dialog_v, ship, menu.diff]: Kit.animate_on_show(v)
+	for v in [pause_v, revive, over, tip, dialog_v, ship, menu.diff, hud, chest_v, offer, menu]: Kit.animate_on_show(v)
+	# Godot: переход через затемнение между крупными экранами (итоги → меню, «ещё раз»)
+	_fader = ColorRect.new()
+	_fader.color = Color(0.01, 0.02, 0.06)
+	Kit.full(_fader)
+	_fader.mouse_filter = Control.MOUSE_FILTER_STOP
+	_fader.visible = false
+	root.add_child(_fader)
 	Kit.animate_on_show(menu.screens, true)
 	Kit.animate_on_show(map)
 	_wire()
@@ -129,6 +137,21 @@ func topInset() -> float:
 # ════════════════════════════════════════════════════════════
 # ПЕРЕХОДЫ
 # ════════════════════════════════════════════════════════════
+## Godot: смена экрана через короткое затемнение — без резкого скачка. Во время перехода касания не проходят
+func transition(fn: Callable) -> void:
+	if _fader.visible:
+		fn.call()
+		return
+	_fader.visible = true
+	_fader.modulate.a = 0.0
+	var tw := create_tween()
+	tw.tween_property(_fader, "modulate:a", 1.0, 0.18)
+	tw.tween_callback(fn)
+	tw.tween_interval(0.06)
+	tw.tween_property(_fader, "modulate:a", 0.0, 0.3)
+	tw.tween_callback(func(): _fader.visible = false)
+
+
 func toMenu() -> void:
 	Game.quit()
 	hud.close()
@@ -283,7 +306,7 @@ func _pump() -> void:
 # БОТ-ТЕСТИРОВЩИК (world.gd --autoplay): первое из предложенного
 # ════════════════════════════════════════════════════════════
 func botPick() -> void:
-	if map.visible:
+	if Kit.is_open(map):
 		map.bot_pick()
-	elif offer.visible:
+	elif Kit.is_open(offer):
 		offer.bot_pick()

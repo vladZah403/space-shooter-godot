@@ -53,6 +53,7 @@ func open(id: String) -> void:
 	cur = id
 	tab = ""
 	title.text = Lang.t(TITLES.get(id, id.to_upper()))
+	Kit.unhide(self)
 	visible = true
 	scroll.scroll_vertical = 0
 	render()
@@ -60,9 +61,10 @@ func open(id: String) -> void:
 
 func close() -> void:
 	if visible and get_parent() and get_parent().has_method("set_content_visible"): get_parent().set_content_visible(true)
-	visible = false
-	cur = ""
-	preview = null
+	# Godot: раздел уезжает вбок и гаснет, главное меню проявляется под ним
+	Kit.hide(self, true, 0.16, func():
+		cur = ""
+		preview = null)
 
 
 func back() -> void:

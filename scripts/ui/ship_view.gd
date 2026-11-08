@@ -76,12 +76,13 @@ func open(off: Array = []) -> void:
 	if pick != "": sel = pick
 	if sel == "": sel = "bridge"
 	_render()
+	Kit.unhide(self)
 	visible = true
 
 
 func close() -> void:
 	if visible: A.play("back")
-	visible = false
+	Kit.hide(self)
 
 
 func _lvl(r: Dictionary) -> int:

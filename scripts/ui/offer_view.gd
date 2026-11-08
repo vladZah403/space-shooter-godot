@@ -80,7 +80,7 @@ func _process(dt: float) -> void:
 
 
 func close() -> void:
-	visible = false
+	Kit.hide(self)
 
 
 func _open(t: String, s: String) -> void:
@@ -94,6 +94,7 @@ func _open(t: String, s: String) -> void:
 	ship_btn.visible = false
 	Kit.clear(cards)
 	_picks.clear()
+	Kit.unhide(self)
 	visible = true
 	# пока палец на экране — карточки «спят» дольше
 	_wait = 0.48 if Game.pointer.id != -1 else 0.15

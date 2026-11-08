@@ -159,6 +159,7 @@ static func button(text: String, on_press: Callable, kind := "", size := "") -> 
 	for k in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]: b.add_theme_color_override(k, fc)
 	b.add_theme_color_override("font_disabled_color", Color(fc, 0.4))
 	b.pressed.connect(func():
+		if _blocked(b): return   # окно уже гаснет — второе нажатие не считается
 		A.play("click")
 		Haptic.select()
 		on_press.call())
@@ -203,6 +204,49 @@ static func _spring(c: Control, to: Vector2, dur: float, trans: int) -> void:
 ## slide — экран въезжает сбоку (разделы меню). Подключается раз: Kit.animate_on_show(окно)
 static func animate_on_show(c: Control, slide := false) -> void:
 	c.visibility_changed.connect(func(): if c.is_visible_in_tree(): appear(c, slide))
+
+
+## Godot: плавное исчезновение — окно гаснет (разделы меню уезжают вбок) и только потом прячется; пока гаснет,
+## кнопки внутри не нажимаются (Kit.button). after — что сделать, когда окно уже скрыто
+static func hide(c: Control, slide := false, dur := 0.15, after := Callable()) -> void:
+	if not c.visible or c.get_meta("_hiding", false): return
+	c.set_meta("_hiding", true)
+	var old = c.get_meta("_appear") if c.has_meta("_appear") else null
+	if old is Tween and old.is_valid(): old.kill()
+	var tw := c.create_tween().set_parallel(true)
+	tw.tween_property(c, "modulate:a", 0.0, dur)
+	if slide and c.has_meta("_x0"):
+		tw.tween_property(c, "position:x", float(c.get_meta("_x0")) + 28.0, dur)
+	tw.chain().tween_callback(func():
+		if not c.get_meta("_hiding", false): return
+		c.set_meta("_hiding", false)
+		c.visible = false
+		c.modulate.a = 1.0
+		if c.has_meta("_x0"): c.position.x = c.get_meta("_x0")
+		if after.is_valid(): after.call())
+	c.set_meta("_hide_tw", tw)
+
+
+## окно открывают снова, пока оно ещё гаснет, — отменить исчезновение
+static func unhide(c: Control) -> void:
+	if not c.get_meta("_hiding", false): return
+	c.set_meta("_hiding", false)
+	var tw = c.get_meta("_hide_tw") if c.has_meta("_hide_tw") else null
+	if tw is Tween and tw.is_valid(): tw.kill()
+	c.modulate.a = 1.0
+	if c.has_meta("_x0"): c.position.x = c.get_meta("_x0")
+
+
+## окно видно и не гаснет
+static func is_open(c: Control) -> bool:
+	return c != null and c.visible and not c.get_meta("_hiding", false)
+
+
+static func _blocked(n: Node) -> bool:
+	while n:
+		if n.get_meta("_hiding", false): return true
+		n = n.get_parent()
+	return false
 
 
 static func appear(c: Control, slide := false) -> void:

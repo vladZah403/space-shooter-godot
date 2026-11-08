@@ -69,6 +69,7 @@ func play(chest_tier: String, result: Dictionary, done := Callable()) -> void:
 	var sb: StyleBox = card.get_theme_stylebox("panel")
 	if sb is NeoBox: (sb as NeoBox).edge = Color(col, 0.75)
 	card.modulate.a = 0.0
+	Kit.unhide(self)
 	visible = true
 	A.play("click", {"rate": 0.7})
 
@@ -81,7 +82,7 @@ func _gui_input(e: InputEvent) -> void:
 		t = T_RISE + 0.35   # пропустить анимацию
 		if not _boomed: _boom()
 	else:
-		visible = false
+		Kit.hide(self)
 		if on_done.is_valid(): on_done.call()
 
 

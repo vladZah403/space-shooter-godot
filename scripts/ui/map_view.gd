@@ -81,8 +81,7 @@ func _ready() -> void:
 
 
 func close() -> void:
-	visible = false
-	d = null
+	Kit.hide(self, false, 0.18, func(): d = null)
 
 
 ## открыть карту: d = { map, step, choices, n } (map.gd → mapOffer)
@@ -98,6 +97,7 @@ func open(dd: Dictionary) -> void:
 	var s := ""
 	for c in 4: s += ("●" if c < d.step else ("◉" if c == d.step else "○")) + "  "
 	steps.text = s + "👑"
+	Kit.unhide(self)
 	visible = true
 	await get_tree().process_frame
 	W = maxf(240, area.size.x); H = maxf(300, area.size.y)

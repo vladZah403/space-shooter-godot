@@ -272,6 +272,7 @@ class MenuView extends Control:
 		add_child(screens)
 
 	func open() -> void:
+		Kit.unhide(self)
 		visible = true
 		diff.visible = false
 		screens.close()
@@ -280,9 +281,9 @@ class MenuView extends Control:
 		Game.attract.slot = {"y": hero.global_position.y + hero.size.y / 2 - 10, "h": hero.size.y}
 
 	func close() -> void:
-		visible = false
-		diff.visible = false
-		screens.close()
+		Kit.hide(self, false, 0.2, func():
+			diff.visible = false
+			screens.close())
 
 	func refresh() -> void:
 		var s: Dictionary = M.s
@@ -313,7 +314,7 @@ class MenuView extends Control:
 	func back() -> void:
 		if diff.visible:
 			A.play("back")
-			diff.visible = false
+			Kit.hide(diff)
 			set_content_visible(true)
 			return
 		if screens.visible:
@@ -372,6 +373,7 @@ class DiffView extends Control:
 		var lv: int = int(D.BASE_LIVES + D.SHIPS[s.ship.model].stats.get("lives", 0))
 		lives.text = Lang.t("❤ Жизней: %d • ⚡ Боевая мощь: %s") % [lv, U.fmt(power)]
 		_render()
+		Kit.unhide(self)
 		visible = true
 
 	func _row(id: String, col: String, name_: String, meta: String, rew: String, open_: bool, selected: bool, on_tap: Callable) -> Control:
@@ -565,12 +567,13 @@ class PauseView extends Control:
 				grid.add_child(cell)
 			build.add_child(grid)
 		_sync()
+		Kit.unhide(self)
 		visible = true
 		A.muffle(true)
 
 	func close() -> void:
 		if visible: A.muffle(false)
-		visible = false
+		Kit.hide(self)
 
 	func _fxrow(col: String, ico: String, name_: String, desc: String) -> Control:
 		var h := Kit.hbox(8)
@@ -632,10 +635,11 @@ class ReviveView extends Control:
 	func open(cost: int) -> void:
 		cost_l.text = Lang.t("Стоимость: ◆ ") + U.fmt(cost)
 		_left = 5.0
+		Kit.unhide(self)
 		visible = true
 
 	func close() -> void:
-		visible = false
+		Kit.hide(self)
 
 	func _process(dt: float) -> void:
 		if not visible: return
@@ -713,9 +717,9 @@ class OverView extends Control:
 		events.add_theme_constant_override("v_separation", 4)
 		v.add_child(events)
 		var bh := Kit.hbox(8)
-		var again := Kit.button(Lang.t("↻ ЕЩЁ РАЗ"), func(): Ui.again(), "primary", "big")
+		var again := Kit.button(Lang.t("↻ ЕЩЁ РАЗ"), func(): Ui.transition(func(): Ui.again()), "primary", "big")
 		again.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var menu := Kit.button(Lang.t("МЕНЮ"), func(): Ui.toMenu(), "", "big")
+		var menu := Kit.button(Lang.t("МЕНЮ"), func(): Ui.transition(func(): Ui.toMenu()), "", "big")
 		menu.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		bh.add_child(again); bh.add_child(menu)
 		v.add_child(bh)
@@ -772,10 +776,11 @@ class OverView extends Control:
 			h.add_child(l)
 			events.add_child(h)
 		_t = 0.0
+		Kit.unhide(self)
 		visible = true
 
 	func close() -> void:
-		visible = false
+		Kit.hide(self)
 
 	func _process(dt: float) -> void:
 		if not visible: return
@@ -796,7 +801,7 @@ class OverView extends Control:
 		chests.add_child(Kit.button(Lang.t("ОТКРЫТЬ КОНТЕЙНЕР (%d)") % n, func(): _open_chest(), "gold"))
 
 	func _open_chest() -> void:
-		if Ui.chest_v.visible: return
+		if Kit.is_open(Ui.chest_v): return
 		var r = M.openChest()
 		if r == null: return
 		_render_chests()
@@ -860,10 +865,11 @@ class TipView extends Control:
 		if key.begins_with("evo_"): demo_box.add_child(Kit.demo_view(Demo.weapon(key.substr(4), true), Vector2(0, 150)))
 		elif Demo.hasScene(key): demo_box.add_child(Kit.demo_view(Demo.scene(key), Vector2(0, 150)))
 		A.play("perk", {"vol": 0.6})
+		Kit.unhide(self)
 		visible = true
 
 	func close() -> void:
-		visible = false
+		Kit.hide(self)
 
 
 # ════════════════════════════════════════════════════════════
@@ -921,7 +927,8 @@ class DialogView extends Control:
 		ok.text = o.get("ok", Lang.t("ОК"))
 		cancel.visible = not o.get("noCancel", false)
 		_onOk = o.get("onOk")
+		Kit.unhide(self)
 		visible = true
 
 	func close() -> void:
-		visible = false
+		Kit.hide(self)

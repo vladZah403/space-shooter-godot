@@ -52,6 +52,7 @@ func _area(fn: Callable) -> Button:
 
 
 func open() -> void:
+	Kit.unhide(self)
 	visible = true
 	_lastCoins = -1; _lastLives = -1
 	for w in _wbtns: w.btn.queue_free()
@@ -69,8 +70,7 @@ func open() -> void:
 
 
 func close() -> void:
-	visible = false
-	ctx.begin()
+	Kit.hide(self, false, 0.2, func(): ctx.begin())
 
 
 func hit_flash() -> void:
