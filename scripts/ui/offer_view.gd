@@ -1,5 +1,5 @@
 extends Control
-## Окно выбора (перенос #scr-perk из JS): улучшения за уровень (с перебором за монеты), модули корабля
+## Окно выбора (перенос #scr-perk из JS): улучшения за уровень (с перебором за кредиты), модули корабля
 ## (старт и станция), события между волнами — развилка, торговец, события карты (карточки с ценой).
 ## Карточки «спят» 150–480 мс после показа — чтобы палец, который вёл корабль, не выбрал случайно.
 
@@ -188,7 +188,7 @@ func showPerks(choices: Array, rerolled := false) -> void:
 			Haptic.success()
 		_card(rar.color, Kit.icon("pk_" + id, pk.ico, 44), pk.name + (" %d" % (lv + 1) if lv else ""), pk.desc, rar.name, extra, fn)
 	var cost := Game.rerollCost()
-	reroll.text = "🎲 ДРУГИЕ  ● %d" % cost
+	reroll.text = "🎲 ДРУГИЕ  ◆ %d" % cost
 	reroll.visible = true
 	reroll.disabled = M.s.coins < cost and not M.DEV
 	if rerolled: _wait = 0.12
@@ -233,7 +233,7 @@ func showEvent(o: Dictionary) -> void:
 		var ic: Control
 		if c.get("chest"): ic = Kit.tex_icon(G.chest(c.chest).icon, 44)
 		else: ic = Kit.icon(c.get("icon", ""), c.get("ico", ""), 44)
-		var tag: String = ("● " + U.fmt(price) + (" · мало" if poor else "")) if price > 0 else rar.name
+		var tag: String = ("◆ " + U.fmt(price) + (" · мало" if poor else "")) if price > 0 else rar.name
 		var id: String = c.id
 		var fn := func():
 			if Game.pickOffer(id):

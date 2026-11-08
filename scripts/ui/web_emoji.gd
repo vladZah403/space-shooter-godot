@@ -1,20 +1,22 @@
 class_name WebEmoji
-## Цветные эмодзи в браузере. Godot в вебе не видит системных шрифтов, поэтому значки-эмодзи рисует сам
-## браузер — на айфоне это Apple Color Emoji, на Android — Noto Color Emoji, в Windows — Segoe UI Emoji,
-## то есть ровно те же картинки, что были в JS-версии. Рисуем их на скрытом холсте, забираем пиксели и
-## собираем растровый шрифт (FontFile без файла, глиф = код символа). Kit.font ставит его первым запасным
-## после Exo 2; дальше — контурный Noto Emoji для всего остального.
-## Символы, которые браузер рисует цветом текста (●, ★, ←, ✓), пропускаем: их, как и раньше, рисует
-## Noto Emoji цветом надписи. Список значков — data/emoji.json (собирает tools/emoji_list.py).
+## Значки в браузере. Godot в вебе не видит системных шрифтов, поэтому значки рисует сам браузер — на айфоне
+## это Apple Color Emoji, на Android — Noto Color Emoji, в Windows — Segoe UI Emoji, то есть ровно те же
+## картинки, что были в JS-версии. Рисуем их на скрытом холсте, забираем пиксели и собираем два шрифта,
+## Kit.font ставит их запасными после Exo 2 (дальше — контурный Noto Emoji для всего остального):
+##  • цветной — эмодзи (🚀 ⚔️ 🔒): настоящий файл OpenType с цветными картинками, цвет надписи их не трогает;
+##  • одноцветный — значки-символы цветом текста (● ◆ ▶ ★ ← ✓): белые силуэты, Godot красит их цветом надписи.
+## Списки значков — data/emoji.json (собирает tools/emoji_list.py).
 
 const LIST := "res://data/emoji.json"
 const UPEM := 2048   # единиц на кегль в собранном шрифте
 
-## JS: рисует значки, проверяет «цветной ли» (красной и синей заливкой — у эмодзи картинка не меняется),
-## складывает цветные в атлас; пиксели атласа оставляет в window.__ssEmoji, метрики возвращает строкой JSON
+## JS: рисует значки и складывает в атлас; пиксели оставляет в window.__ssEmoji, метрики возвращает строкой JSON.
+## color — эмодзи: проверяем «цветной ли» (красной и синей заливкой — у эмодзи картинка не меняется), остальные
+## пропускаем; иначе — символы: шрифты символов + U+FE0E (текстовый вид), белый силуэт по прозрачности
 const JS := """
-(function (list, px) {
-	const font = px + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","Twemoji Mozilla",sans-serif';
+(function (list, px, color) {
+	const font = px + (color ? 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","Twemoji Mozilla",sans-serif'
+		: 'px "Segoe UI Symbol","Apple Symbols","Noto Sans Symbols 2","Noto Sans Symbols","DejaVu Sans","Segoe UI",sans-serif');
 	const pad = Math.ceil(px * 0.12), by = Math.ceil(px * 1.05), ch = Math.ceil(px * 1.45);
 	const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
 	probe.canvas.width = px * 2 + pad * 2; probe.canvas.height = ch;
@@ -26,7 +28,8 @@ const JS := """
 	};
 	const ok = [], skip = [];
 	let cw = 0;
-	for (const s of list) {
+	for (const s0 of list) {
+		const s = color ? s0 : s0.replace('\uFE0F', '') + '\uFE0E';
 		const a = ink(s, '#ff0000'), b = ink(s, '#0000ff');
 		let n = 0, diff = 0;
 		for (let i = 0; i < a.length; i += 4) {
@@ -34,7 +37,7 @@ const JS := """
 			n++;
 			if (Math.abs(a[i] - b[i]) > 48 || Math.abs(a[i + 2] - b[i + 2]) > 48) diff++;
 		}
-		if (n < px || diff > n * 0.25) { skip.push(s); continue; }   // пусто или рисуется цветом текста
+		if (n < (color ? px : 4) || (color && diff > n * 0.25)) { skip.push(s0); continue; }   // пусто / цветом текста
 		const w = probe.measureText(s).width;
 		ok.push([s, w]);
 		cw = Math.max(cw, Math.ceil(w));
@@ -51,28 +54,48 @@ const JS := """
 		cx.fillText(s, x + pad, y + by);
 		return { cp: s.codePointAt(0), adv: w, x, y };
 	});
-	window.__ssEmoji = new Uint8Array(cx.getImageData(0, 0, cv.width, cv.height).data.buffer);
+	const data = cx.getImageData(0, 0, cv.width, cv.height).data;
+	if (!color) for (let i = 0; i < data.length; i += 4) { data[i] = data[i + 1] = data[i + 2] = 255; }
+	window.__ssEmoji = new Uint8Array(data.buffer);
 	return JSON.stringify({ w: cv.width, h: cv.height, cw, ch, pad, by, glyphs, skipped: skip.join(' ') });
-})(__LIST__, __PX__)
+})(__LIST__, __PX__, __COLOR__)
 """
 
 
-## растровый шрифт из эмодзи браузера; null — не в браузере или что-то пошло не так (тогда останется Noto Emoji)
-static func build() -> FontFile:
-	if not OS.has_feature("web"): return null
+## запасные шрифты из браузера: [цветные эмодзи, одноцветные символы]; пусто — не в браузере
+## (тогда останется Noto Emoji)
+static func build() -> Array[Font]:
+	var out: Array[Font] = []
+	if not OS.has_feature("web"): return out
 	var f := FileAccess.open(LIST, FileAccess.READ)
-	if f == null: return null
-	var list = JSON.parse_string(f.get_as_text())
-	if not (list is Array) or list.is_empty(): return null
+	if f == null: return out
+	var lists = JSON.parse_string(f.get_as_text())
+	if not (lists is Dictionary): return out
 	# размер глифа — под настоящий размер на экране: на айфоне интерфейс увеличен почти втрое
 	var win := DisplayServer.window_get_size()
 	var k := minf(win.x / 390.0, win.y / 844.0)
 	var px := clampi(int(26 * k), 32, 72)
-	var t0 := Time.get_ticks_msec()
-	var raw = JavaScriptBridge.eval(JS.replace("__LIST__", JSON.stringify(list)).replace("__PX__", str(px)), true)
-	if not (raw is String): return null
+	for color in [true, false]:
+		var list: Array = lists.get("color" if color else "text", [])
+		if list.is_empty(): continue
+		var t0 := Time.get_ticks_msec()
+		var got := _draw(list, px, color)
+		if got.is_empty(): continue
+		var meta: Dictionary = got[1]
+		var font := make_font(got[0], meta.glyphs, px, int(meta.cw), int(meta.ch), int(meta.pad), int(meta.by)) if color \
+			else make_mono_font(got[0], meta.glyphs, px, int(meta.cw), int(meta.ch), int(meta.pad), int(meta.by))
+		out.append(font)
+		print("[emoji] %s из браузера: %d, %d px, %d мс; пропущены: %s" % [
+			"цветных эмодзи" if color else "символов", meta.glyphs.size(), px, Time.get_ticks_msec() - t0, meta.skipped])
+	return out
+
+
+## [атлас, метрики] из браузера; [] — не получилось
+static func _draw(list: Array, px: int, color: bool) -> Array:
+	var raw = JavaScriptBridge.eval(JS.replace("__LIST__", JSON.stringify(list)).replace("__PX__", str(px)).replace("__COLOR__", str(color)), true)
+	if not (raw is String): return []
 	var meta = JSON.parse_string(raw)
-	if not (meta is Dictionary) or meta.glyphs.is_empty(): return null
+	if not (meta is Dictionary) or meta.glyphs.is_empty(): return []
 	var bytes = JavaScriptBridge.eval("window.__ssEmoji", true)
 	if not (bytes is PackedByteArray):
 		# запасной путь, если браузер не отдал массив байтов напрямую — base64 кусками
@@ -81,11 +104,30 @@ static func build() -> FontFile:
 	JavaScriptBridge.eval("delete window.__ssEmoji", true)
 	var w := int(meta.w)
 	var h := int(meta.h)
-	if not (bytes is PackedByteArray) or bytes.size() != w * h * 4: return null
-	var img := Image.create_from_data(w, h, false, Image.FORMAT_RGBA8, bytes)
-	var font := make_font(img, meta.glyphs, px, int(meta.cw), int(meta.ch), int(meta.pad), int(meta.by))
-	print("[emoji] цветных значков из браузера: %d, %d px, атлас %d×%d, %d мс; цветом текста: %s" % [
-		meta.glyphs.size(), px, w, h, Time.get_ticks_msec() - t0, meta.skipped])
+	if not (bytes is PackedByteArray) or bytes.size() != w * h * 4: return []
+	return [Image.create_from_data(w, h, false, Image.FORMAT_RGBA8, bytes), meta]
+
+
+## Одноцветный растровый шрифт: FontFile без файла, глиф = белый силуэт. Здесь как раз нужно, чтобы Godot
+## умножал глиф на цвет надписи (у шрифта без FreeType-«лица» он так и делает): «◆ 100» золотом, «✓» зелёным.
+static func make_mono_font(atlas: Image, glyphs: Array, px: int, cw: int, ch: int, pad: int, by: int) -> FontFile:
+	atlas.fix_alpha_edges()
+	var font := FontFile.new()
+	font.fixed_size = px
+	font.fixed_size_scale_mode = TextServer.FIXED_SIZE_SCALE_ENABLED
+	font.allow_system_fallback = false
+	for scr in ["Zsye", "Zsym", "Zyyy", "Zinh"]: font.set_script_support_override(scr, true)
+	var sz := Vector2i(px, 0)
+	font.set_cache_ascent(0, px, px * 0.86)
+	font.set_cache_descent(0, px, px * 0.24)
+	font.set_texture_image(0, sz, 0, atlas)
+	for g in glyphs:
+		var cp := int(g.cp)
+		font.set_glyph_advance(0, px, cp, Vector2(float(g.adv), 0))
+		font.set_glyph_offset(0, sz, cp, Vector2(-pad, -by))
+		font.set_glyph_size(0, sz, cp, Vector2(cw, ch))
+		font.set_glyph_uv_rect(0, sz, cp, Rect2(float(g.x), float(g.y), cw, ch))
+		font.set_glyph_texture_idx(0, sz, cp, 0)
 	return font
 
 

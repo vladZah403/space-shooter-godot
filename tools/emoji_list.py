@@ -3,8 +3,8 @@
 Запуск из папки проекта: python tools/emoji_list.py
 Перезапускать, когда в тексты (scripts/**/*.gd, data/game_data.json) добавили новый значок.
 Каждый символ записывается так, как он стоит в тексте: если где-то есть «X» + U+FE0F (эмодзи-вид) —
-с FE0F, иначе без. Значки, которые по Юникоду рисуются цветом текста (▶ ★ ● без FE0F), в список не попадают.
-Какие из остальных браузер нарисует цветными, решает сама игра при запуске.
+с FE0F, иначе без. Два списка: color — эмодзи (цветные картинки), text — значки, которые по Юникоду рисуются
+цветом текста (▶ ★ ● ◆ без FE0F). Какие эмодзи браузер действительно нарисует цветными, решает игра при запуске.
 """
 import glob
 import json
@@ -57,12 +57,14 @@ def main() -> None:
                 continue
             vs = i + 1 < len(text) and text[i + 1] == VS16
             found[cp] = found.get(cp, False) or vs
-    items = [chr(cp) + (VS16 if vs else "") for cp, vs in sorted(found.items()) if colored(cp, vs)]
+    items = {"color": [], "text": []}
+    for cp, vs in sorted(found.items()):
+        items["color" if colored(cp, vs) else "text"].append(chr(cp) + (VS16 if vs else ""))
     out = os.path.join(ROOT, "data", "emoji.json")
     with open(out, "w", encoding="utf-8", newline="\n") as f:
         json.dump(items, f, ensure_ascii=False)
         f.write("\n")
-    print(f"{len(items)} значков -> data/emoji.json")
+    print(f"{len(items['color'])} emoji + {len(items['text'])} symbols -> data/emoji.json")
 
 
 if __name__ == "__main__":

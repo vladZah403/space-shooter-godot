@@ -242,13 +242,8 @@ func proc(name: String) -> Texture2D:
 	var img: Image
 	match name:
 		"coin":
-			img = _disc(48, func(u: float, v: float, r: float) -> Color:
-				var d := Vector2(u - 0.38, v - 0.32).length() / 0.62
-				var base := Color("#fff7c2").lerp(Color("#ffd23d"), clampf(d / 0.35, 0, 1))
-				if d > 0.35: base = Color("#ffd23d").lerp(Color("#e09a12"), clampf((d - 0.35) / 0.5, 0, 1))
-				if d > 0.85: base = Color("#e09a12").lerp(Color("#8a5a06"), clampf((d - 0.85) / 0.15, 0, 1))
-				if absf(r - 0.68) < 0.05: base = Color("#a86d08")
-				return base)
+			# валюта — кредиты: кристалл с гранями (как в концепте меню Влада), пока нет его спрайта
+			img = _crystal(64)
 		"xp":
 			img = _diamond(40, Color("#d8ffec"), Color("#3dffa2"), Color("#0d9a5c"))
 		"xpBig":
@@ -299,6 +294,54 @@ func _disc(size: int, shade: Callable) -> Image:
 			if r <= 1.0:
 				img.set_pixel(x, y, shade.call(u, v, r))
 	return img
+
+
+## кристалл-кредит: шестигранный камень, грани светлее сверху и слева; края сглажены (2×2 точки на пиксель)
+func _crystal(size: int) -> Image:
+	var T := Vector2(0.5, 0.04)
+	var B := Vector2(0.5, 0.96)
+	var L := Vector2(0.17, 0.27)
+	var R := Vector2(0.83, 0.27)
+	var LB := Vector2(0.17, 0.69)
+	var RB := Vector2(0.83, 0.69)
+	var CL := Vector2(0.37, 0.39)
+	var CR := Vector2(0.63, 0.39)
+	var outer := PackedVector2Array([T, R, RB, B, LB, L])
+	var facets := [
+		[PackedVector2Array([T, CL, CR]), Color("#f4feff")],
+		[PackedVector2Array([T, L, CL]), Color("#b9f3ff")],
+		[PackedVector2Array([T, CR, R]), Color("#7fd9ff")],
+		[PackedVector2Array([L, CL, B, LB]), Color("#4fc0ff")],
+		[PackedVector2Array([CL, CR, B]), Color("#2f95f2")],
+		[PackedVector2Array([CR, R, RB, B]), Color("#1c5ccc")],
+	]
+	var edge := Color("#0b1e55")
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	for y in size:
+		for x in size:
+			var acc := Color(0, 0, 0, 0)
+			for sy in 2:
+				for sx in 2:
+					var p := Vector2((x + 0.25 + sx * 0.5) / size, (y + 0.25 + sy * 0.5) / size)
+					if not Geometry2D.is_point_in_polygon(p, outer): continue
+					var c := edge
+					if _poly_dist(p, outer) > 0.045:
+						c = Color("#2f95f2")
+						for f in facets:
+							if Geometry2D.is_point_in_polygon(p, f[0]):
+								c = f[1]
+								break
+					acc += Color(c.r, c.g, c.b, 1.0)
+			if acc.a > 0:
+				img.set_pixel(x, y, Color(acc.r / acc.a, acc.g / acc.a, acc.b / acc.a, acc.a / 4.0))
+	return img
+
+
+func _poly_dist(p: Vector2, poly: PackedVector2Array) -> float:
+	var d := INF
+	for i in poly.size():
+		d = minf(d, p.distance_to(Geometry2D.get_closest_point_to_segment(p, poly[i], poly[(i + 1) % poly.size()])))
+	return d
 
 
 func _diamond(size: int, c0: Color, c1: Color, c2: Color) -> Image:

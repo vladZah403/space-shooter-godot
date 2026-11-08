@@ -178,7 +178,7 @@ static func fmt_time(sec: float) -> String:
 	return "%d:%02d" % [m, s % 60]
 
 
-## склонение: plural(5, "монета", "монеты", "монет")
+## склонение: plural(5, "кредит", "кредита", "кредитов")
 static func plural(n: int, one: String, few: String, many: String) -> String:
 	var v := absi(n) % 100
 	var v1 := v % 10

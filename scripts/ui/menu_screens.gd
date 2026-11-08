@@ -95,7 +95,7 @@ func _toast(ico: String, t: String, text: String) -> void:
 
 func _poor(n: float) -> void:
 	A.play("error")
-	_toast("💸", "НЕ ХВАТАЕТ МОНЕТ", "Нужно " + U.fmt(n))
+	_toast("💸", "НЕ ХВАТАЕТ КРЕДИТОВ", "Нужно " + U.fmt(n))
 
 
 ## сетка карточек
@@ -169,7 +169,7 @@ func _render_hangar() -> void:
 				var sel: bool = s.ship.model == id
 				var lvlOk: bool = s.shipLvl >= d.lvl
 				var mid: String = id
-				var tag := "" if owned else ("● " + U.fmt(d.price) if lvlOk else "🔒 Корабль ур. %d" % d.lvl)
+				var tag := "" if owned else ("◆ " + U.fmt(d.price) if lvlOk else "🔒 Корабль ур. %d" % d.lvl)
 				_item(g, func(c, sz, _t): _draw_look(c, mid, M.s.ship.skin, sz), d.name, "", tag, Kit.GOLD if lvlOk else Kit.MUTED, sel, not owned, func(): _ship_tap(mid))
 		"drones":
 			var cm: Dictionary = s.comp
@@ -180,8 +180,8 @@ func _render_hangar() -> void:
 				var lv: int = int(cm.lv.get(id, 1))
 				var did: String = id
 				var tag := ""
-				if owned: tag = ("↑ ● " + U.fmt(d.costs[lv - 1]) if lv < 5 else "МАКС") if sel else ""
-				else: tag = "● " + U.fmt(d.price) if s.shipLvl >= d.lvl else "🔒 Корабль ур. %d" % d.lvl
+				if owned: tag = ("↑ ◆ " + U.fmt(d.costs[lv - 1]) if lv < 5 else "МАКС") if sel else ""
+				else: tag = "◆ " + U.fmt(d.price) if s.shipLvl >= d.lvl else "🔒 Корабль ур. %d" % d.lvl
 				_item(g, func(c, sz, _t):
 					if d.hue != null: G.draw_canvas(c, G.tinted(d.sprite, {"hue": d.hue}), sz.x / 2, sz.y / 2, sz.x * 0.6)
 					else: G.draw(c, d.sprite, sz.x / 2, sz.y / 2, sz.x * 0.6), d.ico + " " + d.name + (" · %d" % lv if owned else ""), "", tag, Kit.GOLD, sel, not owned, func(): _drone_tap(did))
@@ -199,7 +199,7 @@ func _render_hangar() -> void:
 				_item(g, func(c, sz, t):
 					var cols: Array = Game.trailColors(tid)
 					c.additive = true
-					c.draw_tex(Game.flameSprite(cols), sz.x * 0.32, sz.y * 0.12, sz.x * 0.36, sz.y * 0.82 * (0.9 + 0.1 * sin(t * 20))), tr.name, "", "" if owned else "● " + U.fmt(tr.price), Kit.GOLD, sel, not owned, func(): _trail_tap(tid))
+					c.draw_tex(Game.flameSprite(cols), sz.x * 0.32, sz.y * 0.12, sz.x * 0.36, sz.y * 0.82 * (0.9 + 0.1 * sin(t * 20))), tr.name, "", "" if owned else "◆ " + U.fmt(tr.price), Kit.GOLD, sel, not owned, func(): _trail_tap(tid))
 		"pilots":
 			for id in D.PILOT_ORDER:
 				var p: Dictionary = D.PILOTS[id]
@@ -215,9 +215,9 @@ func _render_hangar() -> void:
 			var ok := func():
 				if M.doPrestige():
 					A.play("levelup"); _toast("🌠", "ПРЕСТИЖ %d" % M.s.prestige, "Добро пожаловать в новый цикл!"); _rerender()
-			Ui.dialog({"ico": "star", "title": "ПРЕСТИЖ", "text": "Уровень корабля и навыки сбросятся.\nНавсегда: +8% монет и +4% урона за каждый престиж.\nПрокачка, оружие, корабли, раскраски и монеты останутся.", "ok": "ПРЕСТИЖ", "onOk": ok}), "gold"))
+			Ui.dialog({"ico": "star", "title": "ПРЕСТИЖ", "text": "Уровень корабля и навыки сбросятся.\nНавсегда: +8% кредитов и +4% урона за каждый престиж.\nПрокачка, оружие, корабли, раскраски и кредиты останутся.", "ok": "ПРЕСТИЖ", "onOk": ok}), "gold"))
 	elif s.shipLvl >= 10:
-		body.add_child(Kit.para("Престиж откроется на %d уровне корабля: постоянный бонус к монетам и урону" % D.PRESTIGE_LVL, 12, Kit.MUTED, HORIZONTAL_ALIGNMENT_CENTER))
+		body.add_child(Kit.para("Престиж откроется на %d уровне корабля: постоянный бонус к кредитам и урону" % D.PRESTIGE_LVL, 12, Kit.MUTED, HORIZONTAL_ALIGNMENT_CENTER))
 
 
 func _ship_tap(id: String) -> void:
@@ -236,7 +236,7 @@ func _ship_tap(id: String) -> void:
 		else: _poor(d.price)
 		preview = null
 		_rerender()
-	Ui.dialog({"ico": "🚀", "title": d.name, "text": d.desc + "\n" + " • ".join(d.get("perks", [])) + "\n\nЦена: " + U.fmt(d.price) + " монет", "ok": "КУПИТЬ", "onOk": ok})
+	Ui.dialog({"ico": "🚀", "title": d.name, "text": d.desc + "\n" + " • ".join(d.get("perks", [])) + "\n\nЦена: " + U.fmt(d.price) + " кредитов", "ok": "КУПИТЬ", "onOk": ok})
 
 
 func _drone_tap(id: String) -> void:
@@ -256,7 +256,7 @@ func _drone_tap(id: String) -> void:
 				A.play("levelup"); Haptic.success()
 			else: _poor(d.costs[lv - 1])
 			_rerender()
-		Ui.dialog({"ico": d.ico, "title": d.name + " · УРОВЕНЬ %d" % (lv + 1), "text": d.desc + "\nСледующий уровень: " + d.get("up", "") + "\n\nЦена: " + U.fmt(d.costs[lv - 1]) + " монет", "ok": "ПРОКАЧАТЬ", "onOk": up})
+		Ui.dialog({"ico": d.ico, "title": d.name + " · УРОВЕНЬ %d" % (lv + 1), "text": d.desc + "\nСледующий уровень: " + d.get("up", "") + "\n\nЦена: " + U.fmt(d.costs[lv - 1]) + " кредитов", "ok": "ПРОКАЧАТЬ", "onOk": up})
 		return
 	if s.shipLvl < d.lvl and not M.DEV:
 		A.play("error"); _toast("🔒", "НУЖЕН УРОВЕНЬ", "Откроется на %d уровне корабля" % d.lvl)
@@ -266,7 +266,7 @@ func _drone_tap(id: String) -> void:
 			A.play("buy"); Haptic.success(); _toast(d.ico, "НОВЫЙ ДРОН", d.name)
 		else: _poor(d.price)
 		_rerender()
-	Ui.dialog({"ico": d.ico, "title": d.name, "text": d.desc + "\n\nЦена: " + U.fmt(d.price) + " монет", "ok": "КУПИТЬ", "onOk": buy})
+	Ui.dialog({"ico": d.ico, "title": d.name, "text": d.desc + "\n\nЦена: " + U.fmt(d.price) + " кредитов", "ok": "КУПИТЬ", "onOk": buy})
 
 
 func _skin_tap(id: String) -> void:
@@ -295,7 +295,7 @@ func _trail_tap(id: String) -> void:
 		else: _poor(tr.price)
 		preview = null
 		_rerender()
-	Ui.dialog({"ico": "🔥", "title": "ДВИГАТЕЛЬ «" + tr.name + "»", "text": "Цена: " + U.fmt(tr.price) + " монет", "ok": "КУПИТЬ", "onOk": buy})
+	Ui.dialog({"ico": "🔥", "title": "ДВИГАТЕЛЬ «" + tr.name + "»", "text": "Цена: " + U.fmt(tr.price) + " кредитов", "ok": "КУПИТЬ", "onOk": buy})
 
 
 func _pilot_tap(id: String) -> void:
@@ -364,16 +364,16 @@ func _render_arsenal() -> void:
 	else:
 		var poor: bool = s.coins < w.price and not M.DEV
 		var wid3 := ars
-		var bb := Kit.button("● КУПИТЬ ЗА " + U.fmt(w.price), func():
+		var bb := Kit.button("◆ КУПИТЬ ЗА " + U.fmt(w.price), func():
 			var ok := func():
 				if M.buyWeapon(wid3):
 					A.play("buy"); Haptic.success(); _toast("⚔️", "НОВОЕ ОРУЖИЕ", w.name + (" • уже в бою" if wid3 in M.s.weapons.loadout else ""))
 				else: A.play("error")
 				_rerender()
-			Ui.dialog({"ico": "⚔️", "title": w.name, "text": w.desc + "\n\nЦена: " + U.fmt(w.price) + " монет", "ok": "КУПИТЬ", "onOk": ok}), "gold")
+			Ui.dialog({"ico": "⚔️", "title": w.name, "text": w.desc + "\n\nЦена: " + U.fmt(w.price) + " кредитов", "ok": "КУПИТЬ", "onOk": ok}), "gold")
 		bb.disabled = poor
 		v.add_child(bb)
-		if poor: v.add_child(Kit.para("🔒 Не хватает %s монет. Монеты падают с врагов и даются за задания дня." % U.fmt(w.price - s.coins), 12, Kit.MUTED))
+		if poor: v.add_child(Kit.para("🔒 Не хватает %s кредитов. Кредиты падают с врагов и даются за задания дня." % U.fmt(w.price - s.coins), 12, Kit.MUTED))
 
 
 func _upRow(wid: String, up: Dictionary) -> Control:
@@ -390,7 +390,7 @@ func _upRow(wid: String, up: Dictionary) -> Control:
 	v.add_child(Kit.segs(lvl, int(up.max), Kit.GOLD))
 	h.add_child(v)
 	var upid: String = up.id
-	var b := Kit.button("✓ MAX" if mx else "● " + U.fmt(cost), func():
+	var b := Kit.button("✓ MAX" if mx else "◆ " + U.fmt(cost), func():
 		if M.buyWeaponUp(wid, upid):
 			A.play("buy"); Haptic.light()
 		else: A.play("error")
@@ -557,9 +557,9 @@ func _render_missions() -> void:
 		var prog := "%s / %s%s" % [U.fmt(floorf(minf(m.progress, m.goal))), U.fmt(m.goal), " мин" if m.id == "minutes" else ""]
 		mv.add_child(Kit.label(prog, 11, Kit.DIM, 700))
 		h.add_child(mv)
-		h.add_child(Kit.label("● %d" % m.reward, 13, Kit.GOLD, 900))
+		h.add_child(Kit.label("◆ %d" % m.reward, 13, Kit.GOLD, 900))
 		v.add_child(h)
-	v.add_child(Kit.label(("✓ Бонус за все задания получен" if d.bonus else "🎁 Бонус за все три задания") + "   ● %d" % D.DAILY_BONUS, 13, Kit.GREEN if d.bonus else Kit.GOLD, 800))
+	v.add_child(Kit.label(("✓ Бонус за все задания получен" if d.bonus else "🎁 Бонус за все три задания") + "   ◆ %d" % D.DAILY_BONUS, 13, Kit.GREEN if d.bonus else Kit.GOLD, 800))
 	body.add_child(p)
 	body.add_child(Kit.para("Прогресс засчитывается во время игры, награда приходит сразу", 12, Kit.MUTED, HORIZONTAL_ALIGNMENT_CENTER))
 	var st := M.loginStatus()
@@ -577,7 +577,7 @@ func _render_missions() -> void:
 		var c := Kit.panel(6, Color(Kit.GOLD, 0.15) if today else Color(Kit.PANEL_SOLID, 0.9), Kit.GOLD if today else (Color(Kit.GREEN, 0.5) if got else Kit.LINE), 10)
 		var cv := Kit.vbox(0)
 		cv.add_child(Kit.label("День %d" % (i + 1), 10, Kit.MUTED, 700, HORIZONTAL_ALIGNMENT_CENTER))
-		cv.add_child(Kit.label(("🎁" if i == 6 else "●") + " %d%s" % [r.coins, " + ✦" if r.get("sp", 0) else ""], 12, Kit.GREEN if got else Kit.GOLD, 900, HORIZONTAL_ALIGNMENT_CENTER))
+		cv.add_child(Kit.label(("🎁" if i == 6 else "◆") + " %d%s" % [r.coins, " + ✦" if r.get("sp", 0) else ""], 12, Kit.GREEN if got else Kit.GOLD, 900, HORIZONTAL_ALIGNMENT_CENTER))
 		c.add_child(cv)
 		c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		g.add_child(c)
@@ -586,7 +586,7 @@ func _render_missions() -> void:
 		lv.add_child(Kit.button("🎁 ЗАБРАТЬ НАГРАДУ", func():
 			var r = M.claimLogin()
 			if r:
-				A.play("buy"); Haptic.success(); Ui.toast({"ico": "🎁", "title": "НАГРАДА", "text": "+%d монет%s" % [r.coins, " и +1 очко навыка" if r.get("sp", 0) else ""]})
+				A.play("buy"); Haptic.success(); Ui.toast({"ico": "🎁", "title": "НАГРАДА", "text": "+%d кредитов%s" % [r.coins, " и +1 очко навыка" if r.get("sp", 0) else ""]})
 			_rerender(), "gold"))
 	else:
 		lv.add_child(Kit.para("Следующая награда завтра. Заходите каждый день, чтобы серия не прервалась", 12, Kit.MUTED))
@@ -686,7 +686,7 @@ func _render_achievements() -> void:
 		v.add_child(Kit.para(desc, 12))
 		if a.stat != "" and not done: v.add_child(Kit.bar(M.statValue(a.stat) / maxf(1, a.goal), Kit.CYAN, 4))
 		h.add_child(v)
-		h.add_child(Kit.label("✓" if done else "● %d" % a.reward, 13, Kit.GREEN if done else Kit.GOLD, 900))
+		h.add_child(Kit.label("✓" if done else "◆ %d" % a.reward, 13, Kit.GREEN if done else Kit.GOLD, 900))
 		p.add_child(h)
 		if not done: p.modulate.a = 0.85
 		body.add_child(p)
@@ -752,7 +752,7 @@ func _render_leaders() -> void:
 	var st: Dictionary = s.stats
 	var g := _grid(2)
 	for x in [["Игр сыграно", U.fmt(st.games)], ["Лучшая волна", str(st.bestWave)], ["Врагов уничтожено", U.fmt(st.kills)], ["Боссов побеждено", U.fmt(st.bosses)],
-			["Лучшее комбо", "×%d" % st.maxCombo], ["Время в бою", U.fmt_time(st.playTime)], ["Монет заработано", U.fmt(st.coinsEarned)], ["Улучшений выбрано", U.fmt(st.perks)]]:
+			["Лучшее комбо", "×%d" % st.maxCombo], ["Время в бою", U.fmt_time(st.playTime)], ["Кредитов заработано", U.fmt(st.coinsEarned)], ["Улучшений выбрано", U.fmt(st.perks)]]:
 		var p := Kit.panel(8)
 		var v := Kit.vbox(0)
 		v.add_child(Kit.label(x[0], 11, Kit.MUTED, 700))
@@ -879,10 +879,10 @@ func _render_settings() -> void:
 			M.reset(); A.play("explodeM"); Ui.toast({"ico": "🗑️", "title": "ГОТОВО", "text": "Прогресс сброшен", "info": true}); _rerender()
 		var first := func():
 			Ui.dialog({"ico": "💀", "title": "ТОЧНО?", "text": "Последнее предупреждение.", "ok": "ДА, СБРОСИТЬ", "danger": true, "onOk": really})
-		Ui.dialog({"ico": "↺", "title": "СБРОС ПРОГРЕССА", "text": "Будут удалены монеты, оружие, прокачка, корабли, навыки, рекорды и достижения.\nЭто нельзя отменить!", "ok": "УДАЛИТЬ ВСЁ", "danger": true, "onOk": first}), "danger", "sm")))
+		Ui.dialog({"ico": "↺", "title": "СБРОС ПРОГРЕССА", "text": "Будут удалены кредиты, оружие, прокачка, корабли, навыки, рекорды и достижения.\nЭто нельзя отменить!", "ok": "УДАЛИТЬ ВСЁ", "danger": true, "onOk": first}), "danger", "sm")))
 	if M.DEV:
 		v = sec.call("РАЗРАБОТЧИК").get_child(0)
-		v.add_child(_row("+10 000 монет", Kit.button("ДАТЬ", func():
+		v.add_child(_row("+10 000 кредитов", Kit.button("ДАТЬ", func():
 			M.addCoins(10000, false); A.play("buy"); refresh_wallet(), "", "sm")))
 		v.add_child(_row("+10 очков навыков", Kit.button("ДАТЬ", func():
 			M.s.spBonus += 10; M.save(); A.play("buy"), "", "sm")))

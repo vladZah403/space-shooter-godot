@@ -201,7 +201,7 @@ func updateSolar(dt: float) -> void:
 	if s.t > s.charge + 0.6: c.solar = null
 
 
-# ── КОСМИЧЕСКИЙ МУСОР: медленные обломки, в каждом монеты ──
+# ── КОСМИЧЕСКИЙ МУСОР: медленные обломки, в каждом кредиты ──
 func spawn_debris(c: Dictionary) -> void:
 	c.cd = U.rand(0.55, 0.9)
 	if c.wave.done: return
@@ -245,14 +245,14 @@ func _count(type: String) -> int:
 	return n
 
 
-## ПОЯС АСТЕРОИДОВ: медленные астероиды закрывают от вражеских пуль и мешают стрелять; в части из них монеты
+## ПОЯС АСТЕРОИДОВ: медленные астероиды закрывают от вражеских пуль и мешают стрелять; в части из них кредиты
 ## или кристаллы. Чем дальше в сектор, тем их больше и они крупнее
 func mech_asteroids(m: Dictionary) -> void:
 	var k: int = m.k
 	m.cd = [3, 2.5, 2, 1.6][k] * U.rand(0.8, 1.2)
 	if _count("asteroid") >= [2, 3, 4, 5][k]: return
 	var scale := U.rand(0.85, 1.15) + k * 0.08
-	# добычу видно заранее: камни с самоцветами — монеты, с кристаллами — опыт (лист art/sheet11_asteroids.png)
+	# добычу видно заранее: камни с самоцветами — кредиты, с кристаллами — опыт (лист art/sheet11_asteroids.png)
 	var r := U.random()
 	var loot := "coin" if r < 0.4 else ("xp" if r < 0.6 else "")
 	var size := "m" if scale < 1 else ("l" if scale < 1.2 else "xl")

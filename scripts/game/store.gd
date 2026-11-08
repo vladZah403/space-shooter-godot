@@ -170,7 +170,7 @@ func patchNotes(data: Dictionary) -> void:
 		if not has_note.call("v24"): s.notes.append({"type": "v24"})
 	elif patch >= 24 and patch < 25 and played:
 		if not has_note.call("v25"): s.notes.append({"type": "v25"})
-	# 3.0: прокачка корабля переехала в забег — монеты за неё возвращаем
+	# 3.0: прокачка корабля переехала в забег — кредиты за неё возвращаем
 	if patch < 30:
 		var refund := 0
 		for g in D.GENERAL:
@@ -226,7 +226,7 @@ func _dropOrphans() -> Array:
 
 
 # ════════════════════════════════════════════════════════════
-# МОНЕТЫ
+# КРЕДИТЫ
 # ════════════════════════════════════════════════════════════
 func addCoins(n: float, earned := true) -> void:
 	var k := int(floor(n))
@@ -748,7 +748,7 @@ func diffUnlocked(id: String) -> bool:
 	return st.get(d.unlock, {}).get("wave", 0) >= D.DIFF_UNLOCK_WAVE
 
 
-## страховка: если мощь в 3+ раза выше рекомендуемой, монеты плавно снижаются до ×0,5 (к 6 разам)
+## страховка: если мощь в 3+ раза выше рекомендуемой, кредиты плавно снижаются до ×0,5 (к 6 разам)
 func overpowerK(id: String, pw := -1.0) -> float:
 	var rec: float = D.DIFFS[id].power if D.DIFFS.has(id) else 0.0
 	if not rec: return 1.0
@@ -802,7 +802,7 @@ func challengeWave(ch: Dictionary, wave: int) -> bool:
 		if c.tiers == 1:
 			s.stats.challenges += 1; unlock("challenge1")
 		addCoins(t.coins, false)
-		Bus.emit("toast", {"ico": "🎲", "title": "ИСПЫТАНИЕ: СТУПЕНЬ %d / %d" % [c.tiers, tiers.size()], "text": "Волна %d — +%d монет" % [t.wave, t.coins], "dur": 3200})
+		Bus.emit("toast", {"ico": "🎲", "title": "ИСПЫТАНИЕ: СТУПЕНЬ %d / %d" % [c.tiers, tiers.size()], "text": "Волна %d — +%d кредитов" % [t.wave, t.coins], "dur": 3200})
 		got = true
 	if got:
 		checkAchievements(); save()

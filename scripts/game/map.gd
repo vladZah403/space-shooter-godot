@@ -413,15 +413,15 @@ func resolve(ev: String, card: String) -> void:
 			p.lives = maxi(1, p.lives - 1); FX.flash("#b06bff", 0.3); Bus.emit("playerHit"); say.call("🌀", "Аномалия задела корабль: −1 жизнь")
 	elif ev == "distress":
 		if card == "help":
-			run.coins += 100; M.addCoins(100); say.call("🤝", "Экипаж спасён: +100 монет")
+			run.coins += 100; M.addCoins(100); say.call("🤝", "Экипаж спасён: +100 кредитов")
 		else:
 			giveChest("silver"); run.nextDanger = true
 	elif ev == "station":
 		if card == "fix": Game.heal(1, "🏚️ РЕМОНТ")
 		else:
-			p.bombs = mini(9, p.bombs + 1); run.coins += 50; M.addCoins(50); say.call("💣", "+1 бомба и 50 монет")
+			p.bombs = mini(9, p.bombs + 1); run.coins += 50; M.addCoins(50); say.call("💣", "+1 бомба и 50 кредитов")
 	elif ev == "slot" and card == "play":
 		if U.random() < 0.5:
-			run.coins += 250; M.addCoins(250); A.play("coin", {"rate": 1.3}); say.call("🎰", "Джекпот! +250 монет")
+			run.coins += 250; M.addCoins(250); A.play("coin", {"rate": 1.3}); say.call("🎰", "Джекпот! +250 кредитов")
 		else: say.call("🎰", "Не повезло")
 	Game.hudDirty = true

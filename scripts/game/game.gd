@@ -316,7 +316,7 @@ func computeStats() -> Dictionary:
 	var pl := func(id): return 1.0 if run and run.pilot == id else 0.0
 	var rl := func(id): return 1.0 if relic(id) else 0.0
 	var sg := func(k: String) -> float: return float(ship.get(k, 0.0))
-	# 4.2: пока действует аномалия сектора, монет и опыта больше
+	# 4.2: пока действует аномалия сектора, кредитов и опыта больше
 	var an = anomaly()
 	var anK: float = 1.0 + D.ANOMALIES[an].bonus if an else 1.0
 	var shieldRegen: float = 20.0 if md.call("shieldcore") else (30.0 if sk.call("sk_capacitor") else 0.0)
@@ -334,7 +334,7 @@ func computeStats() -> Dictionary:
 		"multi": pk.call("multi") + int(sg.call("multi")) + int(rl.call("r_twins")),
 		"wings": sg.call("wings") if sg.call("wings") else md.call("wings"),
 		"magnet": 9999.0 if sk.call("sk_magnet") >= 2 else 120 * S * (1.5 if md.call("salvage") else 1.0) * (1 + pk.call("magnet") * 0.5) * (1 + sg.call("magnet")) * (1.5 if sk.call("sk_magnet") else 1.0) * (1 + rl.call("r_gravlov")),
-		# монет за врага меньше там, где врагов больше: доход за волну равен множителю сложности
+		# кредитов за врага меньше там, где врагов больше: доход за волну равен множителю сложности
 		"coins": diff.coins / diff.count * (1 + md.call("salvage") * 0.4) * (1.2 if pl.call("lira") else 1.0) * (1 + pk.call("greed") * 0.3) * pres.coins * (1 + sk.call("sk_greed") * 0.1) * (1 + rl.call("r_purse") * 0.25) * (1 + rl.call("r_cursedcoin")) * Comp.coinMul() * coinK * D.ECON.coins * anK,
 		"luck": (1 + pk.call("luck") * 0.4) * (1 + sk.call("sk_lucky") * 0.25) * (1 + rl.call("r_dice") * 0.5),
 		"speed": (1 + sg.call("speed")) * (1 + md.call("gyro") * 0.15) * (1 + pk.call("speed") * 0.15) * (1 + rl.call("r_afterburner") * 0.12),
@@ -1484,7 +1484,7 @@ func onEnemyKilled(e: En, _src: String) -> void:
 	var waveMul: float = 1 + (wave.n - 1) * 0.08
 	var pts := roundf(e.score * waveMul * diff.score * comboMul_ * (2.0 if e.elite else 1.0))
 	addScore(pts)
-	# монеты и кристаллы
+	# кредиты и кристаллы
 	var coins: float = e.coins * (2.0 if e.elite and relic("r_hunteye") else 1.0) * st.coins * (1 + wave.n * D.ECON.waveGrowth) * (1.5 if run.fever else 1.0) \
 		* (3.0 if e.elite else 1.0) * (diff.count if e.mini else 1.0) * ((3.0 if skill("sk_daredevil") else D.DANGER.coins) if wave.danger else 1.0)
 	var ci := int(floorf(coins)) + (1 if U.random() < fmod(coins, 1.0) else 0)
@@ -1527,7 +1527,7 @@ func setFever(on: bool) -> void:
 	if run.fever == on: return
 	run.fever = on
 	if on:
-		FX.text(G.FW / 2, G.H * 0.42, "ФИВЕР! МОНЕТЫ ×1.5", "#ff6bd6", 18, 1.4, -30)
+		FX.text(G.FW / 2, G.H * 0.42, "ФИВЕР! КРЕДИТЫ ×1.5", "#ff6bd6", 18, 1.4, -30)
 		A.play("powerup", {"rate": 1.3})
 	Bus.emit("intensity")
 
@@ -2171,7 +2171,7 @@ func updatePickups(dt: float) -> void:
 		# бонус и ящик Конвоя сами к кораблю не летят — их нужно подобрать
 		var big := it.kind == "pu" or it.kind == "crate"
 		var mr: float = st.magnet * 0.6 if big else st.magnet
-		# монеты и кристаллы сами летят к кораблю через 2.5 с; энергоблоки молнии нужно собрать самому (или магнитом)
+		# кредиты и кристаллы сами летят к кораблю через 2.5 с; энергоблоки молнии нужно собрать самому (или магнитом)
 		if p.alive and (it.pull or (it.age > 0.35 and (magnetAll or d < mr or Comp.pulls(it))) or (not big and it.kind != "en" and it.age > 2.5)):
 			it.pull = true
 			var sp := (380 + it.age * 120) * S
@@ -2209,7 +2209,7 @@ func collect(it: Pk) -> void:
 			run.energy = minf(1.0, run.energy + D.WEAPONS.lightning.base.block * (it.val if it.val else 1.0))
 			A.play("zap", {"vol": 0.35, "rate": 2})
 		"crate":
-			# ящик Конвоя: монеты и случайный бонус
+			# ящик Конвоя: кредиты и случайный бонус
 			run.coins += int(it.val)
 			M.addCoins(int(it.val))
 			M.trackMission("coins", int(it.val))
@@ -2467,9 +2467,9 @@ func rollAnomaly(n: int, isBoss: bool) -> void:
 				A.play("skill", {"rate": 0.7})
 				var pct := int(round(def.bonus * 100))
 				if tipOnce(aid, {"kind": "АНОМАЛИЯ СЕКТОРА", "icon": "an_" + aid, "ico": def.ico, "title": def.name, "color": def.color,
-					"note": "Действует до босса сектора. Монет и опыта +%d%%." % pct}): return
+					"note": "Действует до босса сектора. Кредитов и опыта +%d%%." % pct}): return
 				Bus.emit("toast", {"ico": def.ico, "icon": "an_" + aid, "title": "АНОМАЛИЯ: " + def.name, "text": def.desc + " · награды +%d%%" % pct, "dur": 3800})
-				hintOnce("anomaly", "ПОДСКАЗКА", "Аномалия меняет правила сектора до босса: сложнее, зато монет и опыта больше. Подробности — на паузе"))
+				hintOnce("anomaly", "ПОДСКАЗКА", "Аномалия меняет правила сектора до босса: сложнее, зато кредитов и опыта больше. Подробности — на паузе"))
 	if run.anomaly != was: refreshStats()
 
 
@@ -2500,7 +2500,7 @@ func nextWave() -> void:
 	if anomaly("swarm"): wave.budget *= 1.3
 	# баннер сектора — только если его карточку не показали в прыжке
 	var newSector: bool = n > 1 and (n - 1) % 5 == 0 and run.get("cardSector", -1) != sector
-	# Развилка: опасный путь — больше врагов и элиты, монеты ×2
+	# Развилка: опасный путь — больше врагов и элиты, кредиты ×2
 	if run.get("nextDanger", false):
 		run.nextDanger = false
 		wave.danger = true
@@ -2571,7 +2571,7 @@ func waveCleared() -> void:
 	if perfect and w.n >= 5: M.unlock("no_hit_level")
 	if w.n >= 10 and perk("glass"): M.unlock("glass10")
 	Events.finish()
-	# собираем оставшиеся монеты и кристаллы
+	# собираем оставшиеся кредиты и кристаллы
 	for it in pickups: if it.kind != "pu" and it.kind != "crate": it.pull = true
 	Bus.emit("waveClear", {"n": w.n, "bonus": bonus, "perfect": perfect})
 	# 4.1: после босса — трофейный сундук (откроется после забега), потом станция; после обычной волны — награда узла карты
@@ -2605,7 +2605,7 @@ func forkOffer() -> Dictionary:
 	var d: Dictionary = D.DANGER
 	return {"title": "РАЗВИЛКА", "sub": "Куда ведём следующую волну?", "cards": [
 		{"id": "safe", "ico": "🛰️", "name": "ОБЫЧНЫЙ ПУТЬ", "desc": "Следующая волна как обычно", "rar": "common"},
-		{"id": "danger", "ico": "☠️", "name": "ОПАСНЫЙ ПУТЬ", "desc": "Врагов +%d%%, элита чаще — но монеты ×%s" % [int(round((d.count - 1) * 100)), str(d.coins)], "rar": "epic"},
+		{"id": "danger", "ico": "☠️", "name": "ОПАСНЫЙ ПУТЬ", "desc": "Врагов +%d%%, элита чаще — но кредиты ×%s" % [int(round((d.count - 1) * 100)), str(d.coins)], "rar": "epic"},
 	]}
 
 
@@ -2631,8 +2631,8 @@ func merchantOffer() -> Dictionary:
 		if x.rar == "epic" and perk(x.id) < x.max and x.id != "glass" and x.id != "maxhp" and (pk == null or x.id != pk.id): epic.append(x)
 	var ep = U.pick(epic) if epic.size() and p.lives >= 2 else null
 	if ep: cards.append({"id": "deal:" + ep.id, "ico": "🩸", "name": "СДЕЛКА: " + ep.name, "desc": "−1 жизнь, взамен: " + ep.desc, "rar": "legendary"})
-	cards.append({"id": "pass", "ico": "👋", "name": "ПРОЙТИ МИМО", "desc": "Сберечь монеты", "rar": "common"})
-	return {"title": "ТОРГОВЕЦ", "art": "p_merchant", "sub": ("Скидка за эскорт −%d%% · монеты из кошелька" % int(round((1 - disc) * 100))) if disc < 1 else "Цены в монетах — монеты уходят из кошелька", "cards": cards, "cut": cut}
+	cards.append({"id": "pass", "ico": "👋", "name": "ПРОЙТИ МИМО", "desc": "Сберечь кредиты", "rar": "common"})
+	return {"title": "ТОРГОВЕЦ", "art": "p_merchant", "sub": ("Скидка за эскорт −%d%% · кредиты из кошелька" % int(round((1 - disc) * 100))) if disc < 1 else "Цены в кредитах — кредиты уходят из кошелька", "cards": cards, "cut": cut}
 
 
 func pickOffer(id: String) -> bool:

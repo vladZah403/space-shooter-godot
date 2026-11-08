@@ -147,10 +147,10 @@ func _checkLogin() -> void:
 		var got = M.claimLogin()
 		if got:
 			A.play("buy"); Haptic.success()
-			toast({"ico": "🎁", "title": "НАГРАДА", "text": "+%d монет%s" % [got.coins, " и +1 очко навыка" if got.get("sp", 0) else ""]})
+			toast({"ico": "🎁", "title": "НАГРАДА", "text": "+%d кредитов%s" % [got.coins, " и +1 очко навыка" if got.get("sp", 0) else ""]})
 			menu.refresh()
 	var streak := ("Серия: %d %s подряд!" % [st.streak, U.plural(st.streak, "день", "дня", "дней")]) if st.streak > 1 else "Заходите каждый день — награда растёт!"
-	dialog({"ico": "🎁", "title": "НАГРАДА ЗА ВХОД · ДЕНЬ %d" % (st.day + 1), "text": "+%d монет%s
+	dialog({"ico": "🎁", "title": "НАГРАДА ЗА ВХОД · ДЕНЬ %d" % (st.day + 1), "text": "+%d кредитов%s
 
 %s" % [r.coins, " и +1 очко навыка" if r.get("sp", 0) else "", streak], "ok": "ЗАБРАТЬ", "noCancel": true, "onOk": claim})
 
@@ -221,7 +221,7 @@ func waveBanner(w: Dictionary) -> void:
 	if w.get("newSector", false) or w.n == 1:
 		banner([["СЕКТОР %d" % (int(w.get("sector", 0)) + 1), 2], [w.get("sectorName", ""), 1], ["Волна %d" % w.n, 3]], "#3de0ff", 2600)
 	elif w.get("danger", false):
-		banner([["☠️ ОПАСНЫЙ ПУТЬ · МОНЕТЫ ×%s" % str(D.DANGER.coins), 2], ["ВОЛНА %d" % w.n, 1]], "#ff5c7a", 2200)
+		banner([["☠️ ОПАСНЫЙ ПУТЬ · КРЕДИТЫ ×%s" % str(D.DANGER.coins), 2], ["ВОЛНА %d" % w.n, 1]], "#ff5c7a", 2200)
 	else:
 		banner([["ВОЛНА %d" % w.n, 1]], "#ffffff", 1800)
 

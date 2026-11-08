@@ -86,7 +86,7 @@ func block(b: Eb) -> bool:
 	return true
 
 
-## Сборщик тянет к кораблю всё с экрана (монеты, кристаллы, энергию; с 3-го уровня — и бонусы)
+## Сборщик тянет к кораблю всё с экрана (кредиты, кристаллы, энергию; с 3-го уровня — и бонусы)
 func pulls(it: Pk) -> bool:
 	return has("collector") and ((it.kind != "pu" and it.kind != "crate") or d.lv >= 3)
 

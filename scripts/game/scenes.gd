@@ -1,7 +1,7 @@
 extends Node
 ## Сцены узлов карты: анимации (автозагрузка Scenes) — перенос scenes.js.
 ##  Торговец (прилёт с торможением, огни, неоновая вывеска, грузы на орбите, луч стыковки, реплика, отлёт),
-##  ремонт (сварка, наноботы), тайник (падает, трясётся, лопается — монеты летят в кошелёк), элита (строй,
+##  ремонт (сварка, наноботы), тайник (падает, трясётся, лопается — кредиты летят в кошелёк), элита (строй,
 ##  мигалки), события (обломки с искрами, маяк SOS, чёрный рынок, аномалия, заброшенная станция, игральный
 ##  автомат), сундук. Плюс актёры после сцены (отлёт торговца). Координаты — поля боя.
 ##  Живой портрет торговца в окне лавки (SC.portrait) — часть интерфейса, переносится вместе с ним.
@@ -194,7 +194,7 @@ func update(sc: Dictionary) -> void:
 				sc.done = true
 				FX.explode(cx, y, 1, "#ffc83d"); FX.ring(cx, y, 10 * S, 90 * S, "#ffc83d", 0.4, 4)
 				FX.debris(cx, y, "#8a6a3a", 8, 260)
-				# монеты летят в кошелёк (вверх вправо)
+				# кредиты летят в кошелёк (вверх вправо)
 				var coins: Array = []
 				for i in 14: coins.append({"a": U.rand(-PI, 0), "v": U.rand(80, 200) * S, "d": U.rand(0, 0.25)})
 				sc.coins = coins
@@ -289,7 +289,7 @@ func draw(ctx: Ctx, sc: Dictionary) -> void:
 				ctx.alpha = 1.0
 				G.draw(ctx, "p_crate", cx + sx, y, 66 * S, t * 4 if t < 0.7 else sin(t * 50) * 0.06 * rattle)
 				if rattle > 0.3: lamp(ctx, cx + sx, y - 6 * S, "#fff1a6", 60 * S * rattle, rattle)
-			# монеты дугой в кошелёк
+			# кредиты дугой в кошелёк
 			if sc.get("coins") != null:
 				var lt := t - 1.5
 				var hx := G.FW - 40 * S
@@ -502,7 +502,7 @@ func drawSlot(ctx: Ctx, x: float, y: float, t: float, a: float) -> void:
 	ctx.stroke = U.col("#c9d4ea"); ctx.line_width = 5 * S
 	ctx.stroke_line(L + w, T + 60 * S, L + w + 16 * S, ky)
 	ctx.fill = U.col("#ff3d5a"); ctx.fill_circle(L + w + 16 * S, ky, 7 * S)
-	# лоток с монетами
+	# лоток с кредитами
 	ctx.fill = U.col("#1a0828"); ctx.begin_path(); ctx.round_rect(L + 24 * S, T + h - 34 * S, w - 48 * S, 18 * S, 6 * S); ctx.fill_path()
 	ctx.restore()
 

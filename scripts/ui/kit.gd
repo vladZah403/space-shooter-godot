@@ -38,9 +38,11 @@ static func font(weight := 600) -> Font:
 		# цветные значки берём у браузера (WebEmoji), остальное — свой Noto Emoji (OFL, контурный)
 		var noto: Font = load("res://assets/fonts/NotoEmoji.ttf")
 		if OS.has_feature("web"):
-			# цветные значки рисует сам браузер (как в JS-версии), остальное — контурный Noto Emoji
-			var web := WebEmoji.build()
-			_font.fallbacks = [web, noto] if web else [noto]
+			# значки рисует сам браузер (как в JS-версии): цветные эмодзи и символы цветом текста;
+			# чего нет у браузера — контурный Noto Emoji
+			var fb: Array[Font] = WebEmoji.build()
+			fb.append(noto)
+			_font.fallbacks = fb
 			# системных шрифтов в браузере нет; с этим флагом Godot пропускает «не цветные» шрифты для эмодзи
 			# (растровый из браузера он считает не цветным) в поисках системного, которого нет
 			_font.allow_system_fallback = false

@@ -25,7 +25,7 @@ static func toast_el(t: Dictionary) -> Control:
 	v.add_child(Kit.label(t.get("title", ""), 12, Kit.CYAN if t.get("info", false) else Kit.GOLD, 900))
 	v.add_child(Kit.para(t.get("text", ""), 13, Kit.TEXT))
 	h.add_child(v)
-	if t.get("rew", "") != "": h.add_child(Kit.label(t.rew + " ●", 13, Kit.GOLD, 900))
+	if t.get("rew", "") != "": h.add_child(Kit.label(t.rew + " ◆", 13, Kit.GOLD, 900))
 	p.add_child(h)
 	return p
 
@@ -365,7 +365,7 @@ class DiffView extends Control:
 			for x in D.CHALLENGE_MODS:
 				if x.id == mid: mods.append(x.name)
 		var tiers: Array = D.CHALLENGE_TIERS
-		var rew := "✓ всё получено" if cs.tiers >= tiers.size() else "● %d за волну %d" % [tiers[cs.tiers].coins, tiers[cs.tiers].wave]
+		var rew := "✓ всё получено" if cs.tiers >= tiers.size() else "◆ %d за волну %d" % [tiers[cs.tiers].coins, tiers[cs.tiers].wave]
 		list.add_child(_row("daily", "#ff5cf0", "ИСПЫТАНИЕ ДНЯ" + ("  · сегодня: волна %d" % cs.wave if cs.wave else ""), " · ".join(mods), rew, true, sel == "daily", func(): _pick("daily")))
 		for id in D.DIFF_ORDER:
 			var d: Dictionary = D.DIFFS[id]
@@ -381,7 +381,7 @@ class DiffView extends Control:
 				meta = "🔒 Откроется: волна %d на «%s»" % [D.DIFF_UNLOCK_WAVE, D.DIFFS[d.unlock].name]
 			var nm: String = d.name + ("  · рекорд: волна %d" % bst.wave if bst.get("wave", 0) else "")
 			var did: String = id
-			list.add_child(_row(id, d.color, nm, meta, "● ×" + MenuView.Views_fmt(d.coins * M.overpowerK(id, power)), opened, did == sel, func():
+			list.add_child(_row(id, d.color, nm, meta, "◆ ×" + MenuView.Views_fmt(d.coins * M.overpowerK(id, power)), opened, did == sel, func():
 				if opened: _pick(did)
 				else:
 					A.play("error"); Haptic.error()))
@@ -457,13 +457,13 @@ class PauseView extends Control:
 				close()
 				Game.gameOver()
 			Ui.dialog({"ico": "🏠", "title": "ВЫЙТИ В МЕНЮ?", "text": "Забег будет завершён.
-Собранные монеты останутся у вас.", "ok": "ВЫЙТИ", "onOk": leave})
+Собранные кредиты останутся у вас.", "ok": "ВЫЙТИ", "onOk": leave})
 		v.add_child(Kit.button("ВЫЙТИ В МЕНЮ", quit_fn, "danger"))
 
 	func open() -> void:
 		var g = Game
 		var run: Dictionary = g.run
-		info.text = "Счёт %s  •  Волна %d  •  ● %s" % [U.fmt_short(run.score), g.wave.n if g.wave else 1, U.fmt(run.coins)]
+		info.text = "Счёт %s  •  Волна %d  •  ◆ %s" % [U.fmt_short(run.score), g.wave.n if g.wave else 1, U.fmt(run.coins)]
 		Kit.clear(fx)
 		var an = g.anomaly()
 		if an:
@@ -549,7 +549,7 @@ class ReviveView extends Control:
 		v.add_child(Kit.button("НЕТ, СПАСИБО", no_fn, "ghost"))
 
 	func open(cost: int) -> void:
-		cost_l.text = "Стоимость: ● " + U.fmt(cost)
+		cost_l.text = "Стоимость: ◆ " + U.fmt(cost)
 		_left = 5.0
 		visible = true
 
@@ -660,7 +660,7 @@ class OverView extends Control:
 			p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			stats.add_child(p)
 			_counts.append({"l": val, "to": float(r[1]), "f": r[2], "at": 0.6 + i * 0.09, "dur": 0.65})
-		rew.text = "● +%s    ✦ +%s опыта" % [U.fmt(s.coins + s.get("lvlCoins", 0)), U.fmt(s.xp)]
+		rew.text = "◆ +%s    ✦ +%s опыта" % [U.fmt(s.coins + s.get("lvlCoins", 0)), U.fmt(s.xp)]
 		xp_lvl.text = "Ур. %d" % M.s.shipLvl
 		xp_bar.max_value = D.ship_xp_need(M.s.shipLvl)
 		xp_bar.value = M.s.shipXP
@@ -698,7 +698,7 @@ class OverView extends Control:
 		A.play("achievement")
 		Haptic.success()
 		var col: String = D.RELIC_RARITY[rel.rar].color
-		Ui.dialog({"ico": rel.ico, "title": ("ПОВТОР: " if r.dupe else "КСЕНОТЕХ: ") + rel.name, "text": rel.desc + ("\n\nУже в коллекции — взамен ● %d" % r.coins if r.dupe else "\n\nДобавлен в коллекцию"), "ok": "ОТЛИЧНО", "noCancel": true, "color": col})
+		Ui.dialog({"ico": rel.ico, "title": ("ПОВТОР: " if r.dupe else "КСЕНОТЕХ: ") + rel.name, "text": rel.desc + ("\n\nУже в коллекции — взамен ◆ %d" % r.coins if r.dupe else "\n\nДобавлен в коллекцию"), "ok": "ОТЛИЧНО", "noCancel": true, "color": col})
 		_render_chests()
 
 

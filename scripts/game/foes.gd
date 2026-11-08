@@ -218,7 +218,7 @@ func updateMed(dt: float) -> void:
 # ════════════════════════════════════════════════════════════
 func onKill(e: En) -> void:
 	if e.def.prop: Sectors.onKill(e)
-	# Вор возвращает добычу, монеты — вдвойне
+	# Вор возвращает добычу, кредиты — вдвойне
 	if not e.loot.is_empty():
 		var coins := 0.0
 		for l: Dictionary in e.loot:
@@ -281,7 +281,7 @@ func _init_link(e: En, o: Dictionary) -> void:
 	e.pair = o.get("pair"); e.side = o.get("side", 1.0)
 
 
-## Вор: охотится за выпавшими бонусами, энергоблоками и монетами, с добычей уходит вверх
+## Вор: охотится за выпавшими бонусами, энергоблоками и кредитами, с добычей уходит вверх
 func findLoot(e: En) -> Pk:
 	var best: Pk = null
 	var bd := INF
