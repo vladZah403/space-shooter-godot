@@ -40,6 +40,12 @@ static func key(c: int, r: int) -> String:
 	return "%d:%d" % [c, r]
 
 
+## Godot: камера карты — при открытии мягкий отъезд к общему плану, в конце полёта — «нырок» к узлу со вспышкой
+var cam_z := 1.0
+var cam_c := Vector2.ZERO
+var dive = null            # после полёта: камера и вспышка остаются, пока карта гаснет
+
+
 func _ready() -> void:
 	Kit.full(self)
 	visible = false
@@ -87,7 +93,7 @@ func close() -> void:
 ## открыть карту: d = { map, step, choices, n } (map.gd → mapOffer)
 func open(dd: Dictionary) -> void:
 	d = dd
-	t = 0.0; sel = null; reach = null; fly = null; trail.clear(); bg = {}
+	t = 0.0; sel = null; reach = null; fly = null; dive = null; trail.clear(); bg = {}
 	pod = {"t": 0.0, "side": -1.0 if U.random() < 0.5 else 1.0, "y": U.rand(0.35, 0.7), "got": false, "gt": 0.0, "x": 0.0, "py": 0.0, "coins": 0} if U.random() < 0.4 else null
 	var map: Dictionary = d.map
 	var sec := Game.sectorDef(map.sector)
@@ -122,7 +128,10 @@ func _layout() -> void:
 				continue
 			var x: float = U.lerp(padX, W - padX, r / 2.0) + (rnd.call() - 0.5) * W * 0.1
 			var y: float = H * (0.8 - c * 0.165) + (rnd.call() - 0.5) * H * 0.045
-			nodes.append({"c": c, "r": r, "t": n.t, "x": x, "y": y, "ph": rnd.call() * TAU, "spr": FIGHT[(int(map.seed) + c * 5 + r * 2) % FIGHT.size()], "def": D.MAP_NODES[n.t]})
+			# Godot: глубина — чем дальше (выше), тем узел меньше и ближе к оси, как в перспективе
+			var depth := clampf(y / H, 0.0, 1.0)
+			x = W / 2 + (x - W / 2) * lerpf(0.82, 1.0, depth)
+			nodes.append({"c": c, "r": r, "t": n.t, "x": x, "y": y, "s": lerpf(0.8, 1.05, depth), "ph": rnd.call() * TAU, "spr": FIGHT[(int(map.seed) + c * 5 + r * 2) % FIGHT.size()], "def": D.MAP_NODES[n.t]})
 	boss = {"x": W / 2, "y": H * 0.115, "def": Game.bossDef(int(map.sector) + 1), "boss": true}
 	entry = Vector2(W / 2, H * 0.95)
 	for n in nodes:
@@ -196,6 +205,17 @@ func _process(dt: float) -> void:
 
 
 func _update(dt: float) -> void:
+	# камера: открытие — отъезд от корабля к общему плану; полёт — во второй половине «нырок» к цели
+	var ki := clampf(t / 0.8, 0.0, 1.0)
+	cam_z = lerpf(1.18, 1.0, 1.0 - pow(1.0 - ki, 3.0))
+	cam_c = entry
+	if fly != null:
+		var fk := clampf((fly.t / fly.dur - 0.4) / 0.6, 0.0, 1.0)
+		cam_z += 0.35 * fk * fk
+		cam_c = entry.lerp(Vector2(fly.b.x, fly.b.y), minf(1.0, fly.t / fly.dur))
+	elif dive != null:
+		cam_z = dive.z
+		cam_c = dive.c
 	# полёт по коридору
 	if fly != null:
 		fly.t += dt
@@ -207,6 +227,7 @@ func _update(dt: float) -> void:
 		for i in 2: trail.append({"x": p.x + U.rand(-2, 2), "y": p.y + U.rand(-2, 2), "t": 0.0, "life": 0.5})
 		if k >= 1 and not fly.ended:
 			fly.ended = true
+			A.play("teleport", {"rate": 1.6, "vol": 0.5})
 			var fn: Callable = fly.done
 			get_tree().create_timer(0.12).timeout.connect(fn)
 	for p in trail: p.t += dt
@@ -252,6 +273,8 @@ func _ship_pos() -> Vector2:
 
 func _draw_map() -> void:
 	ctx.begin()
+	ctx.save()
+	ctx.translate(cam_c.x, cam_c.y); ctx.scale(cam_z, cam_z); ctx.translate(-cam_c.x, -cam_c.y)
 	var map: Dictionary = d.map
 	# фон чуть «дышит»
 	var ox := sin(t * 0.07) * 4
@@ -308,6 +331,17 @@ func _draw_map() -> void:
 		ctx.alpha = k * 0.8; ctx.draw_tex(G.glow("#7fe7ff", 32), p.x - 7 * k, p.y - 7 * k, 14 * k, 14 * k)
 	ctx.additive = false; ctx.alpha = 1.0
 	_drawShip()
+	ctx.restore()
+	# конец полёта: вспышка прыжка поверх всей карты (и пока карта гаснет)
+	if fly != null or dive != null:
+		var fk := clampf((fly.t / fly.dur - 0.7) / 0.3, 0.0, 1.0) if fly != null else 1.0
+		if fk > 0:
+			ctx.additive = true
+			ctx.alpha = fk * 0.85
+			ctx.fill = Color(0.85, 0.95, 1.0)
+			ctx.fill_rect(0, 0, W, H)
+			ctx.additive = false
+			ctx.alpha = 1.0
 
 
 func _drawLane(a: Vector2, b: Vector2, kind: String, k: float) -> void:
@@ -344,7 +378,7 @@ func _drawNode(n: Dictionary, k: float, on: bool) -> void:
 	if k <= 0: return
 	var col: String = n.def.color
 	var isSel: bool = sel != null and is_same(sel, n)
-	var R := 21 * (1.18 if isSel else 1.0) * (0.6 + 0.4 * U.ease_out_back(k))
+	var R := 21 * float(n.get("s", 1.0)) * (1.18 if isSel else 1.0) * (0.6 + 0.4 * U.ease_out_back(k))
 	var live: bool = n.can or n.done or on
 	var a := k * (1.0 if n.can or isSel else (0.85 if n.done else (((0.9 if reach != null else 0.62)) if on else 0.22)))
 	var x: float = n.x
@@ -376,10 +410,15 @@ func _drawNode(n: Dictionary, k: float, on: bool) -> void:
 		ctx.begin_path(); ctx.move_to(x + R * 0.75 - 3, y - R * 0.75); ctx.line_to(x + R * 0.75 - 0.5, y - R * 0.75 + 2.5); ctx.line_to(x + R * 0.75 + 3.5, y - R * 0.75 - 2.5); ctx.stroke_path()
 	# подпись
 	if n.can or isSel or (on and reach != null):
+		# Godot: подпись — плашкой цвета узла (у доступных — яркая, у остальных на пути — приглушённая)
 		ctx.font = Kit.font(800)
 		var fs := 11 if isSel else 10
-		ctx.fill = Color(0, 0, 0, 0.6); ctx.fill_text(n.def.name, x + 1, y + R + 13 + fs, fs, 1)
-		ctx.fill = Color.WHITE if n.can or isSel else U.col(col, 0.9); ctx.fill_text(n.def.name, x, y + R + 12 + fs, fs, 1)
+		var tw := ctx.text_width(n.def.name, fs) + 14.0
+		var py := y + R + 8
+		ctx.fill = U.col(col, 0.9 if n.can or isSel else 0.35)
+		ctx.begin_path(); ctx.round_rect(x - tw / 2, py, tw, fs + 7, (fs + 7) / 2.0); ctx.fill_path()
+		ctx.fill = Color("#04122b") if n.can or isSel else Color(1, 1, 1, 0.9)
+		ctx.fill_text(n.def.name, x, py + fs + 1.5, fs, 1)
 	ctx.restore()
 
 
@@ -512,8 +551,9 @@ func _drawPod() -> void:
 func _on_area_input(e: InputEvent) -> void:
 	if not (e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT): return
 	if d == null or fly != null: return
-	var x: float = e.position.x
-	var y: float = e.position.y
+	var mp: Vector2 = (e.position - cam_c) / cam_z + cam_c
+	var x: float = mp.x
+	var y: float = mp.y
 	# груз
 	if pod != null and not pod.got and Vector2(pod.x - x, pod.py - y).length() < 30:
 		var coins := int(round(8 + d.n * 1.2))
@@ -582,12 +622,13 @@ func fly_go() -> bool:
 	var nc: int = n.c
 	var nr: int = n.r
 	var done := func():
+		dive = {"z": cam_z, "c": cam_c}
 		fly = null
 		if not RunMap.choose(nc, nr):
 			A.play("error")
 			return
 		close()
-	fly = {"a": from, "b": Vector2(n.x, n.y), "t": 0.0, "dur": 0.75, "x": from.x, "y": from.y, "ang": 0.0, "ended": false, "done": done}
+	fly = {"a": from, "b": Vector2(n.x, n.y), "t": 0.0, "dur": 1.0, "x": from.x, "y": from.y, "ang": 0.0, "ended": false, "done": done}
 	go.disabled = true
 	A.play("teleport", {"rate": 1.3, "vol": 0.5})
 	Haptic.success()
