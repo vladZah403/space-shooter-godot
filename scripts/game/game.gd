@@ -70,6 +70,8 @@ var keys := {}
 var pointer := {"id": -1, "x": 0.0, "y": 0.0, "downT": 0.0, "downX": 0.0, "downY": 0.0, "moved": 0.0, "lastTap": 0.0, "lastTapX": 0.0, "lastTapY": 0.0}
 var ov := {"rail": null, "hole": null, "beams": [], "lasers": [], "fire": [], "refl": []}
 var attract := {"t": 0.0}
+## Godot: выход из гиперпрыжка в начале забега — корабль въезжает снизу, потом вспышка выхода
+const ENTRY_T := 0.95
 var hudDirty := true
 var timers: Array = []
 var scene = null              # кат-сцена (bossScene / jumpScene)
@@ -181,7 +183,11 @@ func start(newDiffId: String, o := {}) -> void:
 	cam = {"x": 0.0, "y": 0.0, "z": 1.0, "tz": 1.0, "hold": 0.0}
 	darkK = 0.0
 	Bg.setSector(0, true)
-	Bg.warp = 0.6
+	Bg.warp = 1.6
+	attract.erase("launch")
+	run.entryT = ENTRY_T
+	player.y = G.H + player.w * 1.3
+	player.inv = maxf(player.inv, ENTRY_T + 0.8)
 	state = "play"
 	hudDirty = true
 	# в босс-раше первый босс выходит после выбора стартового модуля; до него — пустая «волна 0»
@@ -191,7 +197,7 @@ func start(newDiffId: String, o := {}) -> void:
 		nextWave()
 	Bus.emit("runStart")
 	# стартовый модуль корабля — первый выбор забега
-	after(0.2 if mode == "rush" else 0.7, func(): offerModules("start"))
+	after(ENTRY_T + (0.2 if mode == "rush" else 0.5), func(): offerModules("start"))
 
 
 func clearWorld() -> void:
@@ -393,7 +399,7 @@ func onPointerMove(id: int, pos: Vector2) -> void:
 	var pt := pointer
 	if pt.id != id: return
 	# палец следим и без управления, чтобы после сцены корабль не прыгнул на накопленный сдвиг
-	if state != "play":
+	if state != "play" or (run and run.get("entryT", 0.0) > 0.0):
 		pt.moved += absf(pos.x - pt.x) + absf(pos.y - pt.y)
 		pt.x = pos.x; pt.y = pos.y
 		return
@@ -443,6 +449,19 @@ func onKey(code: String, down: bool) -> void:
 		if i >= 0 and i < player.weapons.size(): setWeapon(player.weapons[i])
 
 
+## корабль вышел из гиперпрыжка: кольцо, вспышка, искры
+func _arrive() -> void:
+	var p := player
+	var S := G.S
+	FX.ring(p.x, p.y, 8 * S, 150 * S, "#bff4ff", 0.55, 3.0)
+	FX.ring(p.x, p.y, 4 * S, 90 * S, "#3de0ff", 0.4, 2.0)
+	FX.flash("#d8f6ff", 0.3)
+	Vfx.burst(p.x, p.y + p.w * 0.3, "#7fe7ff", 0.7)
+	Post.wave(p.x, p.y, 0.6)
+	A.play("teleport", {"rate": 1.4, "vol": 0.6})
+	Haptic.light()
+
+
 func clampPlayer() -> void:
 	var p := player
 	var m := p.w * 0.42
@@ -490,6 +509,10 @@ func frame(rdt: float) -> void:
 		update(dt, rdt)
 	elif state == "idle":
 		attract.t += rdt
+		# взлёт из меню (DiffView._go): корабль уходит вверх, звёзды вытягиваются всё сильнее
+		if attract.has("launch"):
+			attract.launch += rdt
+			Bg.warp = minf(2.4, Bg.warp + rdt * 3.5)
 		Bg.update(rdt, 0.6)
 		FX.update(rdt)
 	else:
@@ -573,8 +596,16 @@ func update(dt: float, rdt: float) -> void:
 	Scenes.tick(dt)
 	var slow := enemySlow()
 	var edt := dt * slow
+	# Godot: выход из гиперпрыжка — корабль въезжает снизу, управление — после
+	if run.get("entryT", 0.0) > 0.0:
+		run.entryT -= dt
+		var k := clampf(1.0 - run.entryT / ENTRY_T, 0.0, 1.0)
+		var e := 1.0 - pow(1.0 - k, 3.0)
+		p.x = G.FW / 2
+		p.y = lerpf(G.H + p.w * 1.3, G.H * 0.8, e)
+		if run.entryT <= 0.0: _arrive()
 	# ── управление с клавиатуры ──
-	if p.alive and state == "play":
+	if p.alive and state == "play" and run.get("entryT", 0.0) <= 0.0:
 		var kx := 0.0
 		var ky := 0.0
 		if keys.get("ArrowLeft") or keys.get("KeyA"): kx -= 1
@@ -3405,8 +3436,15 @@ func drawAttract(ctx: Ctx) -> void:
 	if slot and fr.size(): size = minf(size, (slot.h / 2 + 10) / (float(fr[3]) / fr[2] / 2 + 0.5))
 	var x := G.W / 2 + sin(at * 0.7) * 26 * S
 	var y: float = (slot.y if slot else G.H * 0.36) + sin(at * 1.3) * 6 * S
+	var boost := 1.1
+	var L: float = attract.get("launch", -1.0)
+	if L >= 0.0:
+		# взлёт: сначала присел, потом рывок вверх с форсажем
+		y += 14 * S * sin(minf(L / 0.18, 1.0) * PI) - pow(maxf(0.0, L - 0.12), 2.0) * 2600.0 * S
+		boost = 1.1 + L * 9.0
+		x = lerpf(x, G.W / 2, minf(1.0, L * 4.0))
 	ctx.alpha = 0.95
-	drawShip(ctx, s.ship.model, s.ship.skin, s.ship.trail, x, y, size, cos(at * 0.7) * 0.12, at, 1.1)
+	drawShip(ctx, s.ship.model, s.ship.skin, s.ship.trail, x, y, size, cos(at * 0.7) * 0.12 * (0.0 if L >= 0.0 else 1.0), at, boost)
 	ctx.alpha = 1.0
 
 
@@ -3754,7 +3792,7 @@ func drawPlayer(ctx: Ctx) -> void:
 	var blink: bool = p.inv > 0 and state == "play" and int(floor(p.inv * 14)) % 2 == 0
 	ctx.alpha = 0.35 if blink else 1.0
 	# в прыжке между секторами двигатели на форсаже
-	var boost: float = (1.3 if buffs.get("rapid", 0.0) > 0 or run.skillFx.get("sk_overclock", 0.0) > 0 else 1.0) + (scene.warp * 1.5 if scene != null and scene.kind == "jump" else 0.0)
+	var boost: float = (1.3 if buffs.get("rapid", 0.0) > 0 or run.skillFx.get("sk_overclock", 0.0) > 0 else 1.0) + (scene.warp * 1.5 if scene != null and scene.kind == "jump" else 0.0) + run.get("entryT", 0.0) / ENTRY_T * 3.0
 	# след двигателя на частицах Godot — под кораблём, остаётся в пространстве
 	Vfx.wake(ctx, p.x, p.y + p.w * 0.42, p.w, drawLook(s.ship.model, s.ship.skin, s.ship.trail).glowCol, boost)
 	drawShip(ctx, s.ship.model, s.ship.skin, s.ship.trail, p.x, p.y, p.w, p.tilt, t, boost, run.get("parts"))

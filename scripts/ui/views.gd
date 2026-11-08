@@ -276,6 +276,7 @@ class MenuView extends Control:
 		visible = true
 		diff.visible = false
 		screens.close()
+		Kit.unhide(content)
 		content.visible = true
 		refresh()
 		Game.attract.slot = {"y": hero.global_position.y + hero.size.y / 2 - 10, "h": hero.size.y}
@@ -464,18 +465,24 @@ class DiffView extends Control:
 		if _jumping: return
 		_jumping = true
 		visible = false
-		# Godot: гиперпрыжок — звёзды вытягиваются в лучи, вспышка, и уже в бою они замедляются (Bg.warp гаснет сам)
-		Ui.menu.content.visible = false
+		# Godot: взлёт — меню гаснет, корабль приседает и уходит вверх на форсаже, звёзды вытягиваются в тоннель;
+		# белая вспышка — и забег начинается выходом из гиперпрыжка (Game.start: корабль въезжает снизу)
+		Kit.hide(Ui.menu.content, false, 0.2)
 		A.play("teleport", {"rate": 1.25, "vol": 0.8})
 		Haptic.medium()
-		Bg.warp = 1.35
-		await get_tree().create_timer(0.42).timeout
-		FX.flash("#d8f6ff", 0.55)
-		_jumping = false
-		if sel == "daily":
-			Ui.startRun("normal", {"challenge": M.challenge()})
-		else:
-			Ui.startRun(sel, {"mode": M.s.settings.get("mode", "normal")})
+		Bg.warp = 0.3
+		# корабль меню снова на своём месте (под окном сложности он был скрыт) — и взлетает
+		var hero: Control = Ui.menu.hero
+		Game.attract.slot = {"y": hero.global_position.y + hero.size.y / 2 - 10, "h": hero.size.y}
+		Game.attract.launch = 0.0
+		await get_tree().create_timer(0.55).timeout
+		var go := func():
+			_jumping = false
+			if sel == "daily":
+				Ui.startRun("normal", {"challenge": M.challenge()})
+			else:
+				Ui.startRun(sel, {"mode": M.s.settings.get("mode", "normal")})
+		Ui.transition(go, Color(0.9, 0.97, 1.0), 0.1, 0.45)
 
 
 # ════════════════════════════════════════════════════════════

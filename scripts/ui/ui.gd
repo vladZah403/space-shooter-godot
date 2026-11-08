@@ -138,17 +138,18 @@ func topInset() -> float:
 # ПЕРЕХОДЫ
 # ════════════════════════════════════════════════════════════
 ## Godot: смена экрана через короткое затемнение — без резкого скачка. Во время перехода касания не проходят
-func transition(fn: Callable) -> void:
+func transition(fn: Callable, color := Color(0.01, 0.02, 0.06), t_in := 0.18, t_out := 0.3) -> void:
 	if _fader.visible:
 		fn.call()
 		return
+	_fader.color = color
 	_fader.visible = true
 	_fader.modulate.a = 0.0
 	var tw := create_tween()
-	tw.tween_property(_fader, "modulate:a", 1.0, 0.18)
+	tw.tween_property(_fader, "modulate:a", 1.0, t_in)
 	tw.tween_callback(fn)
 	tw.tween_interval(0.06)
-	tw.tween_property(_fader, "modulate:a", 0.0, 0.3)
+	tw.tween_property(_fader, "modulate:a", 0.0, t_out)
 	tw.tween_callback(func(): _fader.visible = false)
 
 
