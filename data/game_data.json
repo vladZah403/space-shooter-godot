@@ -1720,6 +1720,21 @@
   }
  ],
  "ENEMIES": {
+  "bturret": {
+   "name": "Турель босса",
+   "sprite": "sp_gun_minigun",
+   "w": 26,
+   "hp": 1,
+   "spd": 0,
+   "score": 250,
+   "coins": 6,
+   "xp": 2,
+   "ai": "bturret",
+   "wave": 99,
+   "weight": 0,
+   "ico": "🔫",
+   "hint": "Пушки на корпусе босса: сбейте — деталь отлетит, а босс получит урон"
+  },
   "scout": {
    "name": "Разведчик",
    "sprite": "scout",

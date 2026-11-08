@@ -816,6 +816,25 @@ func _ai_swarm(e: En, dt: float) -> void:
 	e.y += e.vy * dt
 
 
+## Godot: турель на корпусе босса — держится своего места, наводится на корабль и бьёт прицельно;
+## пока босс перестраивается между фазами или входит — молчит. Без босса гаснет
+func _ai_bturret(e: En, dt: float) -> void:
+	var b := e.host
+	if b == null or not b.alive:
+		e.alive = false
+		FX.explode(e.x, e.y, 0.8, "#ffb03d")
+		return
+	e.x = b.x + e.hx * b.w * (-1.0 if b.fx < 0 else 1.0)
+	e.y = b.y + e.hy * b.h
+	var p: Pl = Game.player
+	if p.alive: e.dir = lerp_angle(e.dir, atan2(p.y - e.y, p.x - e.x), minf(1.0, dt * 4))
+	e.shotT -= dt
+	if e.shotT <= 0 and b.trans <= 0 and not b.entering and canShoot(e):
+		e.shotT = U.rand(1.7, 2.5) / pow(fireRate(), 0.6)
+		Game.aimAt(e.x + cos(e.dir) * e.h * 0.5, e.y + sin(e.dir) * e.h * 0.5, 240, "bolt")
+		A.play("enemyShot", {"vol": 0.35, "x": e.x})
+
+
 ## Таран: целится, показывает полосу удара и проносится вниз
 func _ai_ram(e: En, dt: float) -> void:
 	var p: Pl = Game.player
@@ -1237,6 +1256,7 @@ func updateAll(edt: float, dt: float) -> void:
 	for i in range(burns.size() - 1, -1, -1):
 		var c: Dictionary = burns[i]
 		c.t += dt
+		c.vy += c.g * dt
 		c.x += c.vx * dt; c.y += c.vy * dt; c.rot += c.spin * dt
 		if c.t >= c.dur: burns.remove_at(i)
 	for i in range(corpses.size() - 1, -1, -1):
@@ -1303,6 +1323,14 @@ func kill(e: En, src: String) -> void:
 		for i in hn:
 			var a := off + float(i) / hn * TAU
 			Game.ebullet(e.x, e.y, cos(a) * s, sin(a) * s, "dot")
+	if e.ai == "bturret" and e.host != null and e.host.alive:
+		var b := e.host
+		b.flash = 0.25
+		FX.text(e.x, e.y - 20 * S, "ДЕТАЛЬ СБИТА!", "#ffc83d", 15, 0.9)
+		FX.shake(0.3)
+		Game.hitstop(0.05)
+		Haptic.medium()
+		Game.damageEnemy(b, b.maxHp * 0.04, {"src": "part"})
 	Foes.onKill(e)
 	Game.onEnemyKilled(e, src)
 
@@ -1323,8 +1351,13 @@ func _addBurn(e: En) -> void:
 	if burns.size() >= 24: burns.pop_front()
 	var flip := horizFlip(e) if e.horiz else 1.0
 	var rot := 0.0 if e.horiz else (e.spinAng if not is_nan(e.spinAng) else _rotOf(e))
-	burns.append({"sprite": e.sprite, "cv": e.cv, "x": e.x, "y": e.y, "w": e.w, "h": e.h, "rot": rot, "flip": flip,
-		"vx": U.rand(-20, 20) * G.S, "vy": U.rand(10, 40) * G.S, "spin": U.rand(-1.2, 1.2), "t": 0.0, "dur": 0.9 if not e.mini else 1.2})
+	var c := {"sprite": e.sprite, "cv": e.cv, "x": e.x, "y": e.y, "w": e.w, "h": e.h, "rot": rot, "flip": flip,
+		"vx": U.rand(-20, 20) * G.S, "vy": U.rand(10, 40) * G.S, "spin": U.rand(-1.2, 1.2), "t": 0.0, "dur": 0.9 if not e.mini else 1.2, "g": 0.0}
+	if e.ai == "bturret":
+		# деталь босса отрывается: подскок, кувырок, падение
+		c.vx = (signf(e.x - e.host.x) if e.host else 1.0) * U.rand(60, 110) * G.S
+		c.vy = -U.rand(120, 180) * G.S; c.g = 520 * G.S; c.spin = U.rand(5, 8) * signf(c.vx); c.dur = 1.5; c.w *= 1.15; c.h *= 1.15
+	burns.append(c)
 
 
 ## поворот корпуса при отрисовке (как в drawAll): курс ныряльщиков, камикадзе, личинок, крен
@@ -1335,6 +1368,7 @@ func _rotOf(e: En) -> float:
 	if (ai == "kamikaze" or ai == "hunter") and e.st >= 1: rot = e.dir - PI / 2
 	if (e.ai == "diver" and e.st == 2) or e.ai == "flank": rot = def.rot + e.dir - PI / 2
 	if e.larva: rot = e.dir - PI / 2
+	if ai == "bturret": rot = e.dir + PI / 2   # ствол спрайта смотрит вверх
 	return rot
 
 
@@ -1427,7 +1461,11 @@ func drawAll(ctx: Ctx) -> void:
 				ctx.draw_image(G.src(f), f[0], f[1], f[2], f[3], -c.w / 2, -c.h / 2, c.w, c.h, tint)
 			ctx.restore()
 	var bubble := G.has("fx_sh_bubble")
-	for e: En in Game.enemies:
+	# турели босса стоят в списке перед ним (для попаданий), а рисуются — поверх корпуса
+	var list: Array = Game.enemies
+	if Game.boss != null:
+		list = list.filter(func(x): return x.ai != "bturret") + list.filter(func(x): return x.ai == "bturret")
+	for e: En in list:
 		if not e.alive: continue
 		if e.boss:
 			B.drawBoss(ctx, e)
@@ -1471,11 +1509,12 @@ func drawAll(ctx: Ctx) -> void:
 			ctx.rotate(e.spinAng)
 		else:
 			# def.rot без своего поворота — PI (D дополняет при загрузке)
-			var rot: float = def.rot + e.bank
-			if (ai == "kamikaze" or ai == "hunter") and e.st >= 1: rot = e.dir - PI / 2
-			if (e.ai == "diver" and e.st == 2) or e.ai == "flank": rot = def.rot + e.dir - PI / 2
-			if e.larva: rot = e.dir - PI / 2
-			ctx.rotate(rot)
+			if ai == "bturret":
+				# основание турели: тёмный диск с кромкой цвета босса
+				ctx.fill = Color(0.07, 0.08, 0.13, 0.95); ctx.fill_circle(0, 0, e.w * 0.62)
+				ctx.stroke = U.col(e.host.bdef.color if e.host else "#9fb3d9"); ctx.line_width = 2 * S
+				ctx.begin_path(); ctx.arc(0, 0, e.w * 0.62, 0, TAU); ctx.stroke_path()
+			ctx.rotate(_rotOf(e))
 		if def.cloak and e.alpha < 0.999 and FX.quality > 0: drawCloaked(ctx, e)
 		else: drawFrame(ctx, e.sprite, e.cv, e.w, e.h)
 		if e.flash > 0:

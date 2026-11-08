@@ -588,6 +588,7 @@ func updateBoss(b: En, edt: float, dt: float) -> void:
 		b.y = U.damp(b.y, b.baseY, 2.2, dt) + 30 * S * dt
 		if b.y >= b.baseY - 4 * S:
 			b.entering = false; b.y = b.baseY; Bus.emit("bossReady", b)
+			attachTurrets(b)
 		return
 	# фазы: на 2/3 и 1/3 прочности босс перестраивается (PHASE_T с неуязвим), потом — новый набор атак
 	var ratio := b.hp / b.maxHp
@@ -662,6 +663,30 @@ func updateBoss(b: En, edt: float, dt: float) -> void:
 		var y := b.y + U.rand(-0.3, 0.3) * b.h
 		FX.sparks(x, y, "#ffcf6b", 3, 160)
 		if b.phase >= 3: FX.smoke(x, y, 1, 14 * S)
+
+
+## Godot: механические боссы несут две турели на корпусе (враг bturret): их можно отстрелить — деталь отлетает,
+## босс теряет 4% прочности и одну пушку. Места — доли размеров корпуса, подобраны под силуэты
+const TURRETS := {"guardian": [[-0.3, 0.12], [0.3, 0.12]], "spider": [[-0.28, 0.18], [0.28, 0.18]],
+	"dreadnought": [[-0.32, 0.05], [0.32, 0.05]], "inquisitor": [[-0.3, 0.15], [0.3, 0.15]],
+	"mothership": [[-0.28, 0.12], [0.28, 0.12]], "cruiser": [[-0.3, 0.1], [0.3, 0.1]], "overlord": [[-0.32, 0.12], [0.32, 0.12]]}
+
+
+func attachTurrets(b: En) -> void:
+	var spots: Array = TURRETS.get(b.bdef.id, [])
+	if spots.is_empty(): return
+	var at := Game.enemies.find(b)
+	for sp in spots:
+		var t: En = E.spawn("bturret", {"noElite": true, "x": b.x, "y": b.y})
+		if t == null: continue
+		t.host = b; t.hx = sp[0]; t.hy = sp[1]
+		t.hp = b.maxHp * 0.06; t.maxHp = t.hp
+		t.w = maxf(t.w, b.w * 0.09); t.h = t.w * G.aspect(t.sprite); t.r = t.w * 0.55
+		t.dir = PI / 2; t.shotT = U.rand(0.8, 1.6)
+		t.x = b.x + t.hx * b.w; t.y = b.y + t.hy * b.h
+		# в списке врагов — перед боссом: пуля, попавшая в турель, достаётся ей, а не корпусу
+		Game.enemies.erase(t)
+		Game.enemies.insert(at, t)
 
 
 func bossDeath(b: En) -> void:
