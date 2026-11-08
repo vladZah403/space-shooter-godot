@@ -25,7 +25,7 @@ var c_desc: Label
 var c_hint: Label
 var _sparks: Array = []    # { p: Vector2, v: Vector2, life, max, size }
 var _boomed := false
-var _icon: Texture2D
+var _frame: Array = []    # кадр спрайта ксенотеха в атласе (G.frame)
 
 
 func _ready() -> void:
@@ -58,7 +58,7 @@ func play(chest_tier: String, result: Dictionary, done := Callable()) -> void:
 	var rar: Dictionary = D.RELIC_RARITY.get(rel.get("rar", "common"), {})
 	col = U.col(rar.get("color", "#7fe7ff"))
 	on_done = done
-	_icon = G.icon("r_" + str(res.get("id", "")))
+	_frame = G.frame(str(res.get("id", "")))   # спрайт ксенотеха называется как его id (r_lens…)
 	t = 0.0
 	_boomed = false
 	_sparks.clear()
@@ -161,8 +161,9 @@ func _draw_scene(c: Ctx, sz: Vector2) -> void:
 		var ip := cp + Vector2(0, -cw * 0.95 * e)
 		var isz := cw * (0.3 + 0.45 * e) * (1.0 + 0.05 * sin(t * 5.0))
 		c.alpha = k
-		if _icon:
-			c.draw_tex(_icon, ip.x - isz / 2, ip.y - isz / 2, isz, isz)
+		if not _frame.is_empty():
+			var f := _frame
+			c.draw_image(G.src(f), f[0], f[1], f[2], f[3], ip.x - isz / 2, ip.y - isz / 2, isz, isz)
 		else:
 			c.fill = Color.WHITE
 			c.fill_text(str(rel.get("ico", "✦")), ip.x, ip.y + isz * 0.35, int(isz), 1)
