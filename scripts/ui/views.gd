@@ -7,7 +7,7 @@ const MenuScreens := preload("res://scripts/ui/menu_screens.gd")
 
 
 static func fmtMul(v: float) -> String:
-	return str(snappedf(v, 0.01)).replace(".", ",")
+	return str(snappedf(v, 0.01)) if Lang.is_en() else str(snappedf(v, 0.01)).replace(".", ",")
 
 
 ## плашка-уведомление: значок, заголовок, текст, награда
@@ -274,7 +274,7 @@ class MenuView extends Control:
 			screens.back()
 
 	static func Views_fmt(v: float) -> String:
-		return str(snappedf(v, 0.01)).replace(".", ",")
+		return str(snappedf(v, 0.01)) if Lang.is_en() else str(snappedf(v, 0.01)).replace(".", ",")
 
 
 # ── выбор сложности, режима и испытание дня ──
