@@ -68,7 +68,7 @@ func play(done: Callable) -> void:
 	_logo.add_child(Kit.label("SHOOTER", 27, Kit.CYAN, 900, HORIZONTAL_ALIGNMENT_CENTER))
 	_logo.modulate.a = 0.0
 	_view.add_child(_logo)
-	var skip := Kit.label("касание — пропустить", 12, Color(200 / 255.0, 220 / 255.0, 1, 0.55), 600, HORIZONTAL_ALIGNMENT_CENTER)
+	var skip := Kit.label(Lang.t("касание — пропустить"), 12, Color(200 / 255.0, 220 / 255.0, 1, 0.55), 600, HORIZONTAL_ALIGNMENT_CENTER)
 	skip.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	skip.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	skip.offset_top = -40; skip.offset_bottom = -20
@@ -205,7 +205,7 @@ func _process(dt: float) -> void:
 	if ci != _capIdx and t <= 6.75:
 		_capIdx = ci
 		if ci >= 0:
-			_cap.text = CAPS[ci][2]
+			_cap.text = Lang.t(CAPS[ci][2])
 			_cap.modulate.a = 0.0
 			_cap.create_tween().tween_property(_cap, "modulate:a", 1.0, 0.45)
 		else:

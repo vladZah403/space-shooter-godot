@@ -413,7 +413,7 @@ static func toggle(on: bool, on_change: Callable) -> Button:
 	b.button_pressed = on
 	b.focus_mode = Control.FOCUS_NONE
 	b.custom_minimum_size = Vector2(64, 34)
-	b.text = "ВКЛ" if on else "ВЫКЛ"
+	b.text = Lang.t("ВКЛ") if on else Lang.t("ВЫКЛ")
 	b.add_theme_font_override("font", font(800))
 	b.add_theme_font_size_override("font_size", 11)
 	var st_on := box(Color(GREEN, 0.25), GREEN, 17, 1, 4)
@@ -424,7 +424,7 @@ static func toggle(on: bool, on_change: Callable) -> Button:
 	b.add_theme_stylebox_override("hover_pressed", st_on)
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	b.toggled.connect(func(v: bool):
-		b.text = "ВКЛ" if v else "ВЫКЛ"
+		b.text = Lang.t("ВКЛ") if v else Lang.t("ВЫКЛ")
 		A.play("click")
 		on_change.call(v))
 	return b

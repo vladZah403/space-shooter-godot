@@ -28,7 +28,7 @@ func _init() -> void:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		push_error("Файл данных повреждён: " + PATH)
 		return
-	data = parsed
+	data = Lang.tr_data(parsed)   # Godot: английский — тексты переводятся сразу при загрузке
 	# необязательные поля, где в JS «нет поля» ≠ 0 (проверка !== undefined): ставим их до дополнения,
 	# иначе дополнение дало бы 0 — например, оттенок 0 (красный) всем врагам без своего tint
 	for t in OPTIONAL:

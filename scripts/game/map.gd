@@ -127,7 +127,7 @@ func apply(w: Dictionary) -> void:
 	if w.node == "cache": w.budget *= 0.8
 	if w.node == "escort":
 		run.escort = {"x": G.FW / 2, "y": G.H * 0.66, "hp": ESCORT.hp, "t": 0.0, "cd": 2.5, "flash": 0.0}
-		Game.after(w.intro + 0.8, func(): Game.hintOnce("escort", "ПОДСКАЗКА", "Враги бьют по Контрабандисту огненными шарами — сбивайте их выстрелами. Довезёте живым — скидка в лавке и контейнер"))
+		Game.after(w.intro + 0.8, func(): Game.hintOnce("escort", Lang.t("ПОДСКАЗКА"), Lang.t("Враги бьют по Контрабандисту огненными шарами — сбивайте их выстрелами. Довезёте живым — скидка в лавке и контейнер")))
 
 
 ## награда узла после волны; true — показано окно, волна начнётся после выбора
@@ -137,7 +137,7 @@ func reward(w: Dictionary) -> bool:
 	var node: String = w.get("node", "fight")
 	if node == "escort": return escortDone()
 	if node == "elite":
-		chestScene("silver" if U.random() < 0.25 else "bronze", "ЭЛИТА ПОВЕРЖЕНА", func(): Game.nextWave())
+		chestScene("silver" if U.random() < 0.25 else "bronze", Lang.t("ЭЛИТА ПОВЕРЖЕНА"), func(): Game.nextWave())
 		return true
 	# контрабандист, тайник, ремонт и событие — сначала короткая сцена, награда в её конце
 	if node in ["shop", "cache", "repair", "event"]:
@@ -155,7 +155,7 @@ func nodeReward(w: Dictionary, ev) -> bool:
 			var o := Game.merchantOffer()
 			# вместо реликвии — закрытый контейнер (откроется после забега); значок рисует интерфейс по полю chest
 			o.cards.insert(o.cards.size() - 1, {"id": "chest:silver", "chest": "silver", "ico": "📦", "name": D.CHESTS.silver.name,
-				"desc": "Откроется после забега: ксенотех в коллекцию", "rar": "epic", "price": roundf((300 + w.n * 25) * o.cut / 10) * 10})
+				"desc": Lang.t("Откроется после забега: ксенотех в коллекцию"), "rar": "epic", "price": roundf((300 + w.n * 25) * o.cut / 10) * 10})
 			return show(o)
 		"event":
 			var cards: Array = ev.cards.map(func(c):
@@ -164,9 +164,9 @@ func nodeReward(w: Dictionary, ev) -> bool:
 				return c2)
 			return show({"title": ev.title, "sub": ev.sub, "cards": cards})
 		"repair":
-			if p.lives < p.maxLives: Game.heal(mini(2, p.maxLives - p.lives), "🔧 РЕМОНТ")
+			if p.lives < p.maxLives: Game.heal(mini(2, p.maxLives - p.lives), Lang.t("🔧 РЕМОНТ"))
 			elif not p.shield:
-				p.shield = true; Game.shieldFx(); FX.text(p.x, p.y - p.w, "🔧 ЩИТ", "#3dffa2", 15, 1.1)
+				p.shield = true; Game.shieldFx(); FX.text(p.x, p.y - p.w, Lang.t("🔧 ЩИТ"), "#3dffa2", 15, 1.1)
 			return false
 		"cache":
 			# st.coins уже включает штраф за фарм лёгкой сложности (coinK) — тайник его не обходит
@@ -225,7 +225,7 @@ func updateEscort(dt: float) -> void:
 			var rr := b.r + (pb.r if pb.r else 4 * S) + 6 * S
 			if U.dist2(b.x, b.y, pb.x, pb.y) < rr * rr:
 				b.dead = true; pb.dead = true
-				FX.hit(b.x, b.y, "#ffc83d"); FX.text(b.x, b.y - 10 * S, "СБИТ", "#ffc83d", 11, 0.6, -40)
+				FX.hit(b.x, b.y, "#ffc83d"); FX.text(b.x, b.y - 10 * S, Lang.t("СБИТ"), "#ffc83d", 11, 0.6, -40)
 				break
 
 
@@ -243,7 +243,7 @@ func escortHit(b: Eb) -> bool:
 		run.escort = null
 		FX.explode(es.x, es.y, 1.6, "#ffc83d"); FX.shake(0.25)
 		A.play("explodeL", {"vol": 0.7})
-		Bus.emit("toast", {"ico": "💥", "title": "ЭСКОРТ", "text": "Контрабандиста сбили — награды не будет", "info": true, "dur": 2600})
+		Bus.emit("toast", {"ico": "💥", "title": Lang.t("ЭСКОРТ"), "text": Lang.t("Контрабандиста сбили — награды не будет"), "info": true, "dur": 2600})
 	return true
 
 
@@ -278,8 +278,8 @@ func escortDone() -> bool:
 	run.shopCut = ESCORT.cut
 	FX.ring(es.x, es.y, 10 * S, 120 * S, "#ffc83d", 0.5, 4); FX.glow_puff(es.x, es.y, "#ffc83d", 140 * S, 0.5)
 	A.play("teleport", {"rate": 1.2, "vol": 0.5})
-	Bus.emit("toast", {"ico": "🛡", "title": "ЭСКОРТ", "text": "Контрабандист доставлен: −30% в следующей лавке", "info": true, "dur": 2600})
-	chestScene("silver" if U.random() < 0.35 else "bronze", "КОНТРАБАНДИСТ ДОСТАВЛЕН", func(): Game.nextWave())
+	Bus.emit("toast", {"ico": "🛡", "title": Lang.t("ЭСКОРТ"), "text": Lang.t("Контрабандист доставлен: −30% в следующей лавке"), "info": true, "dur": 2600})
+	chestScene("silver" if U.random() < 0.35 else "bronze", Lang.t("КОНТРАБАНДИСТ ДОСТАВЛЕН"), func(): Game.nextWave())
 	return true
 
 
@@ -295,7 +295,7 @@ func giveChest(tier: String, quiet := false) -> String:
 	run.get_or_add("chests", []).append(tier)
 	if not quiet:
 		A.play("perk", {"rate": 0.8})
-		Bus.emit("toast", {"ico": "chest", "title": "КОНТЕЙНЕР", "text": D.CHESTS[tier].short + " — откроется после забега", "info": true, "dur": 2200})
+		Bus.emit("toast", {"ico": "chest", "title": Lang.t("КОНТЕЙНЕР"), "text": D.CHESTS[tier].short + Lang.t(" — откроется после забега"), "info": true, "dur": 2200})
 	Bus.emit("chest", tier)
 	Game.hudDirty = true
 	return tier
@@ -314,7 +314,7 @@ func chestScene(tier: String, cap: String, onEnd: Callable) -> void:
 		return
 	tier = giveChest(tier, true)
 	var def: Dictionary = D.CHESTS[tier]
-	Game.startScene({"kind": "visit", "node": "chest", "tier": tier, "color": def.color, "v": {"cap": cap, "name": def.short + " КОНТЕЙНЕР", "sub": "Откроется после забега"},
+	Game.startScene({"kind": "visit", "node": "chest", "tier": tier, "color": def.color, "v": {"cap": cap, "name": def.short + Lang.t(" КОНТЕЙНЕР"), "sub": Lang.t("Откроется после забега")},
 		"end": 2.3, "cardT": 0.55, "onEnd": onEnd, "done": false})
 	A.play("teleport", {"rate": 1.1, "vol": 0.5})
 
@@ -337,7 +337,7 @@ func grant(id: String, quiet := false) -> void:
 		FX.glow_puff(p.x, p.y, col, 120 * G.S, 0.5)
 		FX.ring(p.x, p.y, p.w * 0.4, p.w * 1.8, col, 0.5, 4)
 		A.play("perk", {"rate": 0.9})
-		Bus.emit("toast", {"ico": def.ico, "title": "КСЕНОТЕХ", "text": def.name, "info": true, "dur": 2200})
+		Bus.emit("toast", {"ico": def.ico, "title": Lang.t("КСЕНОТЕХ"), "text": def.name, "info": true, "dur": 2200})
 	Game.hudDirty = true
 
 
@@ -354,7 +354,7 @@ func visit(node: String, ev, onEnd: Callable) -> void:
 	if Game.state != "play":
 		onEnd.call()
 		return
-	var v: Dictionary = {"cap": "СОБЫТИЕ", "name": ev.title, "sub": ev.sub, "color": "#7fe7ff"} if node == "event" else VISIT[node]
+	var v: Dictionary = {"cap": Lang.t("СОБЫТИЕ"), "name": ev.title, "sub": ev.sub, "color": "#7fe7ff"} if node == "event" else VISIT[node]
 	Game.startScene({"kind": "visit", "node": node, "ev": ev, "color": v.color, "v": v, "end": 2.7 if node == "shop" else 2.4, "cardT": 0.35, "onEnd": onEnd, "done": false})
 	A.play("warning" if node == "elite" else "teleport", {"rate": 1.0 if node == "elite" else 0.8, "vol": 0.6})
 
@@ -390,12 +390,12 @@ func rays(ctx: Ctx, x: float, y: float, r: float, col: String, t: float, a: floa
 func resolve(ev: String, card: String) -> void:
 	var p: Pl = Game.player
 	var run: Dictionary = Game.run
-	var say := func(ico: String, text: String): Bus.emit("toast", {"ico": ico, "title": "СОБЫТИЕ", "text": text, "info": true, "dur": 2400})
+	var say := func(ico: String, text: String): Bus.emit("toast", {"ico": ico, "title": Lang.t("СОБЫТИЕ"), "text": text, "info": true, "dur": 2400})
 	if card == "pass": return
 	if ev == "wreck" and card == "search":
 		if U.random() < 0.6: giveChest("bronze")
 		else:
-			run.nextDanger = true; say.call("⚠️", "Засада! Следующая волна элитная")
+			run.nextDanger = true; say.call("⚠️", Lang.t("Засада! Следующая волна элитная"))
 	elif ev == "black" and card == "blood":
 		p.lives = maxi(1, p.lives - 1)
 		FX.flash("#ff3d5a", 0.3); A.play("playerHit", {"vol": 0.5}); Bus.emit("playerHit")
@@ -408,20 +408,20 @@ func resolve(ev: String, card: String) -> void:
 				run.mods[m.id] = run.mods.get(m.id, 0) + 1
 				run.parts = Game.shipParts(run.mods)
 				Game.refreshStats()
-				say.call(m.ico, "Аномалия подарила модуль: " + m.name)
+				say.call(m.ico, Lang.t("Аномалия подарила модуль: ") + m.name)
 		else:
-			p.lives = maxi(1, p.lives - 1); FX.flash("#b06bff", 0.3); Bus.emit("playerHit"); say.call("🌀", "Аномалия задела корабль: −1 жизнь")
+			p.lives = maxi(1, p.lives - 1); FX.flash("#b06bff", 0.3); Bus.emit("playerHit"); say.call("🌀", Lang.t("Аномалия задела корабль: −1 жизнь"))
 	elif ev == "distress":
 		if card == "help":
-			run.coins += 100; M.addCoins(100); say.call("🤝", "Экипаж спасён: +100 кредитов")
+			run.coins += 100; M.addCoins(100); say.call("🤝", Lang.t("Экипаж спасён: +100 кредитов"))
 		else:
 			giveChest("silver"); run.nextDanger = true
 	elif ev == "station":
-		if card == "fix": Game.heal(1, "🏚️ РЕМОНТ")
+		if card == "fix": Game.heal(1, Lang.t("🏚️ РЕМОНТ"))
 		else:
-			p.bombs = mini(9, p.bombs + 1); run.coins += 50; M.addCoins(50); say.call("💣", "+1 бомба и 50 кредитов")
+			p.bombs = mini(9, p.bombs + 1); run.coins += 50; M.addCoins(50); say.call("💣", Lang.t("+1 бомба и 50 кредитов"))
 	elif ev == "slot" and card == "play":
 		if U.random() < 0.5:
-			run.coins += 250; M.addCoins(250); A.play("coin", {"rate": 1.3}); say.call("🎰", "Джекпот! +250 кредитов")
-		else: say.call("🎰", "Не повезло")
+			run.coins += 250; M.addCoins(250); A.play("coin", {"rate": 1.3}); say.call("🎰", Lang.t("Джекпот! +250 кредитов"))
+		else: say.call("🎰", Lang.t("Не повезло"))
 	Game.hudDirty = true

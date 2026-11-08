@@ -65,7 +65,7 @@ func _ready() -> void:
 	box.add_child(cards)
 	reroll = Kit.button("", func(): _reroll(), "", "sm")
 	box.add_child(reroll)
-	ship_btn = Kit.button("🛠 СХЕМА КОРАБЛЯ", func(): Ui.ship.open(_mod_offer), "", "sm")
+	ship_btn = Kit.button(Lang.t("🛠 СХЕМА КОРАБЛЯ"), func(): Ui.ship.open(_mod_offer), "", "sm")
 	box.add_child(ship_btn)
 
 
@@ -175,14 +175,14 @@ func _pips(mx: int, lv: int, col: String) -> Control:
 
 
 func showPerks(choices: Array, rerolled := false) -> void:
-	_open("УРОВЕНЬ %d" % Game.run.level, "Выберите улучшение")
+	_open(Lang.t("УРОВЕНЬ %d") % Game.run.level, Lang.t("Выберите улучшение"))
 	for pk in choices:
 		var lv := Game.perk(pk.id)
 		var rar: Dictionary = D.RARITY[pk.rar]
 		var extra: Array = []
 		var ev = Game.evoStep(pk.id)
 		if ev:
-			extra.append(Kit.label("🧬 " + ("ЭВОЛЮЦИЯ СЕЙЧАС: " if lv + 1 >= ev.lvl else "К эволюции %d/%d: " % [lv + 1, ev.lvl]) + ev.name, 12, Kit.GOLD, 800))
+			extra.append(Kit.label("🧬 " + (Lang.t("ЭВОЛЮЦИЯ СЕЙЧАС: ") if lv + 1 >= ev.lvl else Lang.t("К эволюции %d/%d: ") % [lv + 1, ev.lvl]) + ev.name, 12, Kit.GOLD, 800))
 		if pk.max > 1 and pk.max < 99: extra.append(_pips(int(pk.max), lv, rar.color))
 		var id: String = pk.id
 		var fn := func():
@@ -191,7 +191,7 @@ func showPerks(choices: Array, rerolled := false) -> void:
 			Haptic.success()
 		_card(rar.color, Kit.icon("pk_" + id, pk.ico, 44), pk.name + (" %d" % (lv + 1) if lv else ""), pk.desc, rar.name, extra, fn)
 	var cost := Game.rerollCost()
-	reroll.text = "🎲 ДРУГИЕ  ◆ %d" % cost
+	reroll.text = Lang.t("🎲 ДРУГИЕ  ◆ %d") % cost
 	reroll.visible = true
 	reroll.disabled = M.s.coins < cost and not M.DEV
 	if rerolled: _wait = 0.12
@@ -203,7 +203,7 @@ func _reroll() -> void:
 
 
 func showModules(choices: Array, kind: String) -> void:
-	_open("СТАРТОВЫЙ МОДУЛЬ" if kind == "start" else "СТАНЦИЯ", "Модуль корабля — до конца забега")
+	_open(Lang.t("СТАРТОВЫЙ МОДУЛЬ") if kind == "start" else Lang.t("СТАНЦИЯ"), Lang.t("Модуль корабля — до конца забега"))
 	_mod_offer = choices.map(func(m): return m.id)
 	ship_btn.visible = true
 	for m in choices:
@@ -223,7 +223,7 @@ func showEvent(o: Dictionary) -> void:
 	if a == "p_merchant":
 		portrait.visible = true
 		say.get_parent().visible = true
-		_phrase = U.pick(Scenes.HELLO)
+		_phrase = Lang.t(U.pick(Scenes.HELLO))
 		_pt = 0.0
 		say.text = ""
 	elif a != "" and G.has(a):
@@ -236,7 +236,7 @@ func showEvent(o: Dictionary) -> void:
 		var ic: Control
 		if c.get("chest"): ic = Kit.tex_icon(G.chest(c.chest).icon, 44)
 		else: ic = Kit.icon(c.get("icon", ""), c.get("ico", ""), 44)
-		var tag: String = ("◆ " + U.fmt(price) + (" · мало" if poor else "")) if price > 0 else rar.name
+		var tag: String = ("◆ " + U.fmt(price) + (Lang.t(" · мало") if poor else "")) if price > 0 else rar.name
 		var id: String = c.id
 		var fn := func():
 			if Game.pickOffer(id):

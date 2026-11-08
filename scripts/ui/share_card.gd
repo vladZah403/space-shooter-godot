@@ -86,14 +86,14 @@ static func _build(root: Control, sum: Dictionary) -> void:
 	v.add_child(Kit.label("GODOT EDITION", 22, Kit.GOLD, 800, HORIZONTAL_ALIGNMENT_CENTER))
 	v.add_child(Kit.spacer(0, true))
 	var rec: bool = sum.get("isRecord", false)
-	v.add_child(Kit.label("НОВЫЙ РЕКОРД!" if rec else "ИТОГ ЗАБЕГА", 26, Kit.GOLD if rec else Kit.MUTED, 900, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.label(Lang.t("НОВЫЙ РЕКОРД!") if rec else Lang.t("ИТОГ ЗАБЕГА"), 26, Kit.GOLD if rec else Kit.MUTED, 900, HORIZONTAL_ALIGNMENT_CENTER))
 	v.add_child(Kit.label(U.fmt(sum.get("score", 0)), 96, Color.WHITE, 900, HORIZONTAL_ALIGNMENT_CENTER))
 	var d: Dictionary = D.DIFFS.get(sum.get("diff", "normal"), D.DIFFS.normal)
-	v.add_child(Kit.label("ВОЛНА %d  ·  %s" % [int(sum.get("wave", 1)), d.name], 30, Kit.TEXT, 900, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.label(Lang.t("ВОЛНА %d  ·  %s") % [int(sum.get("wave", 1)), d.name], 30, Kit.TEXT, 900, HORIZONTAL_ALIGNMENT_CENTER))
 	v.add_child(Kit.label(String(sec.name), 24, U.col(sec.neb[0]).lightened(0.35), 800, HORIZONTAL_ALIGNMENT_CENTER))
 	var row := Kit.hbox(28)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	for it in [["skull", "ВРАГИ", U.fmt(sum.get("kills", 0))], ["crown", "БОССЫ", U.fmt(sum.get("bosses", 0))], ["bolt", "КОМБО", "×%d" % int(sum.get("maxCombo", 0))]]:
+	for it in [["skull", Lang.t("ВРАГИ"), U.fmt(sum.get("kills", 0))], ["crown", Lang.t("БОССЫ"), U.fmt(sum.get("bosses", 0))], ["bolt", Lang.t("КОМБО"), "×%d" % int(sum.get("maxCombo", 0))]]:
 		var cell := Kit.vbox(2)
 		var ih := Kit.hbox(6)
 		ih.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -114,7 +114,7 @@ static func _build(root: Control, sum: Dictionary) -> void:
 	v.add_child(Kit.spacer(10))
 	var pil: Dictionary = D.PILOTS.get(s.get("pilot", "kai"), D.PILOTS.kai)
 	var date := Time.get_date_dict_from_system()
-	v.add_child(Kit.label("Пилот %s  ·  %02d.%02d.%d" % [pil.name, date.day, date.month, date.year], 20, Kit.MUTED, 700, HORIZONTAL_ALIGNMENT_CENTER))
+	v.add_child(Kit.label(Lang.t("Пилот %s  ·  %02d.%02d.%d") % [pil.name, date.day, date.month, date.year], 20, Kit.MUTED, 700, HORIZONTAL_ALIGNMENT_CENTER))
 	v.add_child(Kit.label(LINK, 20, Kit.CYAN, 800, HORIZONTAL_ALIGNMENT_CENTER))
 
 
@@ -147,13 +147,13 @@ static func share(img: Image, score: int) -> String:
 	} catch (e) {}
 	return 'fail';
 })('%s', '%s', '%s')
-""" % [b64, fname, "Мой результат в Space Shooter: %s очков! %s" % [U.fmt(score), "https://" + LINK]]
+""" % [b64, fname, Lang.t("Мой результат в Space Shooter: %s очков! %s") % [U.fmt(score), "https://" + LINK]]
 		var how = JavaScriptBridge.eval(js, true)
 		if how == "fail":
 			JavaScriptBridge.download_buffer(png, fname, "image/png")
-		return "" if how == "share" else "Картинка скачана"
+		return "" if how == "share" else Lang.t("Картинка скачана")
 	var dir := OS.get_system_dir(OS.SYSTEM_DIR_PICTURES)
 	if dir == "": dir = OS.get_user_data_dir()
 	var path := dir.path_join(fname)
-	if img.save_png(path) != OK: return "Не удалось сохранить картинку"
-	return "Сохранено: " + path
+	if img.save_png(path) != OK: return Lang.t("Не удалось сохранить картинку")
+	return Lang.t("Сохранено: ") + path

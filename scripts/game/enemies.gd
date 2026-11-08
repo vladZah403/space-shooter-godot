@@ -301,7 +301,7 @@ func spawnMini(wn: float) -> En:
 	var order: Array = D.MINI_ORDER
 	var k := int(maxf(0, floorf((wn - 8) / 5))) % order.size()
 	var e := spawn(order[k], {"x": G.FW / 2})
-	if e: Bus.emit("toast", {"ico": "⚠️", "title": "МИНИ-БОСС", "text": e.def.name + " приближается!", "info": true, "dur": 1800})
+	if e: Bus.emit("toast", {"ico": "⚠️", "title": Lang.t("МИНИ-БОСС"), "text": e.def.name + Lang.t(" приближается!"), "info": true, "dur": 1800})
 	return e
 
 
@@ -1185,7 +1185,7 @@ func _ai_flyby(e: En, dt: float) -> void:
 		e.passes += 1
 		if e.passes >= 3:
 			e.leaving = true; e.alive = false
-			Bus.emit("toast", {"ico": "💨", "title": "РЕЙДЕР", "text": "Ушёл без боя", "info": true, "dur": 1500})
+			Bus.emit("toast", {"ico": "💨", "title": Lang.t("РЕЙДЕР"), "text": Lang.t("Ушёл без боя"), "info": true, "dur": 1500})
 			return
 		e.face = -e.face; e.vx = -e.vx * 1.08
 		e.ty = maxf(minY(e), e.ty + U.rand(-20, 40) * S)
@@ -1377,7 +1377,7 @@ func kill(e: En, src: String) -> void:
 	if e.ai == "bturret" and e.host != null and e.host.alive:
 		var b := e.host
 		b.flash = 0.25
-		FX.text(e.x, e.y - 20 * S, "ДЕТАЛЬ СБИТА!", "#ffc83d", 15, 0.9)
+		FX.text(e.x, e.y - 20 * S, Lang.t("ДЕТАЛЬ СБИТА!"), "#ffc83d", 15, 0.9)
 		FX.shake(0.3)
 		Game.hitstop(0.05)
 		Haptic.medium()

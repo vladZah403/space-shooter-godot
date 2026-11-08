@@ -91,7 +91,7 @@ func onKill(e: En) -> void:
 	elif e.type == "satellite":
 		if U.random() < 0.6: Game.dropPowerup(e.x, e.y)
 		else: Game.dropCoins(e.x, e.y, 5)
-		FX.text(e.x, e.y - e.r, "ГРУЗ!", "#7fe7ff", 13, 0.8, -50)
+		FX.text(e.x, e.y - e.r, Lang.t("ГРУЗ!"), "#7fe7ff", 13, 0.8, -50)
 
 
 # ════════════════════════════════════════════════════════════
@@ -188,7 +188,7 @@ func _toxic_update(m: Dictionary, dt: float) -> void:
 	# в облаке дольше 1,2 с — урон (рамка экрана зеленеет заранее)
 	st.inT = st.inT + dt if inside else 0.0
 	if st.inT > 1.2:
-		st.inT = 0.0; Game.hitPlayer(p.x, p.y, "Ядовитое облако")
+		st.inT = 0.0; Game.hitPlayer(p.x, p.y, Lang.t("Ядовитое облако"))
 
 
 func _toxic_back(ctx: Ctx, m: Dictionary) -> void:

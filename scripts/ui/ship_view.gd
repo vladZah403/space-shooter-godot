@@ -35,7 +35,7 @@ func _ready() -> void:
 	var v := Kit.vbox(8)
 	m.add_child(v)
 	var head := Kit.hbox(8)
-	var tl := Kit.label("КОРАБЛЬ · МОДУЛИ", 18, Kit.TEXT, 900)
+	var tl := Kit.label(Lang.t("КОРАБЛЬ · МОДУЛИ"), 18, Kit.TEXT, 900)
 	tl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(tl)
 	head.add_child(Kit.icon_button("close", "", func(): close(), "ghost", "sm"))
@@ -141,7 +141,7 @@ func _render() -> void:
 		var on: bool = n > 0 or room.id == "bridge"
 		var ico: String = D.PILOTS.get(run.pilot, D.PILOTS.kai).ico if room.id == "bridge" else room.ico
 		var rid: String = room.id
-		var b := Kit.button(ico + " " + room.name + ("  %d" % n if n else ""), func():
+		var b := Kit.button(ico + " " + Lang.t(room.name) + ("  %d" % n if n else ""), func():
 			sel = rid; A.play("click"); _render(), "primary" if room.id == sel else ("" if on else "ghost"), "sm")
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		info.add_child(b)
@@ -151,7 +151,7 @@ func _render() -> void:
 			var pil: Dictionary = D.PILOTS.get(run.pilot, D.PILOTS.kai)
 			box.add_child(Kit.para(pil.ico + " " + pil.name + " · " + pil.title, 13, Kit.TEXT))
 			box.add_child(Kit.para(pil.desc, 12))
-			box.add_child(Kit.para("Улучшений в забеге: %d" % run.perks.size(), 12))
+			box.add_child(Kit.para(Lang.t("Улучшений в забеге: %d") % run.perks.size(), 12))
 		else:
 			for id in room.mods:
 				var md = null
@@ -160,7 +160,7 @@ func _render() -> void:
 				if md == null: continue
 				var lv: int = int(run.mods.get(id, 0))
 				var off: bool = id in offer
-				var txt: String = (md.name + (" %d/%d" % [lv, md.max] if md.max > 1 else "") + " — " + md.desc) if lv else (md.name + (" — предлагают сейчас" if off else " — свободно"))
+				var txt: String = (md.name + (" %d/%d" % [lv, md.max] if md.max > 1 else "") + " — " + md.desc) if lv else (md.name + (Lang.t(" — предлагают сейчас") if off else Lang.t(" — свободно")))
 				var row := Kit.hbox(6)
 				row.add_child(Kit.icon("md_" + id, md.ico, 22))
 				var l := Kit.para(txt, 12, Kit.TEXT if lv else (Kit.GOLD if off else Kit.MUTED))

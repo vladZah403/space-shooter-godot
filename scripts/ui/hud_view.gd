@@ -169,7 +169,7 @@ func _draw_hud() -> void:
 	var sp := 1.0 + 0.12 * (_scorePop / 0.2)
 	_txt(U.fmt(run.score), cx, top + 36, int(24 * sp), Kit.TEXT, 900, 1, 4)
 	var wave_txt := ""
-	if g.wave: wave_txt = ("БОСС • ВОЛНА %d" if g.boss else "ВОЛНА %d") % g.wave.n
+	if g.wave: wave_txt = (Lang.t("БОСС • ВОЛНА %d") if g.boss else Lang.t("ВОЛНА %d")) % g.wave.n
 	_txt(wave_txt, cx, top + 52, 11, Kit.MUTED, 700, 1, 3)
 	if run.coins != _lastCoins:
 		if _lastCoins >= 0: _coinBump = 0.3
@@ -235,7 +235,7 @@ func _draw_hud() -> void:
 	var extra := 0.0
 	if boss and boss.alive:
 		var y := top + 100
-		var nm: String = boss.bdef.name + (" · ФАЗА %d" % boss.phase if boss.phase > 1 else "")
+		var nm: String = boss.bdef.name + (Lang.t(" · ФАЗА %d") % boss.phase if boss.phase > 1 else "")
 		_txt(nm, cx, y, 11, U.col("#ff6b81"), 900, 1, 3)
 		var x0 := fx + 14
 		var w := fw - 28
@@ -286,7 +286,7 @@ func _draw_hud() -> void:
 		var fever: bool = run.get("fever", false)
 		var mc := U.col("#ff5cf0") if fever else Kit.GOLD
 		_txt("x%.1f" % g.comboMul(), rx, top + 92 + extra + 22, 22, mc, 900, 2, 4)
-		_txt("КОМБО %d" % run.combo, rx, top + 92 + extra + 36, 10, Kit.MUTED, 800, 2, 3)
+		_txt(Lang.t("КОМБО %d") % run.combo, rx, top + 92 + extra + 36, 10, Kit.MUTED, 800, 2, 3)
 		var ct := clampf(run.comboT / (5.2 if g.relic("r_combo") else 2.6), 0, 1)
 		ctx.fill = Color(1, 1, 1, 0.12); ctx.fill_rect(rx - 70, top + 92 + extra + 41, 70, 3)
 		ctx.fill = mc; ctx.fill_rect(rx - 70, top + 92 + extra + 41, 70 * ct, 3)

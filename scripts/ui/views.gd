@@ -58,7 +58,7 @@ class Banner extends Control:
 		warn.set_anchors_preset(Control.PRESET_CENTER)
 		warn.grow_horizontal = Control.GROW_DIRECTION_BOTH
 		warn.grow_vertical = Control.GROW_DIRECTION_BOTH
-		warn.add_child(Kit.label("⚠ ВНИМАНИЕ ⚠", 16, Kit.RED, 900, HORIZONTAL_ALIGNMENT_CENTER))
+		warn.add_child(Kit.label(Lang.t("⚠ ВНИМАНИЕ ⚠"), 16, Kit.RED, 900, HORIZONTAL_ALIGNMENT_CENTER))
 		warn_name = Kit.label("", 30, Color.WHITE, 900, HORIZONTAL_ALIGNMENT_CENTER)
 		warn_name.add_theme_constant_override("outline_size", 6)
 		warn_name.add_theme_color_override("font_outline_color", Color(0.6, 0, 0.1, 0.8))
@@ -182,7 +182,7 @@ class MenuView extends Control:
 		var prof := Kit.vbox(0)
 		prof.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		lvl = Kit.label("", 13, Kit.MUTED, 700)
-		prof.add_child(Kit.label("ПИЛОТ", 11, Kit.DIM, 800))
+		prof.add_child(Kit.label(Lang.t("ПИЛОТ"), 11, Kit.DIM, 800))
 		prof.add_child(lvl)
 		head.add_child(prof)
 		coins = Kit.label("", 18, Kit.GOLD, 900)
@@ -206,20 +206,20 @@ class MenuView extends Control:
 		hero = Kit.spacer(0, true)
 		v.add_child(hero)
 		hero.resized.connect(func(): Game.attract.slot = {"y": hero.global_position.y + hero.size.y / 2 - 10, "h": hero.size.y})
-		v.add_child(Kit.icon_button("play", "ИГРАТЬ", func(): show_diff(), "primary", "big"))
+		v.add_child(Kit.icon_button("play", Lang.t("ИГРАТЬ"), func(): show_diff(), "primary", "big"))
 		play_sub = Kit.label("", 12, Kit.MUTED, 600, HORIZONTAL_ALIGNMENT_CENTER)
 		v.add_child(play_sub)
 		# как в JS: четыре крупные плитки, ниже — строка небольших значков; цвет значка у каждого раздела свой
 		var tiles := Kit.hbox(7)
-		for it in [["ship", "ВЕРФЬ", "Корабли", Kit.CYAN, "hangar"], ["swords", "ОРУЖЕЙНАЯ", "Оружие", Kit.GOLD, "arsenal"],
-				["atom", "ИМПЛАНТЫ", "Нейросеть", Kit.VIOLET, "skills"], ["target", "КОНТРАКТЫ", "", Kit.ORANGE, "missions"]]:
+		for it in [["ship", Lang.t("ВЕРФЬ"), Lang.t("Корабли"), Kit.CYAN, "hangar"], ["swords", Lang.t("ОРУЖЕЙНАЯ"), Lang.t("Оружие"), Kit.GOLD, "arsenal"],
+				["atom", Lang.t("ИМПЛАНТЫ"), Lang.t("Нейросеть"), Kit.VIOLET, "skills"], ["target", Lang.t("КОНТРАКТЫ"), "", Kit.ORANGE, "missions"]]:
 			var t := _tile(it[0], it[1], it[2], it[3], it[4])
 			tiles.add_child(t)
 			if it[4] == "missions": mission_sub = t.get_meta("sub")
 		v.add_child(tiles)
 		var bar := Kit.hbox(6)
-		for it in [["trophy", "Бортжурнал", Kit.PINK, "leaders"], ["medal", "Медали", Kit.GREEN, "achievements"],
-				["chest", "Ксенотех", Kit.GOLD, "relics"], ["list", "Банк данных", Kit.CYAN, "codex"], ["gear", "Настройки", Color("#aab4d8"), "settings"]]:
+		for it in [["trophy", Lang.t("Бортжурнал"), Kit.PINK, "leaders"], ["medal", Lang.t("Медали"), Kit.GREEN, "achievements"],
+				["chest", Lang.t("Ксенотех"), Kit.GOLD, "relics"], ["list", Lang.t("Банк данных"), Kit.CYAN, "codex"], ["gear", Lang.t("Настройки"), Color("#aab4d8"), "settings"]]:
 			bar.add_child(_bar_btn(it[0], it[1], it[2], it[3]))
 		v.add_child(bar)
 		diff = DiffView.new()
@@ -243,12 +243,12 @@ class MenuView extends Control:
 	func refresh() -> void:
 		var s: Dictionary = M.s
 		var pil: Dictionary = D.PILOTS.get(s.pilot, D.PILOTS.kai)
-		lvl.text = "%s %s • Корабль %d%s" % [pil.ico, pil.name, s.shipLvl, (" • ✦%d" % s.prestige) if s.prestige else ""]
-		best.text = "Рекорд: %s  •  Волна %d" % [U.fmt(s.stats.bestScore), s.stats.bestWave]
+		lvl.text = Lang.t("%s %s • Корабль %d%s") % [pil.ico, pil.name, s.shipLvl, (" • ✦%d" % s.prestige) if s.prestige else ""]
+		best.text = Lang.t("Рекорд: %s  •  Волна %d") % [U.fmt(s.stats.bestScore), s.stats.bestWave]
 		var ms := M.missions()
 		mission_sub.text = "%d / %d" % [ms.filter(func(m): return m.done).size(), ms.size()]
 		var cd: Dictionary = D.DIFFS.get(s.settings.diff, D.DIFFS.normal)
-		play_sub.text = "Сложность: %s • награды ×%s" % [cd.name, Views_fmt(cd.coins)]
+		play_sub.text = Lang.t("Сложность: %s • награды ×%s") % [cd.name, Views_fmt(cd.coins)]
 		refresh_wallet()
 
 	func refresh_wallet() -> void:
@@ -296,7 +296,7 @@ class DiffView extends Control:
 		var v := Kit.vbox(10)
 		m.add_child(v)
 		var head := Kit.hbox(8)
-		var t := Kit.label("СЛОЖНОСТЬ", 22, Kit.TEXT, 900)
+		var t := Kit.label(Lang.t("СЛОЖНОСТЬ"), 22, Kit.TEXT, 900)
 		t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		head.add_child(t)
 		var close_fn := func():
@@ -316,7 +316,7 @@ class DiffView extends Control:
 		v.add_child(sc)
 		modes = Kit.hbox(6)
 		v.add_child(modes)
-		go = Kit.button("В БОЙ", func(): _go(), "primary", "big")
+		go = Kit.button(Lang.t("В БОЙ"), func(): _go(), "primary", "big")
 		v.add_child(go)
 
 	func open() -> void:
@@ -324,7 +324,7 @@ class DiffView extends Control:
 		sel = s.settings.diff if D.DIFFS.has(s.settings.diff) and M.diffUnlocked(s.settings.diff) else "normal"
 		var power := M.power()
 		var lv: int = int(D.BASE_LIVES + D.SHIPS[s.ship.model].stats.get("lives", 0))
-		lives.text = "❤ Жизней: %d • ⚡ Боевая мощь: %s" % [lv, U.fmt(power)]
+		lives.text = Lang.t("❤ Жизней: %d • ⚡ Боевая мощь: %s") % [lv, U.fmt(power)]
 		_render()
 		visible = true
 
@@ -370,8 +370,8 @@ class DiffView extends Control:
 			for x in D.CHALLENGE_MODS:
 				if x.id == mid: mods.append(x.name)
 		var tiers: Array = D.CHALLENGE_TIERS
-		var rew := "✓ всё получено" if cs.tiers >= tiers.size() else "◆ %d за волну %d" % [tiers[cs.tiers].coins, tiers[cs.tiers].wave]
-		list.add_child(_row("daily", "#ff5cf0", "ИСПЫТАНИЕ ДНЯ" + ("  · сегодня: волна %d" % cs.wave if cs.wave else ""), " · ".join(mods), rew, true, sel == "daily", func(): _pick("daily")))
+		var rew := Lang.t("✓ всё получено") if cs.tiers >= tiers.size() else Lang.t("◆ %d за волну %d") % [tiers[cs.tiers].coins, tiers[cs.tiers].wave]
+		list.add_child(_row("daily", "#ff5cf0", Lang.t("ИСПЫТАНИЕ ДНЯ") + (Lang.t("  · сегодня: волна %d") % cs.wave if cs.wave else ""), " · ".join(mods), rew, true, sel == "daily", func(): _pick("daily")))
 		for id in D.DIFF_ORDER:
 			var d: Dictionary = D.DIFFS[id]
 			var bst: Dictionary = s.stats.diff.get(id, {"wave": 0})
@@ -379,12 +379,12 @@ class DiffView extends Control:
 			var meta := ""
 			if opened:
 				var parts: Array = []
-				for x in [["Враги", d.count], ["Броня", d.hp], ["Огонь", d.fire]]:
+				for x in [[Lang.t("Враги"), d.count], [Lang.t("Броня"), d.hp], [Lang.t("Огонь"), d.fire]]:
 					if x[1] != 1.0: parts.append("%s %s" % [x[0], _pct(x[1])])
-				meta = "  ".join(parts) if not parts.is_empty() else "Обычные враги и награды"
+				meta = "  ".join(parts) if not parts.is_empty() else Lang.t("Обычные враги и награды")
 			else:
-				meta = "🔒 Откроется: волна %d на «%s»" % [D.DIFF_UNLOCK_WAVE, D.DIFFS[d.unlock].name]
-			var nm: String = d.name + ("  · рекорд: волна %d" % bst.wave if bst.get("wave", 0) else "")
+				meta = Lang.t("🔒 Откроется: волна %d на «%s»") % [D.DIFF_UNLOCK_WAVE, D.DIFFS[d.unlock].name]
+			var nm: String = d.name + (Lang.t("  · рекорд: волна %d") % bst.wave if bst.get("wave", 0) else "")
 			var did: String = id
 			list.add_child(_row(id, d.color, nm, meta, "◆ ×" + MenuView.Views_fmt(d.coins * M.overpowerK(id, power)), opened, did == sel, func():
 				if opened: _pick(did)
@@ -440,46 +440,46 @@ class PauseView extends Control:
 		c.add_child(p)
 		var v := Kit.vbox(10)
 		p.add_child(v)
-		v.add_child(Kit.label("ПАУЗА", 26, Kit.TEXT, 900, HORIZONTAL_ALIGNMENT_CENTER))
+		v.add_child(Kit.label(Lang.t("ПАУЗА"), 26, Kit.TEXT, 900, HORIZONTAL_ALIGNMENT_CENTER))
 		info = Kit.label("", 14, Kit.MUTED, 700, HORIZONTAL_ALIGNMENT_CENTER)
 		v.add_child(info)
 		fx = Kit.vbox(4); v.add_child(fx)
 		build = Kit.vbox(4); v.add_child(build)
 		var tg := Kit.hbox(6)
-		tg_music = Kit.button("♪ МУЗЫКА", func(): _vol("music"), "", "sm")
-		tg_sfx = Kit.button("🔊 ЗВУК", func(): _vol("sfx"), "", "sm")
+		tg_music = Kit.button(Lang.t("♪ МУЗЫКА"), func(): _vol("music"), "", "sm")
+		tg_sfx = Kit.button(Lang.t("🔊 ЗВУК"), func(): _vol("sfx"), "", "sm")
 		var vibe_fn := func():
 			M.s.settings.vibro = not M.s.settings.vibro; M.soon(); _sync()
-		tg_vibe = Kit.button("📳 ВИБРО", vibe_fn, "", "sm")
+		tg_vibe = Kit.button(Lang.t("📳 ВИБРО"), vibe_fn, "", "sm")
 		for b in [tg_music, tg_sfx, tg_vibe]:
 			b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			tg.add_child(b)
 		v.add_child(tg)
-		v.add_child(Kit.button("🛠 СХЕМА КОРАБЛЯ", func(): Ui.ship.open(), "", "sm"))
-		v.add_child(Kit.button("▶  ПРОДОЛЖИТЬ", func(): Game.resume(), "primary", "big"))
+		v.add_child(Kit.button(Lang.t("🛠 СХЕМА КОРАБЛЯ"), func(): Ui.ship.open(), "", "sm"))
+		v.add_child(Kit.button(Lang.t("▶  ПРОДОЛЖИТЬ"), func(): Game.resume(), "primary", "big"))
 		var quit_fn := func():
 			var leave := func():
 				close()
 				Game.gameOver()
-			Ui.dialog({"ico": "🏠", "title": "ВЫЙТИ В МЕНЮ?", "text": "Забег будет завершён.
-Собранные кредиты останутся у вас.", "ok": "ВЫЙТИ", "onOk": leave})
-		v.add_child(Kit.button("ВЫЙТИ В МЕНЮ", quit_fn, "danger"))
+			Ui.dialog({"ico": "🏠", "title": Lang.t("ВЫЙТИ В МЕНЮ?"), "text": Lang.t("Забег будет завершён.
+Собранные кредиты останутся у вас."), "ok": Lang.t("ВЫЙТИ"), "onOk": leave})
+		v.add_child(Kit.button(Lang.t("ВЫЙТИ В МЕНЮ"), quit_fn, "danger"))
 
 	func open() -> void:
 		var g = Game
 		var run: Dictionary = g.run
-		info.text = "Счёт %s  •  Волна %d  •  ◆ %s" % [U.fmt_short(run.score), g.wave.n if g.wave else 1, U.fmt(run.coins)]
+		info.text = Lang.t("Счёт %s  •  Волна %d  •  ◆ %s") % [U.fmt_short(run.score), g.wave.n if g.wave else 1, U.fmt(run.coins)]
 		Kit.clear(fx)
 		var an = g.anomaly()
 		if an:
 			var d: Dictionary = D.ANOMALIES[an]
-			fx.add_child(_fxrow(d.color, d.ico, "Аномалия: " + d.name, d.desc + " · награды +%d%%" % int(round(d.bonus * 100))))
+			fx.add_child(_fxrow(d.color, d.ico, Lang.t("Аномалия: ") + d.name, d.desc + Lang.t(" · награды +%d%%") % int(round(d.bonus * 100))))
 		var wev = Events.active()
 		if wev: fx.add_child(_fxrow(wev.color, wev.ico, wev.name, wev.get("desc", "")))
-		for k in g.buffs: fx.add_child(_fxrow(D.POWERUPS[k].color, "★", D.POWERUPS[k].name, "ещё %d с" % int(ceil(g.buffs[k]))))
+		for k in g.buffs: fx.add_child(_fxrow(D.POWERUPS[k].color, "★", D.POWERUPS[k].name, Lang.t("ещё %d с") % int(ceil(g.buffs[k]))))
 		Kit.clear(build)
 		var pil: Dictionary = D.PILOTS.get(run.pilot, D.PILOTS.kai)
-		build.add_child(Kit.label(pil.ico + " " + pil.name + "  · СБОРКА ЗАБЕГА", 12, U.col(pil.color), 800))
+		build.add_child(Kit.label(pil.ico + " " + pil.name + Lang.t("  · СБОРКА ЗАБЕГА"), 12, U.col(pil.color), 800))
 		# значки сборки — спрайты (модули md_, улучшения pk_, ксенотех r_), уровень — цифрой в углу
 		var items: Array = []
 		for m in D.MODULES:
@@ -489,7 +489,7 @@ class PauseView extends Control:
 		for id in run.relics:
 			if D.RELICS.has(id): items.append([id, D.RELICS[id].ico, 1])
 		if items.is_empty():
-			build.add_child(Kit.para("Пока пусто — модули на станциях, улучшения за кристаллы", 13, Kit.MUTED))
+			build.add_child(Kit.para(Lang.t("Пока пусто — модули на станциях, улучшения за кристаллы"), 13, Kit.MUTED))
 		else:
 			var grid := HFlowContainer.new()
 			grid.add_theme_constant_override("h_separation", 4)
@@ -560,19 +560,19 @@ class ReviveView extends Control:
 		c.add_child(p)
 		var v := Kit.vbox(10)
 		p.add_child(v)
-		v.add_child(Kit.label("КОРАБЛЬ ПОДБИТ", 22, Kit.RED, 900, HORIZONTAL_ALIGNMENT_CENTER))
+		v.add_child(Kit.label(Lang.t("КОРАБЛЬ ПОДБИТ"), 22, Kit.RED, 900, HORIZONTAL_ALIGNMENT_CENTER))
 		sec_l = Kit.label("5", 44, Kit.TEXT, 900, HORIZONTAL_ALIGNMENT_CENTER)
 		v.add_child(sec_l)
 		cost_l = Kit.label("", 14, Kit.GOLD, 800, HORIZONTAL_ALIGNMENT_CENTER)
 		v.add_child(cost_l)
-		v.add_child(Kit.button("❤ ВОСКРЕСНУТЬ", func(): Game.revive(), "gold", "big"))
+		v.add_child(Kit.button(Lang.t("❤ ВОСКРЕСНУТЬ"), func(): Game.revive(), "gold", "big"))
 		var no_fn := func():
 			close()
 			Game.gameOver()
-		v.add_child(Kit.button("НЕТ, СПАСИБО", no_fn, "ghost"))
+		v.add_child(Kit.button(Lang.t("НЕТ, СПАСИБО"), no_fn, "ghost"))
 
 	func open(cost: int) -> void:
-		cost_l.text = "Стоимость: ◆ " + U.fmt(cost)
+		cost_l.text = Lang.t("Стоимость: ◆ ") + U.fmt(cost)
 		_left = 5.0
 		visible = true
 
@@ -630,7 +630,7 @@ class OverView extends Control:
 		cause = Kit.label("", 12, Kit.RED, 700, HORIZONTAL_ALIGNMENT_CENTER); v.add_child(cause)
 		var sp := Kit.panel(14)
 		var sv := Kit.vbox(2)
-		sv.add_child(Kit.label("СЧЁТ", 11, Kit.DIM, 800, HORIZONTAL_ALIGNMENT_CENTER))
+		sv.add_child(Kit.label(Lang.t("СЧЁТ"), 11, Kit.DIM, 800, HORIZONTAL_ALIGNMENT_CENTER))
 		score = Kit.label("0", 40, Color.WHITE, 900, HORIZONTAL_ALIGNMENT_CENTER); sv.add_child(score)
 		best = Kit.label("", 12, Kit.MUTED, 700, HORIZONTAL_ALIGNMENT_CENTER); sv.add_child(best)
 		sp.add_child(sv)
@@ -655,14 +655,14 @@ class OverView extends Control:
 		events.add_theme_constant_override("v_separation", 4)
 		v.add_child(events)
 		var bh := Kit.hbox(8)
-		var again := Kit.button("↻ ЕЩЁ РАЗ", func(): Ui.again(), "primary", "big")
+		var again := Kit.button(Lang.t("↻ ЕЩЁ РАЗ"), func(): Ui.again(), "primary", "big")
 		again.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var menu := Kit.button("МЕНЮ", func(): Ui.toMenu(), "", "big")
+		var menu := Kit.button(Lang.t("МЕНЮ"), func(): Ui.toMenu(), "", "big")
 		menu.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		bh.add_child(again); bh.add_child(menu)
 		v.add_child(bh)
 		# Godot: карточка забега картинкой — в браузере системное «Поделиться», на компьютере файл
-		share_btn = Kit.icon_button("share", "ПОДЕЛИТЬСЯ", func(): _share(), "ghost")
+		share_btn = Kit.icon_button("share", Lang.t("ПОДЕЛИТЬСЯ"), func(): _share(), "ghost")
 		v.add_child(share_btn)
 
 	func _share() -> void:
@@ -671,24 +671,24 @@ class OverView extends Control:
 		var img: Image = await ShareCard.render(self, sum)
 		var msg := ShareCard.share(img, int(sum.get("score", 0)))
 		share_btn.disabled = false
-		if msg != "": Ui.toast({"info": true, "ico": "info", "title": "КАРТОЧКА ЗАБЕГА", "text": msg})
+		if msg != "": Ui.toast({"info": true, "ico": "info", "title": Lang.t("КАРТОЧКА ЗАБЕГА"), "text": msg})
 
 	func open(s: Dictionary) -> void:
 		sum = s
 		var st: Dictionary = M.s.stats
-		title.text = "НОВЫЙ РЕКОРД" if s.isRecord else "КОРАБЛЬ ПОДБИТ"
+		title.text = Lang.t("НОВЫЙ РЕКОРД") if s.isRecord else Lang.t("КОРАБЛЬ ПОДБИТ")
 		title.add_theme_color_override("font_color", Kit.GOLD if s.isRecord else Kit.TEXT)
 		var d: Dictionary = D.DIFFS.get(s.diff, D.DIFFS.normal)
-		sub.text = "%s • награды ×%s • Волна %d" % [d.name, MenuView.Views_fmt(d.coins), s.wave]
-		cause.text = ("Сбит: " + s.cause) if s.get("cause", "") != "" else ""
+		sub.text = Lang.t("%s • награды ×%s • Волна %d") % [d.name, MenuView.Views_fmt(d.coins), s.wave]
+		cause.text = (Lang.t("Сбит: ") + s.cause) if s.get("cause", "") != "" else ""
 		var md = st.get("modes", {}).get(s.get("mode", "normal")) if s.get("mode", "normal") != "normal" else null
-		best.text = "Лучший: " + U.fmt(md.best if md else st.bestScore)
+		best.text = Lang.t("Лучший: ") + U.fmt(md.best if md else st.bestScore)
 		Kit.clear(stats)
 		_counts.clear()
 		var dur: float = minf(1.6, 0.4 + log(s.score + 10) / log(10) * 0.25)
 		_counts.append({"l": score, "to": float(s.score), "f": func(n): return U.fmt(n), "at": 0.35, "dur": dur})
-		var rows := [["💀 Враги", s.kills, func(n): return U.fmt(n)], ["👑 Боссы", s.bosses, func(n): return U.fmt(n)], ["⚡ Комбо", s.maxCombo, func(n): return "×%d" % int(n)],
-			["📈 Уровень", s.level, func(n): return U.fmt(n)], ["🎯 Точность", s.accuracy, func(n): return "%d%%" % int(n)], ["⏱ Время", s.time, func(n): return U.fmt_time(n)]]
+		var rows := [[Lang.t("💀 Враги"), s.kills, func(n): return U.fmt(n)], [Lang.t("👑 Боссы"), s.bosses, func(n): return U.fmt(n)], [Lang.t("⚡ Комбо"), s.maxCombo, func(n): return "×%d" % int(n)],
+			[Lang.t("📈 Уровень"), s.level, func(n): return U.fmt(n)], [Lang.t("🎯 Точность"), s.accuracy, func(n): return "%d%%" % int(n)], [Lang.t("⏱ Время"), s.time, func(n): return U.fmt_time(n)]]
 		for i in rows.size():
 			var r: Array = rows[i]
 			var p := Kit.panel(8)
@@ -700,8 +700,8 @@ class OverView extends Control:
 			p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			stats.add_child(p)
 			_counts.append({"l": val, "to": float(r[1]), "f": r[2], "at": 0.6 + i * 0.09, "dur": 0.65})
-		rew.text = "◆ +%s    ✦ +%s опыта" % [U.fmt(s.coins + s.get("lvlCoins", 0)), U.fmt(s.xp)]
-		xp_lvl.text = "Ур. %d" % M.s.shipLvl
+		rew.text = Lang.t("◆ +%s    ✦ +%s опыта") % [U.fmt(s.coins + s.get("lvlCoins", 0)), U.fmt(s.xp)]
+		xp_lvl.text = Lang.t("Ур. %d") % M.s.shipLvl
 		xp_bar.max_value = D.ship_xp_need(M.s.shipLvl)
 		xp_bar.value = M.s.shipXP
 		_render_chests()
@@ -735,7 +735,7 @@ class OverView extends Control:
 		h.alignment = BoxContainer.ALIGNMENT_CENTER
 		for i in mini(n, 6): h.add_child(Kit.tex_icon(G.chest(M.s.chests[i]).icon, 48))
 		chests.add_child(h)
-		chests.add_child(Kit.button("ОТКРЫТЬ КОНТЕЙНЕР (%d)" % n, func(): _open_chest(), "gold"))
+		chests.add_child(Kit.button(Lang.t("ОТКРЫТЬ КОНТЕЙНЕР (%d)") % n, func(): _open_chest(), "gold"))
 
 	func _open_chest() -> void:
 		var r = M.openChest()
@@ -744,7 +744,7 @@ class OverView extends Control:
 		A.play("achievement")
 		Haptic.success()
 		var col: String = D.RELIC_RARITY[rel.rar].color
-		Ui.dialog({"ico": rel.ico, "title": ("ПОВТОР: " if r.dupe else "КСЕНОТЕХ: ") + rel.name, "text": rel.desc + ("\n\nУже в коллекции — взамен ◆ %d" % r.coins if r.dupe else "\n\nДобавлен в коллекцию"), "ok": "ОТЛИЧНО", "noCancel": true, "color": col})
+		Ui.dialog({"ico": rel.ico, "title": (Lang.t("ПОВТОР: ") if r.dupe else Lang.t("КСЕНОТЕХ: ")) + rel.name, "text": rel.desc + (Lang.t("\n\nУже в коллекции — взамен ◆ %d") % r.coins if r.dupe else Lang.t("\n\nДобавлен в коллекцию")), "ok": Lang.t("ОТЛИЧНО"), "noCancel": true, "color": col})
 		_render_chests()
 
 
@@ -779,11 +779,11 @@ class TipView extends Control:
 		title.custom_minimum_size.x = 10
 		note = Kit.para("", 13, Kit.GOLD, HORIZONTAL_ALIGNMENT_CENTER); v.add_child(note)
 		demo_box = Kit.vbox(0); v.add_child(demo_box)
-		v.add_child(Kit.label("КАК РАБОТАЕТ", 11, Kit.CYAN, 800))
+		v.add_child(Kit.label(Lang.t("КАК РАБОТАЕТ"), 11, Kit.CYAN, 800))
 		how = Kit.para("", 14, Kit.TEXT); v.add_child(how)
-		v.add_child(Kit.label("КАК ИСПОЛЬЗОВАТЬ", 11, Kit.GREEN, 800))
+		v.add_child(Kit.label(Lang.t("КАК ИСПОЛЬЗОВАТЬ"), 11, Kit.GREEN, 800))
 		use = Kit.para("", 14, Kit.TEXT); v.add_child(use)
-		v.add_child(Kit.button("ПОНЯТНО", func(): Game.closeTip(), "primary", "big"))
+		v.add_child(Kit.button(Lang.t("ПОНЯТНО"), func(): Game.closeTip(), "primary", "big"))
 
 	func open(t: Dictionary) -> void:
 		var col: String = t.get("color", "#3de0ff")
@@ -841,13 +841,13 @@ class DialogView extends Control:
 		var cancel_fn := func():
 			A.play("back")
 			close()
-		cancel = Kit.button("ОТМЕНА", cancel_fn, "ghost")
+		cancel = Kit.button(Lang.t("ОТМЕНА"), cancel_fn, "ghost")
 		cancel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		h.add_child(cancel)
 		var ok_fn := func():
 			close()
 			if _onOk is Callable: _onOk.call()
-		ok = Kit.button("ОК", ok_fn, "primary")
+		ok = Kit.button(Lang.t("ОК"), ok_fn, "primary")
 		ok.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		h.add_child(ok)
 		v.add_child(h)
@@ -860,7 +860,7 @@ class DialogView extends Control:
 		if o.has("color"): title.add_theme_color_override("font_color", U.col(o.color))
 		else: title.add_theme_color_override("font_color", Kit.TEXT)
 		text.text = o.get("text", "")
-		ok.text = o.get("ok", "ОК")
+		ok.text = o.get("ok", Lang.t("ОК"))
 		cancel.visible = not o.get("noCancel", false)
 		_onOk = o.get("onOk")
 		visible = true

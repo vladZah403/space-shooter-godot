@@ -159,7 +159,7 @@ func merchant(ctx: Ctx, x: float, y: float, w: float, t: float, o: Dictionary) -
 	var cols := ["#ff5c7a", "#3de0ff", "#ffc83d", "#3dffa2", "#b06bff"]
 	for i in 5: lamp(ctx, x + (i - 2) * w * 0.14, y - h * 0.02, cols[i], 8 * S, 0.9 if sin(t * 5 + i * 1.3) > 0.2 else 0.2)
 	orb.call(true)
-	if o.get("sign", 0.0): neon(ctx, x, y - h * 0.62, "ЛАВКА", "#ffc83d", t, o.sign)
+	if o.get("sign", 0.0): neon(ctx, x, y - h * 0.62, Lang.t("ЛАВКА"), "#ffc83d", t, o.sign)
 
 
 # ════════════════════════════════════════════════════════════
@@ -172,10 +172,10 @@ func update(sc: Dictionary) -> void:
 	var cx := G.FW / 2
 	# в эскорте Контрабандист встаёт посередине — подпись выше него
 	if sc.get("card") == null and t >= sc.cardT:
-		sc.card = {"cap": sc.v.cap, "name": sc.v.name, "sub": sc.v.sub, "at": t, "y": 0.4 if sc.node == "escort" else 0.58}
+		sc.card = {"cap": Lang.t(sc.v.cap), "name": Lang.t(sc.v.name), "sub": Lang.t(sc.v.sub), "at": t, "y": 0.4 if sc.node == "escort" else 0.58}
 	match sc.node:
 		"shop":
-			if sc.get("hello", "") == "": sc.hello = U.pick(HELLO)
+			if sc.get("hello", "") == "": sc.hello = Lang.t(U.pick(HELLO))
 			if not sc.get("braked", false) and t > 0.5:
 				sc.braked = true; A.play("teleport", {"rate": 0.6, "vol": 0.35}); FX.shake(0.08)
 			if not sc.get("docked", false) and t > 1.15:
@@ -422,7 +422,7 @@ func drawEvent(ctx: Ctx, sc: Dictionary) -> void:
 			ctx.save(); ctx.alpha = a * (0.55 + 0.35 * sin(t * 20) * (1.0 if U.random() < 0.9 else 0.0))
 			glowText(ctx, "$?", cx - 66 * S, y - 50 * S, int(round(26 * S)), U.col("#ff7ab0"), "#ff2a7a", 16 * S)
 			ctx.restore()
-			bubble(ctx, cx + 62 * S, y - 66 * S, "Тсс… есть товар", U.clamp((t - 0.8) / 0.2, 0, 1), -1)
+			bubble(ctx, cx + 62 * S, y - 66 * S, Lang.t("Тсс… есть товар"), U.clamp((t - 0.8) / 0.2, 0, 1), -1)
 		"station":
 			# заброшенная станция: тёмная, огни еле живы, вокруг плавают обломки
 			var dark := G.tinted("p_merchant", {"sat": -0.9, "dark": 0.45})
@@ -462,7 +462,7 @@ func drawSlot(ctx: Ctx, x: float, y: float, t: float, a: float) -> void:
 	ctx.begin_path(); ctx.round_rect(L, top, w, h - 18 * S, 14 * S); ctx.stroke_path()
 	# купол с надписью
 	ctx.fill = U.col("#ff3d8b"); ctx.begin_path(); ctx.round_rect(L + 14 * S, T, w - 28 * S, 30 * S, 12 * S); ctx.fill_path()
-	glowText(ctx, "ДЖЕКПОТ", x, T + 15 * S, int(round(12 * S)), Color.WHITE, "#ffc83d", 8 * S)
+	glowText(ctx, Lang.t("ДЖЕКПОТ"), x, T + 15 * S, int(round(12 * S)), Color.WHITE, "#ffc83d", 8 * S)
 	# бегущие огни по периметру
 	for i in 14:
 		var q := i / 14.0
@@ -512,7 +512,7 @@ func drawSlot(ctx: Ctx, x: float, y: float, t: float, a: float) -> void:
 # ════════════════════════════════════════════════════════════
 func leave(kind: String, bought: bool) -> void:
 	if kind != "merchant": return
-	actors.append({"kind": kind, "t": 0.0, "y0": G.H * 0.33, "say": U.pick(BYE_BUY if bought else BYE), "boom": false})
+	actors.append({"kind": kind, "t": 0.0, "y0": G.H * 0.33, "say": Lang.t(U.pick(BYE_BUY if bought else BYE)), "boom": false})
 
 
 ## время актёров идёт вместе с игрой (Game.update): на паузе и в окнах выбора они замирают

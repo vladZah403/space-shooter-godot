@@ -50,7 +50,7 @@ func _ready() -> void:
 	add_child(v)
 	var head := Kit.margin(16, 12, 16, 4)
 	var hv := Kit.vbox(2)
-	title = Kit.label("СЕКТОР 1", 20, Kit.TEXT, 900, HORIZONTAL_ALIGNMENT_CENTER)
+	title = Kit.label(Lang.t("СЕКТОР 1"), 20, Kit.TEXT, 900, HORIZONTAL_ALIGNMENT_CENTER)
 	sub = Kit.label("", 13, Kit.MUTED, 600, HORIZONTAL_ALIGNMENT_CENTER)
 	steps = Kit.label("", 14, Kit.CYAN, 800, HORIZONTAL_ALIGNMENT_CENTER)
 	hv.add_child(title); hv.add_child(sub); hv.add_child(steps)
@@ -74,7 +74,7 @@ func _ready() -> void:
 	pv.add_child(info_name); pv.add_child(info_desc); pv.add_child(info_more)
 	pnl.add_child(pv)
 	fv.add_child(pnl)
-	go = Kit.button("ЛЕТИМ", func(): fly_go(), "primary", "big")
+	go = Kit.button(Lang.t("ЛЕТИМ"), func(): fly_go(), "primary", "big")
 	fv.add_child(go)
 	foot.add_child(fv)
 	v.add_child(foot)
@@ -93,8 +93,8 @@ func open(dd: Dictionary) -> void:
 	var map: Dictionary = d.map
 	var sec := Game.sectorDef(map.sector)
 	if not map.has("seed"): map.seed = int(U.random() * 1e9)
-	title.text = "СЕКТОР %d" % (int(map.sector) + 1)
-	sub.text = "%s · волна %d" % [sec.name, d.n]
+	title.text = Lang.t("СЕКТОР %d") % (int(map.sector) + 1)
+	sub.text = Lang.t("%s · волна %d") % [sec.name, d.n]
 	var s := ""
 	for c in 4: s += ("●" if c < d.step else ("◉" if c == d.step else "○")) + "  "
 	steps.text = s + "👑"
@@ -454,7 +454,7 @@ func _drawBoss(k: float) -> void:
 	ctx.begin_path(); ctx.arc(0, 0, R + 7, 0, TAU); ctx.stroke_path(); ctx.restore()
 	G.draw(ctx, boss.def.sprite, x, y + sin(t * 1.3) * 2, R * 1.55, boss.def.get("rot", 0.0))
 	ctx.font = Kit.font(800)
-	var txt: String = "БОСС · " + boss.def.name
+	var txt: String = Lang.t("БОСС · ") + boss.def.name
 	ctx.fill = Color(0, 0, 0, 0.6); ctx.fill_text(txt, x + 1, y + R + 19, 10, 1)
 	ctx.fill = Color("#ffd0d6"); ctx.fill_text(txt, x, y + R + 18, 10, 1)
 	ctx.restore()
@@ -548,20 +548,20 @@ func _select(n: Dictionary) -> void:
 func _info(n) -> void:
 	if n == null:
 		info_name.text = ""
-		info_desc.text = "Тап по узлу — подробности · по светящемуся ещё раз — летим"
+		info_desc.text = Lang.t("Тап по узлу — подробности · по светящемуся ещё раз — летим")
 		info_more.text = ""
 		return
 	if n.get("boss", false):
-		info_name.text = "БОСС: " + n.def.name
+		info_name.text = Lang.t("БОСС: ") + n.def.name
 		info_name.add_theme_color_override("font_color", U.col(n.def.get("color", "#ff3d5a")))
-		info_desc.text = n.def.get("title", "") + ". После боя — трофейный контейнер и станция"
+		info_desc.text = n.def.get("title", "") + Lang.t(". После боя — трофейный контейнер и станция")
 		info_more.text = ""
 		return
-	var tag := "ТАП ЕЩЁ РАЗ — ЛЕТИМ" if n.can else ("ПРОЙДЕН" if n.done else ("ПОЗАДИ" if n.c < d.step else ("ДАЛЬШЕ ПО ПУТИ" if open_set.has(key(n.c, n.r)) else "НЕТ ПУТИ")))
+	var tag := Lang.t("ТАП ЕЩЁ РАЗ — ЛЕТИМ") if n.can else (Lang.t("ПРОЙДЕН") if n.done else (Lang.t("ПОЗАДИ") if n.c < d.step else (Lang.t("ДАЛЬШЕ ПО ПУТИ") if open_set.has(key(n.c, n.r)) else Lang.t("НЕТ ПУТИ"))))
 	info_name.text = n.def.name + "   · " + tag
 	info_name.add_theme_color_override("font_color", U.col(n.def.color))
 	info_desc.text = n.def.desc
-	info_more.text = ("Отсюда дальше: " + _routeText(reach, n)) if n.can and reach != null else ""
+	info_more.text = (Lang.t("Отсюда дальше: ") + _routeText(reach, n)) if n.can and reach != null else ""
 
 
 ## что встретится дальше по выбранному пути (по типам)
@@ -571,7 +571,7 @@ func _routeText(r: Dictionary, from: Dictionary) -> String:
 		if not is_same(n, from) and n.c > from.c and r.has(key(n.c, n.r)): cnt[n.t] = cnt.get(n.t, 0) + 1
 	var parts: Array = []
 	for tp in cnt: parts.append(D.MAP_NODES[tp].name.to_lower() + (" ×%d" % cnt[tp] if cnt[tp] > 1 else ""))
-	return ", ".join(parts) if not parts.is_empty() else "сразу босс"
+	return ", ".join(parts) if not parts.is_empty() else Lang.t("сразу босс")
 
 
 ## «ЛЕТИМ»: корабль летит по коридору, затем волна

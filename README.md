@@ -58,3 +58,19 @@ GODOT=путь/Godot_v4.6.3-stable_win64_console.exe tools/check/run.sh smoke_bo
 Пресеты `Windows` и `Web` (однопоточный — работает и на iOS) лежат в `export_presets.cfg`.
 Для сборки нужны шаблоны экспорта: в редакторе **Editor → Manage Export Templates → Download**.
 Android — после установки Android SDK и JDK 17 (Editor Settings → Export → Android).
+
+## Язык (русский / английский)
+
+Исходный язык — русский; перевод лежит в `data/i18n/en.json` (ключ — русская строка, значение — английская).
+`scripts/core/lang.gd` (`Lang`): `Lang.t("ВОЛНА %d") % n` в коде, данные `D` переводятся при загрузке,
+`Ctx.fill_text` и надписи Godot переводят сами. Язык по умолчанию — по языку системы (ru/uk/be/kk → русский),
+переключатель — в Настройках (игра перезапускается). Проверка на английском: `-- --lang=en`.
+
+После правок текстов:
+
+```bash
+python tools/i18n.py wrap      # обернуть новые русские строки в коде в Lang.t(...)
+python tools/i18n.py extract   # обновить список ключей в en.json
+python tools/i18n.py missing   # что ещё не переведено → перевести, вписать в en.json
+python tools/i18n.py check     # %d/%s/{n} в переводе те же, что в оригинале
+```

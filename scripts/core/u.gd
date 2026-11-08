@@ -151,7 +151,7 @@ static func fmt(n: float) -> String:
 	var out := ""
 	for i in s.length():
 		if i > 0 and (s.length() - i) % 3 == 0:
-			out += " "
+			out += "," if Lang.is_en() else " "
 		out += s[i]
 	return ("−" + out) if v < 0 else out
 
@@ -160,9 +160,9 @@ static func fmt(n: float) -> String:
 static func fmt_short(n: float) -> String:
 	var v := floorf(n)
 	if v >= 1e6:
-		return _trim_zero(("%.0f" if v >= 1e7 else "%.1f") % (v / 1e6)) + "М"
+		return _trim_zero(("%.0f" if v >= 1e7 else "%.1f") % (v / 1e6)) + Lang.t("М")
 	if v >= 1e4:
-		return _trim_zero(("%.0f" if v >= 1e5 else "%.1f") % (v / 1e3)) + "К"
+		return _trim_zero(("%.0f" if v >= 1e5 else "%.1f") % (v / 1e3)) + Lang.t("К")
 	return fmt(v)
 
 
@@ -174,12 +174,13 @@ static func fmt_time(sec: float) -> String:
 	var s := int(maxf(0.0, floorf(sec)))
 	var m := s / 60
 	if m >= 60:
-		return "%dч %dм" % [m / 60, m % 60]
+		return Lang.t("%dч %dм") % [m / 60, m % 60]
 	return "%d:%02d" % [m, s % 60]
 
 
 ## склонение: plural(5, "кредит", "кредита", "кредитов")
 static func plural(n: int, one: String, few: String, many: String) -> String:
+	if Lang.is_en(): return one if absi(n) == 1 else many
 	var v := absi(n) % 100
 	var v1 := v % 10
 	if v > 10 and v < 20:

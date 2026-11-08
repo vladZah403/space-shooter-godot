@@ -685,7 +685,7 @@ func updateTimers(dt: float) -> void:
 		run.repairT += dt
 		if run.repairT >= 60:
 			run.repairT = 0.0
-			heal(1, "🔧 РЕМОНТ")
+			heal(1, Lang.t("🔧 РЕМОНТ"))
 	if mod("emergency") and p.alive and p.lives == 1 and not p.shield:
 		run.emergT += dt
 		if run.emergT >= 12:
@@ -713,13 +713,13 @@ func updateTimers(dt: float) -> void:
 		run.nanoT += dt
 		if run.nanoT >= 50:
 			run.nanoT = 0.0
-			heal(1, "🦠 НАНОРОБОТЫ")
+			heal(1, Lang.t("🦠 НАНОРОБОТЫ"))
 	if skill("sk_regen") and p.alive and p.lives < p.maxLives:
 		run.regenT += dt
 		var rt := 35.0 if skillLv("sk_regen") >= 2 else 45.0
 		if run.regenT >= (rt / 2 if p.lives == 1 else rt):
 			run.regenT = 0.0
-			heal(1, "💚 РЕГЕНЕРАЦИЯ")
+			heal(1, Lang.t("💚 РЕГЕНЕРАЦИЯ"))
 
 
 # ════════════════════════════════════════════════════════════
@@ -1373,7 +1373,7 @@ func collide() -> void:
 					bumpAsteroid(e)
 					continue
 				if not e.boss and not e.mini: damageEnemy(e, 999999, {"src": "ram", "noText": true})
-				hitPlayer(e.x, e.y, "Столкновение: " + (e.bdef.name if e.boss else (e.def.name if e.def.name != "" else "враг")))
+				hitPlayer(e.x, e.y, Lang.t("Столкновение: ") + (e.bdef.name if e.boss else (e.def.name if e.def.name != "" else Lang.t("враг"))))
 
 
 ## 4.3.2: корабль задел астероид Пояса — его отбрасывает, жизнь цела
@@ -1453,7 +1453,7 @@ func damageEnemy(e: En, dmg: float, o := {}) -> float:
 			run.critsForVamp += 1
 			if run.critsForVamp >= 30:
 				run.critsForVamp = 0
-				heal(1, "🩸 +1 ЖИЗНЬ")
+				heal(1, Lang.t("🩸 +1 ЖИЗНЬ"))
 		if absf(t - critFxT) > 0.08:
 			critFxT = t
 			FX.sprite("fx_flare", e.x + U.rand(-0.25, 0.25) * (e.rx if e.rx != 0.0 else e.r), e.y + U.rand(-0.2, 0.2) * (e.ry if e.ry != 0.0 else e.r),
@@ -1488,7 +1488,7 @@ func damageEnemy(e: En, dmg: float, o := {}) -> float:
 			FX.sparks(e.x, e.y, "#7fd8ff", 16, 300)
 			A.play("shieldHit")
 			if e.boss:
-				Bus.emit("toast", {"ico": "🛡️", "title": "ЩИТ", "text": "Щит дредноута сломан!", "info": true})
+				Bus.emit("toast", {"ico": "🛡️", "title": Lang.t("ЩИТ"), "text": Lang.t("Щит дредноута сломан!"), "info": true})
 				FX.shake(0.3)
 		elif U.random() < 0.3:
 			A.play("hitArmor", {"x": e.x})
@@ -1619,13 +1619,13 @@ func onEnemyKilled(e: En, _src: String) -> void:
 	if run.combo % 10 == 0: M.onCombo(run.combo)
 	if perk("demo") and run.combo % 30 == 0 and player.bombs < 9:
 		player.bombs += 1
-		FX.text(player.x, player.y - player.w * 0.7, "🧨 +1 БОМБА", "#ff8a3d", 14, 1.0, -50)
+		FX.text(player.x, player.y - player.w * 0.7, Lang.t("🧨 +1 БОМБА"), "#ff8a3d", 14, 1.0, -50)
 		hudDirty = true
 	if run.combo >= 50 and not run.fever: setFever(true)
 	if run.combo == 10 or run.combo == 25:
 		var big: bool = run.combo == 25
 		var col := "#ffc83d" if big else "#3de0ff"
-		FX.text(G.FW / 2, G.H * 0.38, "КОМБО %d!" % run.combo, col, 20 if big else 17, 1.1, -30)
+		FX.text(G.FW / 2, G.H * 0.38, Lang.t("КОМБО %d!") % run.combo, col, 20 if big else 17, 1.1, -30)
 		FX.ring(player.x, player.y, player.w * 0.5, player.w * (2.2 if big else 1.6), col, 0.45, 4)
 		addScore(round((1500 if big else 500) * wave.n * diff.score))
 		A.play("powerup", {"rate": 1.5 if big else 1.3, "vol": 0.6})
@@ -1655,13 +1655,13 @@ func onEnemyKilled(e: En, _src: String) -> void:
 		run.bloodKills += 1
 		if run.bloodKills >= 20:
 			run.bloodKills = 0
-			heal(1, "🩸 КАМЕНЬ")
+			heal(1, Lang.t("🩸 КАМЕНЬ"))
 	if relic("r_volatile") and not e.def.prop: blast(e.x, e.y, 70 * S, e.maxHp * 0.25 + 10, "#ff6a2a", "volatile")
 	if skill("sk_vamp"):
 		run.killsForVamp += 1
 		if run.killsForVamp >= 25:
 			run.killsForVamp = 0
-			heal(1, "🧛 ВАМПИР")
+			heal(1, Lang.t("🧛 ВАМПИР"))
 	if skill("sk_detonator"):
 		run.detCount += 1
 		if run.detCount % 5 == 0: blast(e.x, e.y, 80 * S, 40 * dmgMul(), "#ff9f3d", "det")
@@ -1676,7 +1676,7 @@ func setFever(on: bool) -> void:
 	if run.fever == on: return
 	run.fever = on
 	if on:
-		FX.text(G.FW / 2, G.H * 0.42, "ФИВЕР! КРЕДИТЫ ×1.5", "#ff6bd6", 18, 1.4, -30)
+		FX.text(G.FW / 2, G.H * 0.42, Lang.t("ФИВЕР! КРЕДИТЫ ×1.5"), "#ff6bd6", 18, 1.4, -30)
 		A.play("powerup", {"rate": 1.3})
 	Bus.emit("intensity")
 
@@ -1695,7 +1695,7 @@ func hitPlayer(sx: float, sy: float, cause := "") -> bool:
 	if run.skillFx.get("sk_barrier", 0.0) > 0: return false
 	if st.dodge > 0 and U.random() < st.dodge:
 		p.inv = 0.35
-		FX.text(p.x, p.y - p.w * 0.6, "УКЛОНЕНИЕ", "#7fe7ff", 13, 0.7)
+		FX.text(p.x, p.y - p.w * 0.6, Lang.t("УКЛОНЕНИЕ"), "#7fe7ff", 13, 0.7)
 		if perk("nimble"): run.nextCrit = true
 		FX.glow_puff(p.x, p.y, "#7fe7ff", 60 * G.S, 0.25)
 		FX.sprite("fx_dash", 0, 0, {"follow": p, "w0": p.w * 0.9, "w1": p.w * 1.3, "dur": 0.35, "hold": 0.3, "hue": 190})
@@ -1718,7 +1718,7 @@ func hitPlayer(sx: float, sy: float, cause := "") -> bool:
 		return true
 	p.lives -= 1
 	run.hitAt = run.time
-	run.lastHit = cause if cause != "" else "Вражеский огонь"
+	run.lastHit = cause if cause != "" else Lang.t("Вражеский огонь")
 	run.waveDamage += 1
 	run.bossDamaged = true
 	p.inv = 1.8 * st.invMul
@@ -1737,7 +1737,7 @@ func hitPlayer(sx: float, sy: float, cause := "") -> bool:
 		wave.chrono = true
 		run.skillFx.sk_timewarp = maxf(run.skillFx.get("sk_timewarp", 0.0), 3)
 		FX.flash("#3d6bff", 0.25)
-		FX.text(p.x, p.y - p.w * 0.9, "🕰️ ХРОНОЯКОРЬ", "#9fc8ff", 14, 1.2)
+		FX.text(p.x, p.y - p.w * 0.9, Lang.t("🕰️ ХРОНОЯКОРЬ"), "#9fc8ff", 14, 1.2)
 		A.play("teleport", {"rate": 0.5})
 	Bus.emit("playerHit", p.lives)
 	hudDirty = true
@@ -1746,7 +1746,7 @@ func hitPlayer(sx: float, sy: float, cause := "") -> bool:
 
 
 func hitCause(b: Eb, bs: En) -> String:
-	var what: String = SHOT_NAMES.get(b.type, "вражеский снаряд")
+	var what: String = Lang.t(SHOT_NAMES.get(b.type, Lang.t("вражеский снаряд")))
 	return bs.bdef.name + ", " + what if bs and bs.alive else what.substr(0, 1).to_upper() + what.substr(1)
 
 
@@ -1764,7 +1764,7 @@ func heal(n: int, label := "") -> void:
 	var before := p.lives
 	p.lives = mini(p.maxLives, p.lives + n)
 	if p.lives > before:
-		FX.text(p.x, p.y - p.w * 0.7, label if label != "" else "+1 ЖИЗНЬ", "#ff6b8a", 13, 0.9)
+		FX.text(p.x, p.y - p.w * 0.7, label if label != "" else Lang.t("+1 ЖИЗНЬ"), "#ff6b8a", 13, 0.9)
 		FX.glow_puff(p.x, p.y, "#ff6b8a", 70 * G.S, 0.35)
 		FX.sprite("fx_regen", p.x, p.y - p.w * 0.35, {"w0": p.w * 0.45, "w1": p.w * 0.6, "dur": 0.9, "hold": 0.55, "fadeIn": 0.12, "vy": -45 * G.S})
 		A.play("powerup", {"vol": 0.7})
@@ -1786,7 +1786,7 @@ func playerDown() -> void:
 		p.lives = 1; p.inv = 3.0
 		clearBulletsAround(p.x, p.y, 9999)
 		FX.flash("#ffd9a0", 0.5)
-		FX.text(p.x, p.y - p.w, "КАПСУЛА ВОЗРОЖДЕНИЯ!", "#ffc83d", 18, 1.3)
+		FX.text(p.x, p.y - p.w, Lang.t("КАПСУЛА ВОЗРОЖДЕНИЯ!"), "#ffc83d", 18, 1.3)
 		A.play("revive")
 		hudDirty = true
 		return
@@ -1799,9 +1799,9 @@ func playerDown() -> void:
 		FX.flash("#ffb03d", 0.6)
 		FX.explode(p.x, p.y, 2, "#ffb03d", {"kind": "crit"})
 		FX.sprite("fx_beam", 0, 0, {"follow": p, "oy": -p.w * 0.95, "w0": p.w * 1.25, "w1": p.w * 1.4, "dur": 1.1, "hold": 0.5, "fadeIn": 0.1, "hue": 30})
-		FX.text(p.x, p.y - p.w, "ВОЗРОЖДЕНИЕ!", "#ffb03d", 20, 1.3)
+		FX.text(p.x, p.y - p.w, Lang.t("ВОЗРОЖДЕНИЕ!"), "#ffb03d", 20, 1.3)
 		A.play("revive")
-		Bus.emit("toast", {"ico": "🔥", "title": "ИМПЛАНТ", "text": "Протокол возрождения поднял корабль!", "info": true})
+		Bus.emit("toast", {"ico": "🔥", "title": Lang.t("ИМПЛАНТ"), "text": Lang.t("Протокол возрождения поднял корабль!"), "info": true})
 		hudDirty = true
 		return
 	p.alive = false
@@ -2033,7 +2033,7 @@ func updateOverlays(dt: float) -> void:
 		if bm.t >= bm.warn and not bm.hitDone and p.alive and absf(p.x - bm.x) < bm.w * 0.75 + p.r and p.y > bm.y0:
 			bm.hitDone = true
 			if shielded(): reflectBeam(bm)
-			else: hitPlayer(bm.x, bm.y0, boss.bdef.name + ", луч" if boss else "Луч")
+			else: hitPlayer(bm.x, bm.y0, boss.bdef.name + Lang.t(", луч") if boss else Lang.t("Луч"))
 		# столпы света Цитадели бьют и по врагам
 		if bm.get("foes", false) and bm.t >= bm.warn and not bm.get("foesDone", false):
 			bm.foesDone = true
@@ -2068,7 +2068,7 @@ func updateOverlays(dt: float) -> void:
 			if sqrt((p.x - qx) * (p.x - qx) + (p.y - qy) * (p.y - qy)) < L.w * 0.45 + p.r:
 				# Godot: щит держит поворотный лазер до 1,2 с и отражает его в стрелка, потом ломается
 				if shielded() and L.get("reflT", 0.0) < 1.2: reflectLaser(L, o, Vector2(qx, qy), edt)
-				else: hitPlayer(o.x, o.y, (owner.bdef.name + ", " if owner != null and owner.boss else "") + "лазер")
+				else: hitPlayer(o.x, o.y, (owner.bdef.name + ", " if owner != null and owner.boss else "") + Lang.t("лазер"))
 	var refl: Array = ov.refl
 	for i in range(refl.size() - 1, -1, -1):
 		refl[i].t += dt
@@ -2093,7 +2093,7 @@ func reflectBeam(bm: Dictionary) -> void:
 		var dm := e.maxHp * (0.03 if e.boss else (0.25 if e.mini else 0.6)) + 30 * dmgMul()
 		if e == owner and not e.boss: dm = e.maxHp
 		damageEnemy(e, dm, {"src": "reflect"})
-	FX.text(p.x, p.y - p.w * 0.9, "ОТРАЖЕНО!", "#7fe7ff", 16, 0.9)
+	FX.text(p.x, p.y - p.w * 0.9, Lang.t("ОТРАЖЕНО!"), "#7fe7ff", 16, 0.9)
 	FX.ring(p.x, p.y, p.r, p.w * 1.6, "#7fe7ff", 0.35, 4)
 	FX.flash("#bff4ff", 0.25)
 	Post.wave(p.x, p.y, 0.5)
@@ -2114,11 +2114,11 @@ func reflectLaser(L: Dictionary, o: Vector2, at: Vector2, dt: float) -> void:
 		FX.sparks(at.x, at.y, "#7fe7ff", 4, 200)
 		if not L.get("reflShown", false):
 			L.reflShown = true
-			FX.text(at.x, at.y - 30 * G.S, "ОТРАЖЕНО!", "#7fe7ff", 14, 0.7)
+			FX.text(at.x, at.y - 30 * G.S, Lang.t("ОТРАЖЕНО!"), "#7fe7ff", 14, 0.7)
 			A.play("shieldHit", {"rate": 1.2, "vol": 0.6})
 	if L.reflT >= 1.2 and not L.get("hotShown", false):
 		L.hotShown = true
-		FX.text(at.x, at.y - 30 * G.S, "ЩИТ ПЕРЕГРЕТ", "#ff8a96", 13, 0.8)
+		FX.text(at.x, at.y - 30 * G.S, Lang.t("ЩИТ ПЕРЕГРЕТ"), "#ff8a96", 13, 0.8)
 
 
 ## L: { owner, ox, oy — доли размера владельца, ang, spin, track, warn, dur, w, len, color }
@@ -2416,7 +2416,7 @@ func collect(it: Pk) -> void:
 			run.coins += int(it.val)
 			M.addCoins(int(it.val))
 			M.trackMission("coins", int(it.val))
-			FX.text(p.x, p.y - p.w * 0.7, "ЯЩИК  +%d" % int(it.val), "#ffc83d", 15, 1.0, -60)
+			FX.text(p.x, p.y - p.w * 0.7, Lang.t("ЯЩИК  +%d") % int(it.val), "#ffc83d", 15, 1.0, -60)
 			FX.ring(p.x, p.y, p.w * 0.4, p.w * 1.4, "#ffc83d", 0.4, 3)
 			A.play("coin", {"rate": 0.8})
 			A.play("powerup", {"vol": 0.6})
@@ -2521,13 +2521,13 @@ func checkEvolutions() -> void:
 		if run.evo.get(ev.weapon, false) or not ev.weapon in p.weapons or perk(ev.perk) < ev.lvl: continue
 		run.evo[ev.weapon] = true
 		M.onEvolution(ev.weapon)
-		FX.text(G.FW / 2, G.H * 0.4, "ЭВОЛЮЦИЯ: " + ev.name, "#ff9ff3", 18, 1.8, -25)
+		FX.text(G.FW / 2, G.H * 0.4, Lang.t("ЭВОЛЮЦИЯ: ") + ev.name, "#ff9ff3", 18, 1.8, -25)
 		FX.sprite("fx_beam", 0, 0, {"follow": p, "oy": -p.w * 0.95, "w0": p.w * 1.3, "w1": p.w * 1.5, "dur": 1.2, "hold": 0.5, "fadeIn": 0.1, "hue": 300})
 		FX.flash("#ff9ff3", 0.3)
 		A.play("levelup", {"rate": 1.2})
 		var wdef: Dictionary = D.WEAPONS[ev.weapon]
-		if not tipOnce("evo_" + ev.weapon, {"kind": "ЭВОЛЮЦИЯ ОРУЖИЯ", "ico": "🧬", "title": ev.name, "color": wdef.color, "note": "Оружие: " + wdef.name + ". Действует до конца забега."}):
-			Bus.emit("toast", {"ico": "🧬", "title": "ЭВОЛЮЦИЯ ОРУЖИЯ", "text": ev.name + ": " + ev.desc, "info": true, "dur": 3200})
+		if not tipOnce("evo_" + ev.weapon, {"kind": Lang.t("ЭВОЛЮЦИЯ ОРУЖИЯ"), "ico": "🧬", "title": ev.name, "color": wdef.color, "note": Lang.t("Оружие: ") + wdef.name + Lang.t(". Действует до конца забега.")}):
+			Bus.emit("toast", {"ico": "🧬", "title": Lang.t("ЭВОЛЮЦИЯ ОРУЖИЯ"), "text": ev.name + ": " + ev.desc, "info": true, "dur": 3200})
 		if p.weapon != ev.weapon: setWeapon(ev.weapon)
 
 
@@ -2560,7 +2560,7 @@ func offerModules(kind: String) -> void:
 		if kind == "station": jumpScene()
 		return
 	# Борк чинит корабль на каждой станции
-	if kind == "station" and run.pilot == "bork" and player.lives < player.maxLives: heal(1, "🔧 БОРК ЧИНИТ")
+	if kind == "station" and run.pilot == "bork" and player.lives < player.maxLives: heal(1, Lang.t("🔧 БОРК ЧИНИТ"))
 	state = "perk"
 	offerKind = kind
 	pointer.id = -1
@@ -2669,10 +2669,10 @@ func rollAnomaly(n: int, isBoss: bool) -> void:
 				if run != r0 or run.anomaly != aid: return
 				A.play("skill", {"rate": 0.7})
 				var pct := int(round(def.bonus * 100))
-				if tipOnce(aid, {"kind": "АНОМАЛИЯ СЕКТОРА", "icon": "an_" + aid, "ico": def.ico, "title": def.name, "color": def.color,
-					"note": "Действует до босса сектора. Кредитов и опыта +%d%%." % pct}): return
-				Bus.emit("toast", {"ico": def.ico, "icon": "an_" + aid, "title": "АНОМАЛИЯ: " + def.name, "text": def.desc + " · награды +%d%%" % pct, "dur": 3800})
-				hintOnce("anomaly", "ПОДСКАЗКА", "Аномалия меняет правила сектора до босса: сложнее, зато кредитов и опыта больше. Подробности — на паузе"))
+				if tipOnce(aid, {"kind": Lang.t("АНОМАЛИЯ СЕКТОРА"), "icon": "an_" + aid, "ico": def.ico, "title": def.name, "color": def.color,
+					"note": Lang.t("Действует до босса сектора. Кредитов и опыта +%d%%.") % pct}): return
+				Bus.emit("toast", {"ico": def.ico, "icon": "an_" + aid, "title": Lang.t("АНОМАЛИЯ: ") + def.name, "text": def.desc + Lang.t(" · награды +%d%%") % pct, "dur": 3800})
+				hintOnce("anomaly", Lang.t("ПОДСКАЗКА"), Lang.t("Аномалия меняет правила сектора до босса: сложнее, зато кредитов и опыта больше. Подробности — на паузе")))
 	if run.anomaly != was: refreshStats()
 
 
@@ -2779,7 +2779,7 @@ func waveCleared() -> void:
 	Bus.emit("waveClear", {"n": w.n, "bonus": bonus, "perfect": perfect})
 	# 4.1: после босса — трофейный контейнер (откроется после забега), потом станция; после обычной волны — награда узла карты
 	if w.boss:
-		after(0.8, func(): if is_same(wave, w): RunMap.chestScene(RunMap.bossChest(), "ТРОФЕЙ БОССА", func(): offerModules("station")))
+		after(0.8, func(): if is_same(wave, w): RunMap.chestScene(RunMap.bossChest(), Lang.t("ТРОФЕЙ БОССА"), func(): offerModules("station")))
 	else:
 		after(1.2, func(): if is_same(wave, w) and not RunMap.reward(w): nextWave())
 
@@ -2806,9 +2806,9 @@ func waveEvent(w: Dictionary) -> bool:
 
 func forkOffer() -> Dictionary:
 	var d: Dictionary = D.DANGER
-	return {"title": "РАЗВИЛКА", "sub": "Куда ведём следующую волну?", "cards": [
-		{"id": "safe", "ico": "🛰️", "name": "ОБЫЧНЫЙ ПУТЬ", "desc": "Следующая волна как обычно", "rar": "common"},
-		{"id": "danger", "ico": "☠️", "name": "ОПАСНЫЙ ПУТЬ", "desc": "Врагов +%d%%, элита чаще — но кредиты ×%s" % [int(round((d.count - 1) * 100)), str(d.coins)], "rar": "epic"},
+	return {"title": Lang.t("РАЗВИЛКА"), "sub": Lang.t("Куда ведём следующую волну?"), "cards": [
+		{"id": "safe", "ico": "🛰️", "name": Lang.t("ОБЫЧНЫЙ ПУТЬ"), "desc": Lang.t("Следующая волна как обычно"), "rar": "common"},
+		{"id": "danger", "ico": "☠️", "name": Lang.t("ОПАСНЫЙ ПУТЬ"), "desc": Lang.t("Врагов +%d%%, элита чаще — но кредиты ×%s") % [int(round((d.count - 1) * 100)), str(d.coins)], "rar": "epic"},
 	]}
 
 
@@ -2823,19 +2823,19 @@ func merchantOffer() -> Dictionary:
 	var mods := moduleChoices()
 	if mods.size():
 		var m: Dictionary = mods[0]
-		cards.append({"id": "mod:" + m.id, "icon": "md_" + m.id, "ico": m.ico, "name": m.name, "desc": "Модуль корабля: " + m.desc, "rar": m.rar, "price": roundf((250 + n * 20) * cut / 10) * 10})
+		cards.append({"id": "mod:" + m.id, "icon": "md_" + m.id, "ico": m.ico, "name": m.name, "desc": Lang.t("Модуль корабля: ") + m.desc, "rar": m.rar, "price": roundf((250 + n * 20) * cut / 10) * 10})
 	var perks: Array = []
 	for x in D.PERKS:
 		if not x.filler and x.rar != "common" and perk(x.id) < x.max and x.id != "glass": perks.append(x)
 	var pk = U.pick(perks) if perks.size() else null
-	if pk: cards.append({"id": "perk:" + pk.id, "icon": "pk_" + pk.id, "ico": pk.ico, "name": pk.name, "desc": "Улучшение: " + pk.desc, "rar": pk.rar, "price": roundf((150 + n * 12) * cut / 10) * 10})
+	if pk: cards.append({"id": "perk:" + pk.id, "icon": "pk_" + pk.id, "ico": pk.ico, "name": pk.name, "desc": Lang.t("Улучшение: ") + pk.desc, "rar": pk.rar, "price": roundf((150 + n * 12) * cut / 10) * 10})
 	var epic: Array = []
 	for x in D.PERKS:
 		if x.rar == "epic" and perk(x.id) < x.max and x.id != "glass" and x.id != "maxhp" and (pk == null or x.id != pk.id): epic.append(x)
 	var ep = U.pick(epic) if epic.size() and p.lives >= 2 else null
-	if ep: cards.append({"id": "deal:" + ep.id, "ico": "🩸", "name": "СДЕЛКА: " + ep.name, "desc": "−1 жизнь, взамен: " + ep.desc, "rar": "legendary"})
-	cards.append({"id": "pass", "ico": "👋", "name": "ПРОЙТИ МИМО", "desc": "Сберечь кредиты", "rar": "common"})
-	return {"title": "КОНТРАБАНДИСТ", "art": "p_merchant", "sub": ("Скидка за эскорт −%d%% · кредиты из кошелька" % int(round((1 - disc) * 100))) if disc < 1 else "Цены в кредитах — кредиты уходят из кошелька", "cards": cards, "cut": cut}
+	if ep: cards.append({"id": "deal:" + ep.id, "ico": "🩸", "name": Lang.t("СДЕЛКА: ") + ep.name, "desc": Lang.t("−1 жизнь, взамен: ") + ep.desc, "rar": "legendary"})
+	cards.append({"id": "pass", "ico": "👋", "name": Lang.t("ПРОЙТИ МИМО"), "desc": Lang.t("Сберечь кредиты"), "rar": "common"})
+	return {"title": Lang.t("КОНТРАБАНДИСТ"), "art": "p_merchant", "sub": (Lang.t("Скидка за эскорт −%d%% · кредиты из кошелька") % int(round((1 - disc) * 100))) if disc < 1 else Lang.t("Цены в кредитах — кредиты уходят из кошелька"), "cards": cards, "cut": cut}
 
 
 func pickOffer(id: String) -> bool:
@@ -2897,7 +2897,7 @@ func onBossDefeated(bs: En) -> void:
 	# реликвия «Сердце звезды»: +1 к максимуму жизней и +1 жизнь (со «Стеклянной пушкой» — только лечение)
 	if relic("r_starheart") and player.alive:
 		if not perk("glass"): player.maxLives += 1
-		heal(1, "🌟 ЯДРО ПУЛЬСАРА")
+		heal(1, Lang.t("🌟 ЯДРО ПУЛЬСАРА"))
 	# Godot: замедление и наезд камеры на гибнущего босса
 	slowT = 1.5
 	camFocus(bs.x, bs.y, 1.22, 1.1)
@@ -2995,7 +2995,7 @@ func updateScene(dt: float) -> void:
 func bossCard() -> void:
 	var sc: Dictionary = scene
 	var def: Dictionary = sc.def
-	sc.card = {"cap": "НОВЫЙ БОСС" if sc.full else "БОСС", "name": def.name, "sub": def.title, "at": sc.t, "y": 0.6}
+	sc.card = {"cap": Lang.t("НОВЫЙ БОСС") if sc.full else Lang.t("БОСС"), "name": def.name, "sub": def.title, "at": sc.t, "y": 0.6}
 	A.play("bossRoar")
 	FX.shake(0.6 if sc.full else 0.4)
 	Haptic.warning()
@@ -3015,7 +3015,7 @@ func jumpFlash() -> void:
 
 func sectorCard() -> void:
 	var sc: Dictionary = scene
-	sc.card = {"cap": "СЕКТОР %d" % (sc.sector + 1), "name": sc.sec.name, "sub": sc.sec.desc, "at": sc.t, "y": 0.42}
+	sc.card = {"cap": Lang.t("СЕКТОР %d") % (sc.sector + 1), "name": sc.sec.name, "sub": sc.sec.desc, "at": sc.t, "y": 0.42}
 	# карточку видели — баннер сектора на старте волны не нужен (nextWave)
 	run.cardSector = sc.sector
 

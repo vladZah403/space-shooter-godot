@@ -58,7 +58,7 @@ func update(dt: float) -> void:
 			d.flash = 0.06
 	elif d.id == "medic" and d.cd <= 0:
 		d.cd = def.cd[k]
-		if p.lives < p.maxLives: Game.heal(1, "💚 САНИТАР")
+		if p.lives < p.maxLives: Game.heal(1, Lang.t("💚 САНИТАР"))
 		elif not p.shield:
 			p.shield = true; Game.shieldFx()
 		FX.lightning(d.x, d.y, p.x, p.y, "#5cff9d", 2 * S, 0.3)

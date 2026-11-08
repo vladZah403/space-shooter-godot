@@ -350,6 +350,7 @@ func stroke_line(x0: float, y0: float, x1: float, y1: float) -> void:
 func fill_text(text: String, x: float, y: float, size := -1, align := 1, outline := 0, outline_color := Color(0, 0, 0, 0.8)) -> void:
 	if alpha <= 0.0 or text == "":
 		return
+	text = Lang.t(text)
 	var fs := font_size if size < 0 else size
 	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 	var px := x - (w / 2.0 if align == 1 else (w if align == 2 else 0.0))
@@ -360,4 +361,4 @@ func fill_text(text: String, x: float, y: float, size := -1, align := 1, outline
 
 
 func text_width(text: String, size := -1) -> float:
-	return font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size if size < 0 else size).x
+	return font.get_string_size(Lang.t(text), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size if size < 0 else size).x

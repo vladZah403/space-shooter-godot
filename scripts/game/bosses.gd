@@ -348,7 +348,7 @@ func tentacles(b: En, dt: float) -> void:
 				var q: Dictionary = pts[i]
 				var rr := tentR(i, n) + p.r
 				if (q.x - p.x) * (q.x - p.x) + (q.y - p.y) * (q.y - p.y) < rr * rr:
-					Game.hitPlayer(q.x, q.y, "щупальце Кракена")
+					Game.hitPlayer(q.x, q.y, Lang.t("щупальце Кракена"))
 					break
 
 
@@ -381,7 +381,7 @@ func cutTent(b: En, tn: Dictionary) -> void:
 	tn.warn = 0.0; tn.lash = 0.0
 	Game.damageEnemy(b, b.maxHp * 0.015, {"src": "part"})
 	if pts.size() <= 3:
-		FX.text(tip.x, tip.y - 20 * G.S, "ЩУПАЛЬЦЕ ОТРУБЛЕНО!", "#ffc83d", 15, 1.0)
+		FX.text(tip.x, tip.y - 20 * G.S, Lang.t("ЩУПАЛЬЦЕ ОТРУБЛЕНО!"), "#ffc83d", 15, 1.0)
 		FX.shake(0.35)
 		Game.hitstop(0.05)
 		Haptic.medium()
@@ -607,7 +607,7 @@ func _boss_chaos(b: En) -> void:
 		return
 	if ph >= 2 and timer(b, "heat", 12 if ph >= 3 else 9.5, 6):
 		b.vuln = 2.4
-		FX.text(b.x, b.y - b.h * 0.3, "ПЕРЕГРЕВ! УРОН ×1.5", "#ffb03d", 16, 1.4, -40)
+		FX.text(b.x, b.y - b.h * 0.3, Lang.t("ПЕРЕГРЕВ! УРОН ×1.5"), "#ffb03d", 16, 1.4, -40)
 		A.play("explodeM", {"vol": 0.6})
 		return
 	if timer(b, "act", bcd(b, 1.6 if ph >= 3 else (2.3 if ph == 2 else 2.1)), 1.2):
@@ -716,7 +716,7 @@ func phaseEnd(b: En, n: int) -> void:
 	b.pt = {}; b.aim2 = null; b.gat = null; b.dive = null; b.dash = null; b.vuln = 0.0
 	# экран очищается от пуль — передышка и знак, что бой меняется
 	Game.clearBulletsAround(G.FW / 2, G.H / 2, G.FW + G.H)
-	FX.text(G.FW / 2, G.H * 0.42, "ФАЗА " + str(n), b.bdef.color, 26, 1.9, -18)
+	FX.text(G.FW / 2, G.H * 0.42, Lang.t("ФАЗА ") + str(n), b.bdef.color, 26, 1.9, -18)
 	FX.flash(b.bdef.color, 0.2)
 	A.play("bossRoar", {"rate": 0.8})
 	Game.hitstop(0.06)
@@ -744,7 +744,7 @@ func phaseStart(b: En) -> void:
 	# Godot: Кракен в последней фазе отращивает отрубленные щупальца
 	if b.bdef.id == "kraken" and b.phase >= 3:
 		growTents(b)
-		FX.text(b.x, b.y + b.h * 0.5, "ЩУПАЛЬЦА ОТРОСЛИ", "#c89bff", 15, 1.0)
+		FX.text(b.x, b.y + b.h * 0.5, Lang.t("ЩУПАЛЬЦА ОТРОСЛИ"), "#c89bff", 15, 1.0)
 
 
 ## 3.0: дополнительная атака из новых паттернов (E._fire_*): во 2-й фазе — по чётности номера босса, в 3-й — все
@@ -788,7 +788,7 @@ func updateBoss(b: En, edt: float, dt: float) -> void:
 	# «Кошмар» и «Бог войны»: ярость на последних 15% прочности — все атаки чаще
 	if b.phase == 3 and not b.rage and ratio <= 0.15 and Game.diff.bossRage:
 		b.rage = true
-		Bus.emit("toast", {"ico": "😡", "title": "ЯРОСТЬ", "text": b.bdef.name + " в ярости — атаки чаще!", "info": true, "dur": 2200})
+		Bus.emit("toast", {"ico": "😡", "title": Lang.t("ЯРОСТЬ"), "text": b.bdef.name + Lang.t(" в ярости — атаки чаще!"), "info": true, "dur": 2200})
 		FX.vignette("#ff2a48", 1.6, 0.6, true)
 	# 3.0: во 2-й фазе — дополнительная атака из новых паттернов, в 3-й чаще (свой набор у каждого босса)
 	if b.phase >= 2 and timer(b, "xpat", bcd(b, 4 if b.rage else (5.5 if b.phase >= 3 else 7.5)), 3): bossPattern(b)
@@ -880,9 +880,9 @@ func bossDeath(b: En) -> void:
 		b.hp = b.maxHp * 0.3
 		FX.explode(b.x, b.y, 3, "#ff6a2a")
 		FX.flash("#ffb03d", 0.5)
-		FX.text(b.x, b.y, "ВОЗРОЖДЕНИЕ!", "#ffb03d", 20, 1.4)
+		FX.text(b.x, b.y, Lang.t("ВОЗРОЖДЕНИЕ!"), "#ffb03d", 20, 1.4)
 		A.play("bossRoar")
-		Bus.emit("toast", {"ico": "🔥", "title": "БОСС", "text": "Феникс возрождается из пепла!", "info": true})
+		Bus.emit("toast", {"ico": "🔥", "title": Lang.t("БОСС"), "text": Lang.t("Феникс возрождается из пепла!"), "info": true})
 		return
 	b.alive = false
 	Game.boss = null

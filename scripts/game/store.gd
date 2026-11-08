@@ -806,7 +806,7 @@ func challengeWave(ch: Dictionary, wave: int) -> bool:
 		if c.tiers == 1:
 			s.stats.challenges += 1; unlock("challenge1")
 		addCoins(t.coins, false)
-		Bus.emit("toast", {"ico": "🎲", "title": "ИСПЫТАНИЕ: СТУПЕНЬ %d / %d" % [c.tiers, tiers.size()], "text": "Волна %d — +%d кредитов" % [t.wave, t.coins], "dur": 3200})
+		Bus.emit("toast", {"ico": "🎲", "title": Lang.t("ИСПЫТАНИЕ: СТУПЕНЬ %d / %d") % [c.tiers, tiers.size()], "text": Lang.t("Волна %d — +%d кредитов") % [t.wave, t.coins], "dur": 3200})
 		got = true
 	if got:
 		checkAchievements(); save()

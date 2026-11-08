@@ -11,6 +11,8 @@ extends Node
 ## источник урона → оружие: для значка и привыкания Мимика
 const SRC_W := {"laser": "laser", "shotgun": "shotgun", "rocket": "rocket", "arc": "arc", "plasma": "plasma", "lightning": "lightning", "dark": "darkmatter", "boomerang": "boomerang", "gravgun": "gravgun", "flail": "flail"}
 const W_LETTER := {"laser": "Л", "shotgun": "Д", "rocket": "Р", "arc": "С", "plasma": "П", "lightning": "М", "darkmatter": "Т", "boomerang": "Б", "gravgun": "Г", "flail": "Ц"}
+## английские буквы — по английским названиям оружия (TESLA, MISSILES, CRESCENT, RIPPER…)
+const W_LETTER_EN := {"laser": "L", "shotgun": "S", "rocket": "M", "arc": "C", "plasma": "P", "lightning": "T", "darkmatter": "D", "boomerang": "B", "gravgun": "G", "flail": "R"}
 const ARMOR_TXT := {"icebreaker": "ЛЁД"}
 ## Мимик: столько прочности от одного оружия — и он к нему привыкает на ADAPT_T с
 const ADAPT_SHARE := 0.22
@@ -70,7 +72,7 @@ func resist(e: En, src: String, dmg: float) -> float:
 	var k: float = d.resist.get(src, 1.0)
 	# под куполом Проектора плазма не берёт
 	if src == "plasma" and k > 0 and not domes.is_empty() and domeOf(e.x, e.y, 0) != null:
-		nope(e, "КУПОЛ", "#7fd8ff")
+		nope(e, Lang.t("КУПОЛ"), "#7fd8ff")
 		return 0.0
 	if d.adapt and SRC_W.has(src):
 		if e.adapt == src: k = 0.0
@@ -78,11 +80,11 @@ func resist(e: En, src: String, dmg: float) -> float:
 			e.adaptAcc[src] = e.adaptAcc.get(src, 0.0) + dmg
 			if e.adaptAcc[src] >= e.maxHp * ADAPT_SHARE: adapt(e, src)
 	if k <= 0:
-		nope(e, "НЕУЯЗВИМ", wColor(src))
+		nope(e, Lang.t("НЕУЯЗВИМ"), wColor(src))
 		e.shieldHitT = 0.1
 		if U.random() < 0.2: A.play("hitArmor", {"vol": 0.4})
 	elif k < 1:
-		nope(e, ARMOR_TXT.get(e.type, "БРОНЯ"), "#bff4ff")
+		nope(e, Lang.t(ARMOR_TXT.get(e.type, "БРОНЯ")), "#bff4ff")
 		if U.random() < 0.3: FX.sparks(e.x + U.rand(-0.3, 0.3) * e.w, e.y + e.h * 0.3, "#bff4ff", 3, 160)
 	elif k > 1 and U.random() < 0.3:
 		FX.sparks(e.x, e.y, "#e0fbff", 5, 220)
@@ -95,7 +97,7 @@ func adapt(e: En, src: String) -> void:
 	e.adapt = src; e.adaptT = ADAPT_T; e.adaptAcc = {}
 	e.cv = G.tinted(e.sprite, {"hue": G.hue_of(col)})
 	e.nopeT = Game.t
-	FX.text(e.x, e.y - e.r * 0.8, "ПРИВЫК: " + D.WEAPONS[SRC_W[src]].name, col, 12, 1.1, -50)
+	FX.text(e.x, e.y - e.r * 0.8, Lang.t("ПРИВЫК: ") + D.WEAPONS[SRC_W[src]].name, col, 12, 1.1, -50)
 	FX.ring(e.x, e.y, e.r, e.r * 2.2, col, 0.4, 3)
 	A.play("shieldHit", {"rate": 1.3})
 
@@ -108,7 +110,7 @@ func hidden(e: En) -> bool:
 ## Зеркало: лазер отражается в игрока (не чаще ~3 раз в секунду, остальное просто гаснет)
 func reflect(b: Bl, e: En) -> void:
 	FX.hit(b.x, b.y, "#ffffff")
-	nope(e, "ОТРАЖЕНИЕ", "#7ff6ff")
+	nope(e, Lang.t("ОТРАЖЕНИЕ"), "#7ff6ff")
 	if Game.t - e.reflT < 0.3 or not Game.player.alive: return
 	e.reflT = Game.t
 	Game.aimAt(b.x, b.y + e.h * 0.2, 300, "mirror")
@@ -122,7 +124,7 @@ func bendRocket(b: Bl) -> bool:
 		if U.dist2(b.x, b.y, g.x, g.y) > R * R: continue
 		FX.ring(b.x, b.y, 4 * G.S, 26 * G.S, "#b06bff", 0.3, 2)
 		if Game.player.alive: Game.aimAt(b.x, b.y, 210, "rocket", 0.0, {"homing": 1.1, "life": 4.0})
-		nope(g, "РАЗВОРОТ", "#c89bff")
+		nope(g, Lang.t("РАЗВОРОТ"), "#c89bff")
 		A.play("teleport", {"vol": 0.35, "rate": 1.7})
 		return true
 	return false
@@ -143,7 +145,7 @@ func domeHit(x: float, y: float) -> void:
 	var d := domeOf(x, y, 20 * G.S)
 	if d:
 		d.domeHitT = 0.25
-		nope(d, "КУПОЛ", "#7fd8ff")
+		nope(d, Lang.t("КУПОЛ"), "#7fd8ff")
 	FX.ring(x, y, 4 * G.S, 30 * G.S, "#7fd8ff", 0.3, 3)
 	A.play("shieldHit", {"vol": 0.5})
 
@@ -163,7 +165,7 @@ func cutsWave(b: Bl, w: Dictionary) -> bool:
 			var y: float = w.cy + sin(ang) * w.R
 			if U.seg_dist2(x, y, a.x, a.y, m.x, m.y) > rr: continue
 			FX.sparks(x, y, "#ff3d5a", 10, 220)
-			nope(a, "ЛУЧ ГАСИТ СЕРП", "#ff6b7d")
+			nope(a, Lang.t("ЛУЧ ГАСИТ СЕРП"), "#ff6b7d")
 			A.play("shieldHit", {"vol": 0.4, "rate": 1.4})
 			return true
 	return false
@@ -203,12 +205,12 @@ func updateMed(dt: float) -> void:
 	if not ready("p_medship") or (Game.state != "play" and not m.dropped):
 		if m.t > 0: med = null
 		return
-	if m.t < dt * 1.5: hint("medship", "🚑", "Санитарный корабль", "Свои! Сбрасывает аптечку, когда вы ранены")
+	if m.t < dt * 1.5: hint("medship", "🚑", Lang.t("Санитарный корабль"), Lang.t("Свои! Сбрасывает аптечку, когда вы ранены"))
 	m.y += 150 * S * dt
 	if not m.dropped and m.y >= G.H * 0.3:
 		m.dropped = true
 		Game.dropPowerup(m.x, m.y + 20 * S, "heal")
-		FX.text(m.x, m.y + 40 * S, "АПТЕЧКА!", "#ff6b6b", 14, 1.0, -40)
+		FX.text(m.x, m.y + 40 * S, Lang.t("АПТЕЧКА!"), "#ff6b6b", 14, 1.0, -40)
 		A.play("powerup", {"rate": 1.2, "vol": 0.6})
 	if m.y > G.H + 90 * S: med = null
 
@@ -227,18 +229,18 @@ func onKill(e: En) -> void:
 			elif l.kind == "en": Game.dropEnergy(e.x, e.y, 1)
 			elif l.kind == "crate": Game.dropCrate(e.x, e.y, l.val)
 		if coins: Game.dropCoins(e.x, e.y, int(coins))
-		FX.text(e.x, e.y - e.r, "ДОБЫЧА ВОЗВРАЩЕНА", "#ffc83d", 13, 1.0, -50)
+		FX.text(e.x, e.y - e.r, Lang.t("ДОБЫЧА ВОЗВРАЩЕНА"), "#ffc83d", 13, 1.0, -50)
 		e.loot.clear()
 	# грузовик Конвоя роняет ящики
 	if e.type == "cargo":
 		var n := 2 + (1 if Game.threatWave() >= 15 else 0)
 		for i in n: Game.dropCrate(e.x + (i - (n - 1) / 2.0) * 26 * G.S, e.y)
-		FX.text(e.x, e.y - e.r, "ЯЩИКИ!", "#ffc83d", 15, 1.0, -50)
+		FX.text(e.x, e.y - e.r, Lang.t("ЯЩИКИ!"), "#ffc83d", 15, 1.0, -50)
 	# напарник Связки в ярости — стреляет вдвое чаще
 	if e.mate != null and e.mate.alive:
 		e.mate.rage = true
 		e.mate.mate = null
-		FX.text(e.mate.x, e.mate.y - e.mate.r, "ЯРОСТЬ", "#ff3d5a", 13, 0.9, -50)
+		FX.text(e.mate.x, e.mate.y - e.mate.r, Lang.t("ЯРОСТЬ"), "#ff3d5a", 13, 0.9, -50)
 
 
 # ════════════════════════════════════════════════════════════
@@ -298,7 +300,7 @@ func grab(e: En, it: Pk) -> void:
 	e.loot.append({"kind": it.kind, "val": it.val, "pu": it.pu})
 	e.prey = null
 	FX.sparks(it.x, it.y, "#ffc83d", 8, 160)
-	nope(e, "УКРАЛ!", "#ffc83d")
+	nope(e, Lang.t("УКРАЛ!"), "#ffc83d")
 	A.play("coin", {"rate": 0.7, "vol": 0.6})
 
 
@@ -342,7 +344,7 @@ func _ai_cargo(e: En, dt: float) -> void:
 		E.strafe(e, dt, 0.6)
 		e.y = e.ty + sin(e.age * 0.9) * 6 * S
 		if e.t > e.stay:
-			e.st = 2; e.leaving = true; nope(e, "УШЁЛ С ГРУЗОМ", "#ffc83d"); A.play("rail", {"vol": 0.3, "rate": 0.8})
+			e.st = 2; e.leaving = true; nope(e, Lang.t("УШЁЛ С ГРУЗОМ"), "#ffc83d"); A.play("rail", {"vol": 0.3, "rate": 0.8})
 	else:
 		e.vy = maxf(e.vy - 500 * S * dt, -e.spd * 5)
 		e.y += e.vy * dt
@@ -492,7 +494,7 @@ func update(dt: float) -> void:
 	# луч Связки обжигает корабль
 	if p.alive:
 		for a: En in links:
-			if U.seg_dist2(p.x, p.y, a.x, a.y, a.mate.x, a.mate.y) < (p.r + 3 * S) * (p.r + 3 * S): Game.hitPlayer(p.x, p.y, "Луч Связки")
+			if U.seg_dist2(p.x, p.y, a.x, a.y, a.mate.x, a.mate.y) < (p.r + 3 * S) * (p.r + 3 * S): Game.hitPlayer(p.x, p.y, Lang.t("Луч Связки"))
 	# снаряды Мортиры
 	for i in range(shells.size() - 1, -1, -1):
 		var s: Dictionary = shells[i]
@@ -503,7 +505,7 @@ func update(dt: float) -> void:
 		FX.ring(s.tx, s.ty, 6 * S, s.R, "#ffb03d", 0.3, 3)
 		FX.shake(0.08)
 		A.play("explodeS", {"vol": 0.6})
-		if p.alive and U.dist2(p.x, p.y, s.tx, s.ty) < (s.R + p.r * 0.5) * (s.R + p.r * 0.5): Game.hitPlayer(p.x, p.y, "Снаряд Мортиры")
+		if p.alive and U.dist2(p.x, p.y, s.tx, s.ty) < (s.R + p.r * 0.5) * (s.R + p.r * 0.5): Game.hitPlayer(p.x, p.y, Lang.t("Снаряд Мортиры"))
 		if Game.threatWave() >= 22 and p.alive:
 			var sp := Game.bspd(120)
 			var off := U.random() * TAU
@@ -647,7 +649,7 @@ func drawFront(ctx: Ctx) -> void:
 		ctx.stroke = U.col(col); ctx.line_width = 1.5 * S
 		ctx.begin_path(); ctx.arc(x, y, r, 0, TAU); ctx.stroke_path()
 		# y в fill_text — базовая линия: середина строки ≈ +0.36 кегля
-		ctx.fill = U.col(col); ctx.fill_text(W_LETTER[wid], x, y + 0.5 * S + fs * 0.36, fs, 1)
+		ctx.fill = U.col(col); ctx.fill_text((W_LETTER_EN if Lang.is_en() else W_LETTER)[wid], x, y + 0.5 * S + fs * 0.36, fs, 1)
 		ctx.stroke = U.col("#ff3d5a"); ctx.line_width = 1.5 * S
 		ctx.stroke_line(x - r * 0.7, y + r * 0.7, x + r * 0.7, y - r * 0.7)
 	ctx.alpha = 1.0

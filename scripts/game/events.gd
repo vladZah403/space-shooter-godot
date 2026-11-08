@@ -57,7 +57,7 @@ func finish() -> void:
 	M.checkAchievements()
 	var pts := roundf(400 * c.wave.n * Game.diff.score)
 	Game.addScore(pts)
-	FX.text(G.FW / 2, G.H * 0.46, c.def.name + " ПОЗАДИ  +" + U.fmt(pts), c.def.color, 14, 1.6, -22)
+	FX.text(G.FW / 2, G.H * 0.46, c.def.name + Lang.t(" ПОЗАДИ  +") + U.fmt(pts), c.def.color, 14, 1.6, -22)
 
 
 func update(dt: float) -> void:
@@ -76,7 +76,7 @@ func update(dt: float) -> void:
 	if not c.announced:
 		c.announced = true
 		Bus.emit("waveEvent", c.def)
-		Game.tipOnce(c.def.id, {"kind": "СОБЫТИЕ ВОЛНЫ", "ico": c.def.ico, "title": c.def.name, "color": c.def.color})
+		Game.tipOnce(c.def.id, {"kind": Lang.t("СОБЫТИЕ ВОЛНЫ"), "ico": c.def.ico, "title": c.def.name, "color": c.def.color})
 		A.play("skill", {"rate": 0.8})
 		Game.hudDirty = true
 		c.cd = 1.4
@@ -127,7 +127,7 @@ func updateStrikes(dt: float) -> void:
 		for e: En in Game.enemies:
 			if not e.alive or not e.hittable or not E.hitTest(e, s.x, s.y, s.R): continue
 			Game.damageEnemy(e, e.maxHp * 0.015 if e.boss or e.mini else e.maxHp * 0.6 + 20, {"src": "storm"})
-		if p.alive and Vector2(p.x - s.x, p.y - s.y).length() < s.R * 0.8 + p.r: Game.hitPlayer(p.x, p.y, "Ионная буря")
+		if p.alive and Vector2(p.x - s.x, p.y - s.y).length() < s.R * 0.8 + p.r: Game.hitPlayer(p.x, p.y, Lang.t("Ионная буря"))
 	if not c.strikes.is_empty() and c.strikes[0].t > c.strikes[0].warn + 0.4: c.strikes = c.strikes.filter(func(s): return s.t <= s.warn + 0.4)
 
 
@@ -164,7 +164,7 @@ func updateMeteors(dt: float) -> void:
 			Game.damageEnemy(e, e.maxHp * 0.01 if e.boss or e.mini else e.maxHp * (0.8 if m.big else 0.45) + 10, {"src": "meteor"})
 			FX.hit(m.x, m.y, "#ffb03d")
 		if p.alive and Vector2(p.x - m.x, p.y - m.y).length() < m.r + p.r:
-			if Game.hitPlayer(p.x, p.y, "Метеорит"):
+			if Game.hitPlayer(p.x, p.y, Lang.t("Метеорит")):
 				m.dead = true; FX.explode(m.x, m.y, 1.0 if m.big else 0.7, "#ff8a3d")
 		if m.y > G.H + 80 * S or m.x < -120 * S: m.dead = true
 	if not c.meteors.is_empty(): c.meteors = c.meteors.filter(func(m): return not m.dead)

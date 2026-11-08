@@ -52,7 +52,7 @@ func open(id: String) -> void:
 	if get_parent() and get_parent().has_method("set_content_visible"): get_parent().set_content_visible(false)
 	cur = id
 	tab = ""
-	title.text = TITLES.get(id, id.to_upper())
+	title.text = Lang.t(TITLES.get(id, id.to_upper()))
 	visible = true
 	scroll.scroll_vertical = 0
 	render()
@@ -95,7 +95,7 @@ func _toast(ico: String, t: String, text: String) -> void:
 
 func _poor(n: float) -> void:
 	A.play("error")
-	_toast("💸", "НЕ ХВАТАЕТ КРЕДИТОВ", "Нужно " + U.fmt(n))
+	_toast("💸", Lang.t("НЕ ХВАТАЕТ КРЕДИТОВ"), Lang.t("Нужно ") + U.fmt(n))
 
 
 ## сетка карточек
@@ -156,9 +156,9 @@ func _render_hangar() -> void:
 	body.add_child(big)
 	var sh: Dictionary = D.SHIPS[s.ship.model]
 	body.add_child(Kit.label(sh.name, 18, Kit.TEXT, 900, HORIZONTAL_ALIGNMENT_CENTER))
-	var chips := ["⚡ Боевая мощь " + U.fmt(M.power())] + Array(sh.get("perks", []))
+	var chips := [Lang.t("⚡ Боевая мощь ") + U.fmt(M.power())] + Array(sh.get("perks", []))
 	body.add_child(Kit.para("  •  ".join(chips), 12, Kit.CYAN, HORIZONTAL_ALIGNMENT_CENTER))
-	body.add_child(Kit.tabs([["models", "КОРАБЛИ"], ["drones", "ДРОНЫ"], ["skins", "РАСКРАСКИ"], ["trails", "ДВИГАТЕЛИ"], ["pilots", "ПИЛОТЫ"]], tab, func(id):
+	body.add_child(Kit.tabs([["models", Lang.t("КОРАБЛИ")], ["drones", Lang.t("ДРОНЫ")], ["skins", Lang.t("РАСКРАСКИ")], ["trails", Lang.t("ДВИГАТЕЛИ")], ["pilots", Lang.t("ПИЛОТЫ")]], tab, func(id):
 		tab = id; preview = null; render()))
 	var g := _grid(3)
 	match tab:
@@ -169,7 +169,7 @@ func _render_hangar() -> void:
 				var sel: bool = s.ship.model == id
 				var lvlOk: bool = s.shipLvl >= d.lvl
 				var mid: String = id
-				var tag := "" if owned else ("◆ " + U.fmt(d.price) if lvlOk else "🔒 Корабль ур. %d" % d.lvl)
+				var tag := "" if owned else ("◆ " + U.fmt(d.price) if lvlOk else Lang.t("🔒 Корабль ур. %d") % d.lvl)
 				_item(g, func(c, sz, _t): _draw_look(c, mid, M.s.ship.skin, sz), d.name, "", tag, Kit.GOLD if lvlOk else Kit.MUTED, sel, not owned, func(): _ship_tap(mid))
 		"drones":
 			var cm: Dictionary = s.comp
@@ -180,8 +180,8 @@ func _render_hangar() -> void:
 				var lv: int = int(cm.lv.get(id, 1))
 				var did: String = id
 				var tag := ""
-				if owned: tag = ("↑ ◆ " + U.fmt(d.costs[lv - 1]) if lv < 5 else "МАКС") if sel else ""
-				else: tag = "◆ " + U.fmt(d.price) if s.shipLvl >= d.lvl else "🔒 Корабль ур. %d" % d.lvl
+				if owned: tag = ("↑ ◆ " + U.fmt(d.costs[lv - 1]) if lv < 5 else Lang.t("МАКС")) if sel else ""
+				else: tag = "◆ " + U.fmt(d.price) if s.shipLvl >= d.lvl else Lang.t("🔒 Корабль ур. %d") % d.lvl
 				_item(g, func(c, sz, _t):
 					if d.hue != null: G.draw_canvas(c, G.tinted(d.sprite, {"hue": d.hue}), sz.x / 2, sz.y / 2, sz.x * 0.6)
 					else: G.draw(c, d.sprite, sz.x / 2, sz.y / 2, sz.x * 0.6), d.ico + " " + d.name + (" · %d" % lv if owned else ""), "", tag, Kit.GOLD, sel, not owned, func(): _drone_tap(did))
@@ -206,18 +206,18 @@ func _render_hangar() -> void:
 				var opened := M.pilotUnlocked(id)
 				var pid: String = id
 				_item(g, func(c, sz, _t):
-					c.font = Kit.font(600); c.fill = Color.WHITE; c.fill_text(p.ico, sz.x / 2, sz.y / 2 + 14, 38, 1), p.name, p.title if opened else "", "" if opened else "🔒 Корабль %d" % p.lvl, Kit.MUTED, s.pilot == id, not opened, func(): _pilot_tap(pid), U.col(p.color))
+					c.font = Kit.font(600); c.fill = Color.WHITE; c.fill_text(p.ico, sz.x / 2, sz.y / 2 + 14, 38, 1), p.name, p.title if opened else "", "" if opened else Lang.t("🔒 Корабль %d") % p.lvl, Kit.MUTED, s.pilot == id, not opened, func(): _pilot_tap(pid), U.col(p.color))
 			var curp: Dictionary = D.PILOTS.get(s.pilot, D.PILOTS.kai)
 			body.add_child(Kit.para(curp.ico + " " + curp.name + " — " + curp.desc, 13, Kit.TEXT))
 	# престиж
 	if M.canPrestige():
-		body.add_child(Kit.button("✦ ПЕРЕЗАГРУЗКА ЯДРА %d" % (int(s.prestige) + 1), func():
+		body.add_child(Kit.button(Lang.t("✦ ПЕРЕЗАГРУЗКА ЯДРА %d") % (int(s.prestige) + 1), func():
 			var ok := func():
 				if M.doPrestige():
-					A.play("levelup"); _toast("🌠", "ПЕРЕЗАГРУЗКА ЯДРА %d" % M.s.prestige, "Добро пожаловать в новый цикл!"); _rerender()
-			Ui.dialog({"ico": "star", "title": "ПЕРЕЗАГРУЗКА ЯДРА", "text": "Уровень корабля и импланты сбросятся.\nНавсегда: +8% кредитов и +4% урона за каждую перезагрузку.\nПрокачка, оружие, корабли, раскраски и кредиты останутся.", "ok": "ПЕРЕЗАГРУЗИТЬ", "onOk": ok}), "gold"))
+					A.play("levelup"); _toast("🌠", Lang.t("ПЕРЕЗАГРУЗКА ЯДРА %d") % M.s.prestige, Lang.t("Добро пожаловать в новый цикл!")); _rerender()
+			Ui.dialog({"ico": "star", "title": Lang.t("ПЕРЕЗАГРУЗКА ЯДРА"), "text": Lang.t("Уровень корабля и импланты сбросятся.\nНавсегда: +8% кредитов и +4% урона за каждую перезагрузку.\nПрокачка, оружие, корабли, раскраски и кредиты останутся."), "ok": Lang.t("ПЕРЕЗАГРУЗИТЬ"), "onOk": ok}), "gold"))
 	elif s.shipLvl >= 10:
-		body.add_child(Kit.para("Перезагрузка ядра откроется на %d уровне корабля: постоянный бонус к кредитам и урону" % D.PRESTIGE_LVL, 12, Kit.MUTED, HORIZONTAL_ALIGNMENT_CENTER))
+		body.add_child(Kit.para(Lang.t("Перезагрузка ядра откроется на %d уровне корабля: постоянный бонус к кредитам и урону") % D.PRESTIGE_LVL, 12, Kit.MUTED, HORIZONTAL_ALIGNMENT_CENTER))
 
 
 func _ship_tap(id: String) -> void:
@@ -227,16 +227,16 @@ func _ship_tap(id: String) -> void:
 		s.ship.model = id; M.save(); A.play("click"); _rerender()
 		return
 	if s.shipLvl < d.lvl and not M.DEV:
-		A.play("error"); _toast("🔒", "НУЖЕН УРОВЕНЬ", "Откроется на %d уровне корабля" % d.lvl)
+		A.play("error"); _toast("🔒", Lang.t("НУЖЕН УРОВЕНЬ"), Lang.t("Откроется на %d уровне корабля") % d.lvl)
 		return
 	preview = {"model": id, "skin": s.ship.skin, "trail": s.ship.trail}
 	var ok := func():
 		if M.buyShip(id):
-			A.play("buy"); Haptic.success(); _toast("🚀", "НОВЫЙ КОРАБЛЬ", d.name)
+			A.play("buy"); Haptic.success(); _toast("🚀", Lang.t("НОВЫЙ КОРАБЛЬ"), d.name)
 		else: _poor(d.price)
 		preview = null
 		_rerender()
-	Ui.dialog({"ico": "🚀", "title": d.name, "text": d.desc + "\n" + " • ".join(d.get("perks", [])) + "\n\nЦена: " + U.fmt(d.price) + " кредитов", "ok": "КУПИТЬ", "onOk": ok})
+	Ui.dialog({"ico": "🚀", "title": d.name, "text": d.desc + "\n" + " • ".join(d.get("perks", [])) + Lang.t("\n\nЦена: ") + U.fmt(d.price) + Lang.t(" кредитов"), "ok": Lang.t("КУПИТЬ"), "onOk": ok})
 
 
 func _drone_tap(id: String) -> void:
@@ -256,17 +256,17 @@ func _drone_tap(id: String) -> void:
 				A.play("levelup"); Haptic.success()
 			else: _poor(d.costs[lv - 1])
 			_rerender()
-		Ui.dialog({"ico": d.ico, "title": d.name + " · УРОВЕНЬ %d" % (lv + 1), "text": d.desc + "\nСледующий уровень: " + d.get("up", "") + "\n\nЦена: " + U.fmt(d.costs[lv - 1]) + " кредитов", "ok": "ПРОКАЧАТЬ", "onOk": up})
+		Ui.dialog({"ico": d.ico, "title": d.name + Lang.t(" · УРОВЕНЬ %d") % (lv + 1), "text": d.desc + Lang.t("\nСледующий уровень: ") + d.get("up", "") + Lang.t("\n\nЦена: ") + U.fmt(d.costs[lv - 1]) + Lang.t(" кредитов"), "ok": Lang.t("ПРОКАЧАТЬ"), "onOk": up})
 		return
 	if s.shipLvl < d.lvl and not M.DEV:
-		A.play("error"); _toast("🔒", "НУЖЕН УРОВЕНЬ", "Откроется на %d уровне корабля" % d.lvl)
+		A.play("error"); _toast("🔒", Lang.t("НУЖЕН УРОВЕНЬ"), Lang.t("Откроется на %d уровне корабля") % d.lvl)
 		return
 	var buy := func():
 		if M.compBuy(id):
-			A.play("buy"); Haptic.success(); _toast(d.ico, "НОВЫЙ ДРОН", d.name)
+			A.play("buy"); Haptic.success(); _toast(d.ico, Lang.t("НОВЫЙ ДРОН"), d.name)
 		else: _poor(d.price)
 		_rerender()
-	Ui.dialog({"ico": d.ico, "title": d.name, "text": d.desc + "\n\nЦена: " + U.fmt(d.price) + " кредитов", "ok": "КУПИТЬ", "onOk": buy})
+	Ui.dialog({"ico": d.ico, "title": d.name, "text": d.desc + Lang.t("\n\nЦена: ") + U.fmt(d.price) + Lang.t(" кредитов"), "ok": Lang.t("КУПИТЬ"), "onOk": buy})
 
 
 func _skin_tap(id: String) -> void:
@@ -295,13 +295,13 @@ func _trail_tap(id: String) -> void:
 		else: _poor(tr.price)
 		preview = null
 		_rerender()
-	Ui.dialog({"ico": "🔥", "title": "ДВИГАТЕЛЬ «" + tr.name + "»", "text": "Цена: " + U.fmt(tr.price) + " кредитов", "ok": "КУПИТЬ", "onOk": buy})
+	Ui.dialog({"ico": "🔥", "title": Lang.t("ДВИГАТЕЛЬ «") + tr.name + "»", "text": Lang.t("Цена: ") + U.fmt(tr.price) + Lang.t(" кредитов"), "ok": Lang.t("КУПИТЬ"), "onOk": buy})
 
 
 func _pilot_tap(id: String) -> void:
 	var p: Dictionary = D.PILOTS[id]
 	if not M.pilotUnlocked(id):
-		A.play("error"); _toast("🔒", "ЕЩЁ РАНО", p.name + " откроется на %d уровне корабля" % p.lvl)
+		A.play("error"); _toast("🔒", Lang.t("ЕЩЁ РАНО"), p.name + Lang.t(" откроется на %d уровне корабля") % p.lvl)
 		return
 	M.setPilot(id); A.play("click"); Haptic.select(); _rerender()
 
@@ -324,13 +324,13 @@ func _render_arsenal() -> void:
 	var lo: Array = s.weapons.loadout
 	if not D.WEAPONS.has(ars): ars = lo[0] if not lo.is_empty() else "laser"
 	# ── стойка «В бою» ──
-	body.add_child(_secLabel("В БОЮ  %d / 3" % lo.size(), Kit.GREEN))
+	body.add_child(_secLabel(Lang.t("В БОЮ  %d / 3") % lo.size(), Kit.GREEN))
 	var rack := Kit.hbox(6)
 	for i in 3:
 		rack.add_child(_rackSlot(lo[i] if i < lo.size() else "", i))
 	body.add_child(rack)
 	# ── всё оружие ──
-	body.add_child(_secLabel("ОРУЖИЕ", Kit.CYAN))
+	body.add_child(_secLabel(Lang.t("ОРУЖИЕ"), Kit.CYAN))
 	var g := _grid(4)
 	g.add_theme_constant_override("h_separation", 6)
 	g.add_theme_constant_override("v_separation", 6)
@@ -348,8 +348,8 @@ func _render_arsenal() -> void:
 	var nm := Kit.label(w.name, 22, wc, 900)
 	nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(nm)
-	if slot >= 0: top.add_child(_pill("В БОЮ • %d" % (slot + 1), Kit.GREEN))
-	elif own: top.add_child(_pill("КУПЛЕНО", Kit.MUTED))
+	if slot >= 0: top.add_child(_pill(Lang.t("В БОЮ • %d") % (slot + 1), Kit.GREEN))
+	elif own: top.add_child(_pill(Lang.t("КУПЛЕНО"), Kit.MUTED))
 	else: top.add_child(_pill("◆ " + U.fmt(w.price), Kit.GOLD))
 	v.add_child(top)
 	if w.get("tags") is Array and not w.tags.is_empty():
@@ -369,7 +369,7 @@ func _render_arsenal() -> void:
 	sg.columns = 2
 	sg.add_theme_constant_override("h_separation", 12)
 	sg.add_theme_constant_override("v_separation", 6)
-	for x in [["УРОН", "dmg"], ["ТЕМП", "speed"], ["ПЛОЩАДЬ", "area"], ["ДАЛЬНОСТЬ", "range"]]:
+	for x in [[Lang.t("УРОН"), "dmg"], [Lang.t("ТЕМП"), "speed"], [Lang.t("ПЛОЩАДЬ"), "area"], [Lang.t("ДАЛЬНОСТЬ"), "range"]]:
 		var cell := Kit.vbox(3)
 		cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		cell.add_child(Kit.label(x[0], 10, Kit.MUTED, 800))
@@ -378,25 +378,25 @@ func _render_arsenal() -> void:
 	v.add_child(sg)
 	var dps := Kit.hbox(6)
 	dps.add_child(Icons.rect("bolt", Kit.GOLD, 16))
-	dps.add_child(Kit.label("≈ %s урона в секунду" % U.fmt(round(M.weaponDps(ars))), 13, Kit.GOLD, 800))
+	dps.add_child(Kit.label(Lang.t("≈ %s урона в секунду") % U.fmt(round(M.weaponDps(ars))), 13, Kit.GOLD, 800))
 	v.add_child(dps)
 	# главное действие — сразу под витриной
 	if own:
 		var wid2 := ars
-		v.add_child(Kit.button("✓ В БОЮ • УБРАТЬ" if slot >= 0 else "+ ВЗЯТЬ В БОЙ", func(): _loadout(wid2), "" if slot >= 0 else "primary"))
+		v.add_child(Kit.button(Lang.t("✓ В БОЮ • УБРАТЬ") if slot >= 0 else Lang.t("+ ВЗЯТЬ В БОЙ"), func(): _loadout(wid2), "" if slot >= 0 else "primary"))
 	else:
 		var poor: bool = s.coins < w.price and not M.DEV
 		var wid3 := ars
-		var bb := Kit.button("◆ КУПИТЬ ЗА " + U.fmt(w.price), func():
+		var bb := Kit.button(Lang.t("◆ КУПИТЬ ЗА ") + U.fmt(w.price), func():
 			var ok := func():
 				if M.buyWeapon(wid3):
-					A.play("buy"); Haptic.success(); _toast("⚔️", "НОВОЕ ОРУЖИЕ", w.name + (" • уже в бою" if wid3 in M.s.weapons.loadout else ""))
+					A.play("buy"); Haptic.success(); _toast("⚔️", Lang.t("НОВОЕ ОРУЖИЕ"), w.name + (Lang.t(" • уже в бою") if wid3 in M.s.weapons.loadout else ""))
 				else: A.play("error")
 				_rerender()
-			Ui.dialog({"ico": "⚔️", "title": w.name, "text": w.desc + "\n\nЦена: " + U.fmt(w.price) + " кредитов", "ok": "КУПИТЬ", "onOk": ok}), "gold", "big")
+			Ui.dialog({"ico": "⚔️", "title": w.name, "text": w.desc + Lang.t("\n\nЦена: ") + U.fmt(w.price) + Lang.t(" кредитов"), "ok": Lang.t("КУПИТЬ"), "onOk": ok}), "gold", "big")
 		bb.disabled = poor
 		v.add_child(bb)
-		if poor: v.add_child(Kit.para("Не хватает %s кредитов: они падают с врагов и даются за ежедневные контракты." % U.fmt(w.price - s.coins), 12, Kit.MUTED))
+		if poor: v.add_child(Kit.para(Lang.t("Не хватает %s кредитов: они падают с врагов и даются за ежедневные контракты.") % U.fmt(w.price - s.coins), 12, Kit.MUTED))
 	# ── прокачка ──
 	if own:
 		var total := 0
@@ -404,7 +404,7 @@ func _render_arsenal() -> void:
 		for up in w.ups:
 			total += int(up.max); got += M.weaponLevel(ars, up.id)
 		var hh := Kit.hbox(8)
-		var hl := _secLabel("ПРОКАЧКА  %d / %d" % [got, total], Kit.GOLD)
+		var hl := _secLabel(Lang.t("ПРОКАЧКА  %d / %d") % [got, total], Kit.GOLD)
 		hl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		hh.add_child(hl)
 		body.add_child(hh)
@@ -460,7 +460,7 @@ func _rackSlot(id: String, i: int) -> Control:
 	var h := Kit.hbox(4)
 	h.add_child(Kit.label(str(i + 1), 16, Color(col, 0.9), 900))
 	if empty:
-		h.add_child(Kit.label("пусто", 11, Kit.DIM, 700))
+		h.add_child(Kit.label(Lang.t("пусто"), 11, Kit.DIM, 700))
 	else:
 		var wid := id
 		h.add_child(Kit.ctx_view(func(cx, sz, _t): HudView.weaponIcon(cx, wid, sz.x / 2, sz.y / 2, minf(sz.x, sz.y) * 0.95), Vector2(30, 30)))
@@ -495,7 +495,7 @@ func _weaponChip(id: String) -> Control:
 	nl.clip_text = true
 	nl.custom_minimum_size.x = 10
 	v.add_child(nl)
-	var st := ("В БОЮ %d" % (sl + 1)) if sl >= 0 else ("✓" if own else "◆ " + U.fmt(d.price))
+	var st := (Lang.t("В БОЮ %d") % (sl + 1)) if sl >= 0 else ("✓" if own else "◆ " + U.fmt(d.price))
 	v.add_child(Kit.label(st, 10, Kit.GREEN if sl >= 0 else (Kit.MUTED if own else Kit.GOLD), 800, HORIZONTAL_ALIGNMENT_CENTER))
 	c.add_child(v)
 	Kit.passthrough(c)
@@ -519,7 +519,7 @@ func _upRow(wid: String, up: Dictionary, wc := Kit.CYAN) -> Control:
 	nh.add_child(nl)
 	nh.add_child(Kit.label("%d/%d" % [lvl, up.max], 11, Kit.GOLD if mx else Kit.MUTED, 800))
 	v.add_child(nh)
-	var eff := (_effText(up, lvl) + " • максимум") if mx else (((_effText(up, lvl)) if lvl else "Сейчас нет") + "  ›  " + _effText(up, lvl + 1))
+	var eff := (_effText(up, lvl) + Lang.t(" • максимум")) if mx else (((_effText(up, lvl)) if lvl else Lang.t("Сейчас нет")) + "  ›  " + _effText(up, lvl + 1))
 	var el := Kit.label(eff, 11, Kit.CYAN if not mx else Kit.MUTED, 700)
 	el.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	el.custom_minimum_size.x = 10
@@ -543,11 +543,11 @@ func _loadout(id: String) -> void:
 	var lo: Array = M.s.weapons.loadout
 	var inLo := id in lo
 	if inLo and lo.size() <= 1:
-		A.play("error"); _toast("⚠️", "НУЖНО ОРУЖИЕ", "Хотя бы одно оружие должно быть в бою")
+		A.play("error"); _toast("⚠️", Lang.t("НУЖНО ОРУЖИЕ"), Lang.t("Хотя бы одно оружие должно быть в бою"))
 		return
 	var out = lo[0] if not inLo and lo.size() >= 3 else null
 	M.toggleLoadout(id); A.play("click"); Haptic.select()
-	if out: _toast("🔁", "ЗАМЕНА", D.WEAPONS[out].name + " убран из боя")
+	if out: _toast("🔁", Lang.t("ЗАМЕНА"), D.WEAPONS[out].name + Lang.t(" убран из боя"))
 	_rerender()
 
 
@@ -562,17 +562,17 @@ func _render_skills() -> void:
 	for b in branches:
 		if b.id == tab: br = b
 	var bc := U.col(br.color)
-	body.add_child(Kit.label("Очков имплантов: %d" % M.skillPoints(), 15, Kit.VIOLET, 900))
+	body.add_child(Kit.label(Lang.t("Очков имплантов: %d") % M.skillPoints(), 15, Kit.VIOLET, 900))
 	# слоты активных имплантов и счётчик пассивных
 	var act: Array = s.skills.keys().filter(func(id): return D.SKILLS[id].type == "active")
 	var slots := Kit.hbox(6)
 	for i in int(D.MAX_ACTIVE):
-		var txt := "⚡ АКТИВ %d" % (i + 1)
+		var txt := Lang.t("⚡ АКТИВ %d") % (i + 1)
 		if i < act.size(): txt = D.SKILLS[act[i]].ico + " " + D.SKILLS[act[i]].name
 		var l := Kit.label(txt, 11, Kit.CYAN if i < act.size() else Kit.DIM, 800, HORIZONTAL_ALIGNMENT_CENTER)
 		var pp := Kit.panel(6); pp.add_child(l); pp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		slots.add_child(pp)
-	var ps := Kit.panel(6); ps.add_child(Kit.label("%d ПАССИВНЫХ" % M.skillCount("passive"), 11, Kit.TEXT, 800, HORIZONTAL_ALIGNMENT_CENTER))
+	var ps := Kit.panel(6); ps.add_child(Kit.label(Lang.t("%d ПАССИВНЫХ") % M.skillCount("passive"), 11, Kit.TEXT, 800, HORIZONTAL_ALIGNMENT_CENTER))
 	ps.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	slots.add_child(ps)
 	body.add_child(slots)
@@ -606,7 +606,7 @@ func _render_skills() -> void:
 			var v := Kit.vbox(1)
 			v.add_child(Kit.icon(id, sk.ico, 34))
 			v.add_child(Kit.label(sk.name, 10, Kit.TEXT, 800, HORIZONTAL_ALIGNMENT_CENTER))
-			var rk := ("✓" if st.maxed else "очки: %d" % sk.cost) + (" · %d/%d" % [st.rank, st.max] if st.max > 1 else "") + (" ⚡" if sk.type == "active" else "")
+			var rk := ("✓" if st.maxed else Lang.t("очки: %d") % sk.cost) + (" · %d/%d" % [st.rank, st.max] if st.max > 1 else "") + (" ⚡" if sk.type == "active" else "")
 			v.add_child(Kit.label(rk, 10, col, 800, HORIZONTAL_ALIGNMENT_CENTER))
 			c.add_child(v)
 			Kit.passthrough(c)
@@ -624,10 +624,10 @@ func _render_skills() -> void:
 	hv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hv.add_child(Kit.label(sk.name, 17, bc, 900))
 	var meta: Array = []
-	if sk.type == "active": meta.append("⚡ Активный · перезарядка %s с" % str(sk.cd))
-	if st.max > 1: meta.append("Ранг %d из %d" % [st.rank, st.max])
+	if sk.type == "active": meta.append(Lang.t("⚡ Активный · перезарядка %s с") % str(sk.cd))
+	if st.max > 1: meta.append(Lang.t("Ранг %d из %d") % [st.rank, st.max])
 	var req: Array = sk.req
-	if not req.is_empty(): meta.append(("🔒 Нужен: " if st.locked else "✓ ") + " или ".join(req.map(func(r): return D.SKILLS[r].name)))
+	if not req.is_empty(): meta.append((Lang.t("🔒 Нужен: ") if st.locked else "✓ ") + Lang.t(" или ").join(req.map(func(r): return D.SKILLS[r].name)))
 	hv.add_child(Kit.para(" · ".join(meta), 11))
 	hh.add_child(hv)
 	v.add_child(hh)
@@ -636,37 +636,37 @@ func _render_skills() -> void:
 	if sk.type == "active": v.add_child(Kit.demo_view(Demo.skill(sk_sel), Vector2(0, 170)))
 	var why := ""
 	if not st.maxed:
-		if st.locked: why = "Сначала установите " + " или ".join(req.map(func(r): return "«" + D.SKILLS[r].name + "»"))
-		elif st.slotsFull: why = "Уже два активных импланта — снимите один"
-		elif not st.afford: why = "Нужно %d %s, есть %d" % [sk.cost, U.plural(int(sk.cost), "очко", "очка", "очков"), M.skillPoints()]
+		if st.locked: why = Lang.t("Сначала установите ") + Lang.t(" или ").join(req.map(func(r): return "«" + D.SKILLS[r].name + "»"))
+		elif st.slotsFull: why = Lang.t("Уже два активных импланта — снимите один")
+		elif not st.afford: why = Lang.t("Нужно %d %s, есть %d") % [sk.cost, U.plural(int(sk.cost), Lang.t("очко"), Lang.t("очка"), Lang.t("очков")), M.skillPoints()]
 	if why != "": v.add_child(Kit.para(why, 12, Kit.ORANGE))
 	var bh := Kit.hbox(8)
 	var sid2 := sk_sel
 	if not st.maxed:
-		var lb := Kit.button(("РАНГ %d" % (st.rank + 1) if st.learned else "УСТАНОВИТЬ") + " · ✦%d" % sk.cost, func():
+		var lb := Kit.button((Lang.t("РАНГ %d") % (st.rank + 1) if st.learned else Lang.t("УСТАНОВИТЬ")) + " · ✦%d" % sk.cost, func():
 			if M.learnSkill(sid2):
-				A.play("levelup"); Haptic.success(); _toast(sk.ico, "РАНГ %d" % (st.rank + 1) if st.learned else "ИМПЛАНТ УСТАНОВЛЕН", sk.name)
+				A.play("levelup"); Haptic.success(); _toast(sk.ico, Lang.t("РАНГ %d") % (st.rank + 1) if st.learned else Lang.t("ИМПЛАНТ УСТАНОВЛЕН"), sk.name)
 			else: A.play("error")
 			_rerender(), "primary")
 		lb.disabled = not (st.canLearn or (M.DEV and not st.locked and not st.slotsFull))
 		lb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		bh.add_child(lb)
 	if st.learned:
-		var fb := Kit.button("СНЯТЬ", func():
+		var fb := Kit.button(Lang.t("СНЯТЬ"), func():
 			var removed := M.forgetSkill(sid2)
 			A.play("back")
-			if removed.size() > 1: _toast("↩️", "ИМПЛАНТЫ СНЯТЫ", ", ".join(removed.map(func(x): return D.SKILLS[x].name)))
+			if removed.size() > 1: _toast("↩️", Lang.t("ИМПЛАНТЫ СНЯТЫ"), ", ".join(removed.map(func(x): return D.SKILLS[x].name)))
 			_rerender(), "ghost")
 		bh.add_child(fb)
 	v.add_child(bh)
 	body.add_child(p)
-	body.add_child(Kit.button("↺ СНЯТЬ ВСЕ ИМПЛАНТЫ", func():
+	body.add_child(Kit.button(Lang.t("↺ СНЯТЬ ВСЕ ИМПЛАНТЫ"), func():
 		if M.s.skills.is_empty():
 			A.play("error")
 			return
 		var ok := func():
 			M.resetSkills(); A.play("back"); _rerender()
-		Ui.dialog({"ico": "↺", "title": "СНЯТЬ ВСЕ ИМПЛАНТЫ?", "text": "Все очки имплантов вернутся — можно собрать пилота заново.", "ok": "СНЯТЬ", "onOk": ok}), "ghost", "sm"))
+		Ui.dialog({"ico": "↺", "title": Lang.t("СНЯТЬ ВСЕ ИМПЛАНТЫ?"), "text": Lang.t("Все очки имплантов вернутся — можно собрать пилота заново."), "ok": Lang.t("СНЯТЬ"), "onOk": ok}), "ghost", "sm"))
 
 
 # ════════════════════════════════════════════════════════════
@@ -683,8 +683,8 @@ func _render_missions() -> void:
 	p.add_child(v)
 	var now := Time.get_datetime_dict_from_system()
 	var mins := maxi(1, (24 - int(now.hour)) * 60 - int(now.minute))
-	v.add_child(Kit.label("🎯 ЕЖЕДНЕВНЫЕ КОНТРАКТЫ", 13, Kit.TEXT, 900))
-	v.add_child(Kit.label("новые через %s%d мин" % ["%d ч " % (mins / 60) if mins >= 60 else "", mins % 60], 11, Kit.MUTED, 700))
+	v.add_child(Kit.label(Lang.t("🎯 ЕЖЕДНЕВНЫЕ КОНТРАКТЫ"), 13, Kit.TEXT, 900))
+	v.add_child(Kit.label(Lang.t("новые через %s%d мин") % [Lang.t("%d ч ") % (mins / 60) if mins >= 60 else "", mins % 60], 11, Kit.MUTED, 700))
 	for m in ms:
 		var k := minf(1, m.progress / m.goal)
 		var h := Kit.hbox(8)
@@ -693,19 +693,19 @@ func _render_missions() -> void:
 		mv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		mv.add_child(Kit.para(M.missionText(m), 13, Kit.TEXT))
 		mv.add_child(Kit.bar(k, Kit.GREEN if m.done else Kit.CYAN))
-		var prog := "%s / %s%s" % [U.fmt(floorf(minf(m.progress, m.goal))), U.fmt(m.goal), " мин" if m.id == "minutes" else ""]
+		var prog := "%s / %s%s" % [U.fmt(floorf(minf(m.progress, m.goal))), U.fmt(m.goal), Lang.t(" мин") if m.id == "minutes" else ""]
 		mv.add_child(Kit.label(prog, 11, Kit.DIM, 700))
 		h.add_child(mv)
 		h.add_child(Kit.label("◆ %d" % m.reward, 13, Kit.GOLD, 900))
 		v.add_child(h)
-	v.add_child(Kit.label(("✓ Бонус за все контракты получен" if d.bonus else "🎁 Бонус за все три контракта") + "   ◆ %d" % D.DAILY_BONUS, 13, Kit.GREEN if d.bonus else Kit.GOLD, 800))
+	v.add_child(Kit.label((Lang.t("✓ Бонус за все контракты получен") if d.bonus else Lang.t("🎁 Бонус за все три контракта")) + "   ◆ %d" % D.DAILY_BONUS, 13, Kit.GREEN if d.bonus else Kit.GOLD, 800))
 	body.add_child(p)
-	body.add_child(Kit.para("Прогресс засчитывается во время игры, награда приходит сразу", 12, Kit.MUTED, HORIZONTAL_ALIGNMENT_CENTER))
+	body.add_child(Kit.para(Lang.t("Прогресс засчитывается во время игры, награда приходит сразу"), 12, Kit.MUTED, HORIZONTAL_ALIGNMENT_CENTER))
 	var st := M.loginStatus()
 	var lp := Kit.panel(12)
 	var lv := Kit.vbox(8)
 	lp.add_child(lv)
-	lv.add_child(Kit.label("🎁 НАГРАДА ЗА ВХОД" + ("   ·   серия: %d %s" % [st.streak, U.plural(st.streak, "день", "дня", "дней")] if st.streak > 1 else ""), 13, Kit.TEXT, 900))
+	lv.add_child(Kit.label(Lang.t("🎁 НАГРАДА ЗА ВХОД") + (Lang.t("   ·   серия: %d %s") % [st.streak, U.plural(st.streak, Lang.t("день"), Lang.t("дня"), Lang.t("дней"))] if st.streak > 1 else ""), 13, Kit.TEXT, 900))
 	var g := GridContainer.new(); g.columns = 4
 	g.add_theme_constant_override("h_separation", 6); g.add_theme_constant_override("v_separation", 6)
 	var days: Array = D.LOGIN
@@ -715,20 +715,20 @@ func _render_missions() -> void:
 		var today: bool = i == st.day and st.available
 		var c := Kit.panel(6, Color(Kit.GOLD, 0.15) if today else Color(Kit.PANEL_SOLID, 0.9), Kit.GOLD if today else (Color(Kit.GREEN, 0.5) if got else Kit.LINE), 10)
 		var cv := Kit.vbox(0)
-		cv.add_child(Kit.label("День %d" % (i + 1), 10, Kit.MUTED, 700, HORIZONTAL_ALIGNMENT_CENTER))
+		cv.add_child(Kit.label(Lang.t("День %d") % (i + 1), 10, Kit.MUTED, 700, HORIZONTAL_ALIGNMENT_CENTER))
 		cv.add_child(Kit.label(("🎁" if i == 6 else "◆") + " %d%s" % [r.coins, " + ✦" if r.get("sp", 0) else ""], 12, Kit.GREEN if got else Kit.GOLD, 900, HORIZONTAL_ALIGNMENT_CENTER))
 		c.add_child(cv)
 		c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		g.add_child(c)
 	lv.add_child(g)
 	if st.available:
-		lv.add_child(Kit.button("🎁 ЗАБРАТЬ НАГРАДУ", func():
+		lv.add_child(Kit.button(Lang.t("🎁 ЗАБРАТЬ НАГРАДУ"), func():
 			var r = M.claimLogin()
 			if r:
-				A.play("buy"); Haptic.success(); Ui.toast({"ico": "🎁", "title": "НАГРАДА", "text": "+%d кредитов%s" % [r.coins, " и +1 очко импланта" if r.get("sp", 0) else ""]})
+				A.play("buy"); Haptic.success(); Ui.toast({"ico": "🎁", "title": Lang.t("НАГРАДА"), "text": Lang.t("+%d кредитов%s") % [r.coins, Lang.t(" и +1 очко импланта") if r.get("sp", 0) else ""]})
 			_rerender(), "gold"))
 	else:
-		lv.add_child(Kit.para("Следующая награда завтра. Заходите каждый день, чтобы серия не прервалась", 12, Kit.MUTED))
+		lv.add_child(Kit.para(Lang.t("Следующая награда завтра. Заходите каждый день, чтобы серия не прервалась"), 12, Kit.MUTED))
 	body.add_child(lp)
 
 
@@ -739,7 +739,7 @@ func _render_relics() -> void:
 	var s: Dictionary = M.s
 	var slots := M.relicSlots()
 	var lo := M.relicLoadout()
-	body.add_child(Kit.label("В ЗАБЕГ", 12, Kit.MUTED, 900))
+	body.add_child(Kit.label(Lang.t("В ЗАБЕГ"), 12, Kit.MUTED, 900))
 	var sh := Kit.hbox(8)
 	var rs: Array = D.RELIC_SLOTS
 	for i in rs.size():
@@ -753,12 +753,12 @@ func _render_relics() -> void:
 		elif i < slots:
 			c = Kit.panel(6); c.add_child(Kit.label("+", 26, Kit.DIM, 900, HORIZONTAL_ALIGNMENT_CENTER))
 		else:
-			c = Kit.panel(6); c.add_child(Kit.label("🔒 ур. %d" % rs[i], 11, Kit.DIM, 800, HORIZONTAL_ALIGNMENT_CENTER))
+			c = Kit.panel(6); c.add_child(Kit.label(Lang.t("🔒 ур. %d") % rs[i], 11, Kit.DIM, 800, HORIZONTAL_ALIGNMENT_CENTER))
 		c.custom_minimum_size = Vector2(70, 60)
 		Kit.passthrough(c)
 		sh.add_child(c)
 	body.add_child(sh)
-	body.add_child(Kit.label("КОЛЛЕКЦИЯ  %d / %d" % [M.relicCount(), D.RELICS.size()], 12, Kit.MUTED, 900))
+	body.add_child(Kit.label(Lang.t("КОЛЛЕКЦИЯ  %d / %d") % [M.relicCount(), D.RELICS.size()], 12, Kit.MUTED, 900))
 	var g := _grid(5)
 	var order := ["common", "rare", "epic", "legendary", "cursed"]
 	var ids: Array = D.RELICS.keys()
@@ -787,19 +787,19 @@ func _render_relics() -> void:
 		p.add_child(v)
 		v.add_child(Kit.label((rel.ico + " " + rel.name) if have else "??? · " + D.RELIC_RARITY[rel.rar].name, 16, col, 900))
 		v.add_child(Kit.label(D.RELIC_RARITY[rel.rar].name, 11, Color(col, 0.8), 800))
-		v.add_child(Kit.para(rel.desc if have else "Ещё не найден — выпадает из контейнеров", 13, Kit.TEXT))
+		v.add_child(Kit.para(rel.desc if have else Lang.t("Ещё не найден — выпадает из контейнеров"), 13, Kit.TEXT))
 		if have:
 			var rid2 := relic_sel
 			var inLo := rid2 in lo
-			v.add_child(Kit.button("✓ В ЗАБЕГЕ • УБРАТЬ" if inLo else "+ ВЗЯТЬ В ЗАБЕГ", func():
+			v.add_child(Kit.button(Lang.t("✓ В ЗАБЕГЕ • УБРАТЬ") if inLo else Lang.t("+ ВЗЯТЬ В ЗАБЕГ"), func():
 				var r = M.toggleRelic(rid2)
 				if r is String and r == "full":
-					A.play("error"); _toast("🔒", "СЛОТЫ ЗАНЯТЫ", "Уберите один ксенотех, чтобы взять другой")
+					A.play("error"); _toast("🔒", Lang.t("СЛОТЫ ЗАНЯТЫ"), Lang.t("Уберите один ксенотех, чтобы взять другой"))
 				else: A.play("click")
 				render(), "" if inLo else "primary"))
 		body.add_child(p)
 	if not s.chests.is_empty():
-		body.add_child(Kit.para("Закрытых контейнеров: %d — откроются на экране итогов после забега" % s.chests.size(), 12, Kit.GOLD, HORIZONTAL_ALIGNMENT_CENTER))
+		body.add_child(Kit.para(Lang.t("Закрытых контейнеров: %d — откроются на экране итогов после забега") % s.chests.size(), 12, Kit.GOLD, HORIZONTAL_ALIGNMENT_CENTER))
 
 
 # ════════════════════════════════════════════════════════════
@@ -809,7 +809,7 @@ func _render_achievements() -> void:
 	var s: Dictionary = M.s
 	var list: Array = D.ACHIEVEMENTS.duplicate()
 	list.sort_custom(func(a, b): return int(s.achievements.has(a.id)) < int(s.achievements.has(b.id)))
-	body.add_child(Kit.label("Получено %d / %d" % [s.achievements.size(), D.ACHIEVEMENTS.size()], 13, Kit.MUTED, 800))
+	body.add_child(Kit.label(Lang.t("Получено %d / %d") % [s.achievements.size(), D.ACHIEVEMENTS.size()], 13, Kit.MUTED, 800))
 	for a in list:
 		var done: bool = s.achievements.has(a.id)
 		var p := Kit.panel(10, Color(Kit.GREEN, 0.08) if done else Color(Kit.PANEL_SOLID, 0.9), Color(Kit.GREEN, 0.4) if done else Kit.LINE, 14)
@@ -841,7 +841,7 @@ func _render_codex() -> void:
 	var foes: Array = D.ENEMIES.keys().filter(func(k): return (D.ENEMIES[k].weight > 0 or D.ENEMIES[k].mini) and D.ENEMIES[k].wave < 99)
 	foes.sort_custom(func(a, b): return D.ENEMIES[a].wave < D.ENEMIES[b].wave)
 	var known := foes.filter(func(k): return k in seen).size()
-	body.add_child(Kit.tabs([["foes", "ВРАГИ %d/%d" % [known, foes.size()]], ["sectors", "СЕКТОРЫ"]], tab, func(id):
+	body.add_child(Kit.tabs([["foes", Lang.t("ВРАГИ %d/%d") % [known, foes.size()]], ["sectors", Lang.t("СЕКТОРЫ")]], tab, func(id):
 		tab = id; render()))
 	if tab == "sectors":
 		var ss: Array = s.get("sectorSeen", [])
@@ -854,7 +854,7 @@ func _render_codex() -> void:
 			var v := Kit.vbox(2)
 			v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			v.add_child(Kit.label(sec.name if opened else "???", 14, U.col(sec.neb[1]), 900))
-			v.add_child(Kit.para(sec.get("desc", "Без особых правил") if opened else "Ещё не открыт — встретится в одном из забегов", 12))
+			v.add_child(Kit.para(sec.get("desc", Lang.t("Без особых правил")) if opened else Lang.t("Ещё не открыт — встретится в одном из забегов"), 12))
 			h.add_child(v)
 			p.add_child(h)
 			body.add_child(p)
@@ -873,9 +873,9 @@ func _render_codex() -> void:
 		var v := Kit.vbox(2)
 		v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var nm: String = d.name.to_upper() if kn else "???"
-		if kn and d.guard != "": nm += "   [%s]" % W_LETTER.get(d.guard, "?")
+		if kn and d.guard != "": nm += "   [%s]" % (Foes.W_LETTER_EN if Lang.is_en() else W_LETTER).get(d.guard, "?")
 		v.add_child(Kit.label(nm, 14, Kit.TEXT, 900))
-		var desc: String = (d.hint if d.hint != "" else ("Мини-босс" if d.mini else "С %d-й волны" % d.wave)) if kn else "Встречается с %d-й волны" % d.wave
+		var desc: String = (d.hint if d.hint != "" else (Lang.t("Мини-босс") if d.mini else Lang.t("С %d-й волны") % d.wave)) if kn else Lang.t("Встречается с %d-й волны") % d.wave
 		v.add_child(Kit.para(desc, 12))
 		h.add_child(v)
 		p.add_child(h)
@@ -890,8 +890,8 @@ func _render_leaders() -> void:
 	var s: Dictionary = M.s
 	var st: Dictionary = s.stats
 	var g := _grid(2)
-	for x in [["Игр сыграно", U.fmt(st.games)], ["Лучшая волна", str(st.bestWave)], ["Врагов уничтожено", U.fmt(st.kills)], ["Боссов побеждено", U.fmt(st.bosses)],
-			["Лучшее комбо", "×%d" % st.maxCombo], ["Время в бою", U.fmt_time(st.playTime)], ["Кредитов заработано", U.fmt(st.coinsEarned)], ["Улучшений выбрано", U.fmt(st.perks)]]:
+	for x in [[Lang.t("Игр сыграно"), U.fmt(st.games)], [Lang.t("Лучшая волна"), str(st.bestWave)], [Lang.t("Врагов уничтожено"), U.fmt(st.kills)], [Lang.t("Боссов побеждено"), U.fmt(st.bosses)],
+			[Lang.t("Лучшее комбо"), "×%d" % st.maxCombo], [Lang.t("Время в бою"), U.fmt_time(st.playTime)], [Lang.t("Кредитов заработано"), U.fmt(st.coinsEarned)], [Lang.t("Улучшений выбрано"), U.fmt(st.perks)]]:
 		var p := Kit.panel(8)
 		var v := Kit.vbox(0)
 		v.add_child(Kit.label(x[0], 11, Kit.MUTED, 700))
@@ -908,7 +908,7 @@ func _render_leaders() -> void:
 		tab = id; render()))
 	var rows: Array = s.lb.filter(func(r): return r.diff == tab)
 	if rows.is_empty():
-		body.add_child(Kit.para("На сложности «%s» ещё нет забегов" % D.DIFFS[tab].name, 13, Kit.MUTED, HORIZONTAL_ALIGNMENT_CENTER))
+		body.add_child(Kit.para(Lang.t("На сложности «%s» ещё нет забегов") % D.DIFFS[tab].name, 13, Kit.MUTED, HORIZONTAL_ALIGNMENT_CENTER))
 	for i in rows.size():
 		var r: Dictionary = rows[i]
 		var p := Kit.panel(10)
@@ -916,9 +916,9 @@ func _render_leaders() -> void:
 		h.add_child(Kit.label(["🥇", "🥈", "🥉"][i] if i < 3 else str(i + 1), 18, Kit.GOLD, 900))
 		var v := Kit.vbox(0)
 		v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		v.add_child(Kit.label(U.fmt(r.score) + " очков", 15, Kit.TEXT, 900))
+		v.add_child(Kit.label(U.fmt(r.score) + Lang.t(" очков"), 15, Kit.TEXT, 900))
 		var dt := Time.get_datetime_dict_from_unix_time(int(r.date / 1000))
-		v.add_child(Kit.label("Волна %d • %02d.%02d.%d" % [r.wave, dt.day, dt.month, dt.year], 11, Kit.MUTED, 700))
+		v.add_child(Kit.label(Lang.t("Волна %d • %02d.%02d.%d") % [r.wave, dt.day, dt.month, dt.year], 11, Kit.MUTED, 700))
 		h.add_child(v)
 		p.add_child(h)
 		body.add_child(p)
@@ -980,49 +980,64 @@ func _render_settings() -> void:
 		p.add_child(v)
 		body.add_child(p)
 		return p
-	var v: VBoxContainer = sec.call("ЗВУК").get_child(0)
-	v.add_child(Kit.label("♪ Музыка", 14, Kit.TEXT, 700)); v.add_child(_slider("music", 0, 100, 5, func(x): return "%d%%" % int(x)))
-	v.add_child(Kit.label("🔊 Эффекты", 14, Kit.TEXT, 700)); v.add_child(_slider("sfx", 0, 100, 5, func(x): return "%d%%" % int(x)))
-	v.add_child(Kit.label("Стиль музыки", 14, Kit.TEXT, 700))
+	# Godot: язык — смена через перезапуск (данные переводятся при загрузке)
+	var v: VBoxContainer = sec.call("ЯЗЫК · LANGUAGE").get_child(0)
+	var lh := Kit.hbox(4)
+	var cur_lang := Lang.setting()
+	for o in [["auto", Lang.t("Авто")], ["ru", "Русский"], ["en", "English"]]:
+		var code: String = o[0]
+		var b := Kit.button(o[1], func():
+			if Lang.setting() == code: return
+			if Lang.choose(code):
+				Ui.dialog({"ico": "🌐", "title": Lang.t("ЯЗЫК"), "text": Lang.t("Игра перезапустится, чтобы сменить язык."),
+					"ok": Lang.t("ПЕРЕЗАПУСТИТЬ"), "onOk": func(): Lang.restart(get_tree())})
+			render(), "primary" if cur_lang == code else "", "sm")
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lh.add_child(b)
+	v.add_child(lh)
+	v = sec.call(Lang.t("ЗВУК")).get_child(0)
+	v.add_child(Kit.label(Lang.t("♪ Музыка"), 14, Kit.TEXT, 700)); v.add_child(_slider("music", 0, 100, 5, func(x): return "%d%%" % int(x)))
+	v.add_child(Kit.label(Lang.t("🔊 Эффекты"), 14, Kit.TEXT, 700)); v.add_child(_slider("sfx", 0, 100, 5, func(x): return "%d%%" % int(x)))
+	v.add_child(Kit.label(Lang.t("Стиль музыки"), 14, Kit.TEXT, 700))
 	var styles: Array = []
-	for id in A.STYLE_IDS: styles.append([id, A.meta.music.get(id + "_0", {}).get("name", id)])
+	for id in A.STYLE_IDS: styles.append([id, Lang.t(A.meta.music.get(id + "_0", {}).get("name", id))])
 	v.add_child(_segs("musicStyle", styles.slice(0, 3), func(): Main.setMusic(Main.musicMode, true)))
 	v.add_child(_segs("musicStyle", styles.slice(3), func(): Main.setMusic(Main.musicMode, true)))
-	v = sec.call("ГРАФИКА").get_child(0)
-	v.add_child(Kit.label("Качество", 14, Kit.TEXT, 700))
-	v.add_child(_segs("quality", [["auto", "Авто"], ["high", "Высокое"], ["medium", "Среднее"], ["low", "Низкое"]], func(): Main.applyQuality()))
-	v.add_child(_row("Тряска экрана", Kit.toggle(st.shake, func(on):
+	v = sec.call(Lang.t("ГРАФИКА")).get_child(0)
+	v.add_child(Kit.label(Lang.t("Качество"), 14, Kit.TEXT, 700))
+	v.add_child(_segs("quality", [["auto", Lang.t("Авто")], ["high", Lang.t("Высокое")], ["medium", Lang.t("Среднее")], ["low", Lang.t("Низкое")]], func(): Main.applyQuality()))
+	v.add_child(_row(Lang.t("Тряска экрана"), Kit.toggle(st.shake, func(on):
 		st.shake = on; FX.shake_on = on; M.soon())))
-	v.add_child(_row("Эффекты экрана", Kit.toggle(st.get("post", true), func(on):
+	v.add_child(_row(Lang.t("Эффекты экрана"), Kit.toggle(st.get("post", true), func(on):
 		st.post = on; M.soon())))
-	v.add_child(_row("Цифры урона", Kit.toggle(st.dmgNums, func(on):
+	v.add_child(_row(Lang.t("Цифры урона"), Kit.toggle(st.dmgNums, func(on):
 		st.dmgNums = on; M.soon())))
-	v.add_child(_row("Показывать FPS", Kit.toggle(st.fps, func(on):
+	v.add_child(_row(Lang.t("Показывать FPS"), Kit.toggle(st.fps, func(on):
 		st.fps = on; M.soon())))
 	var ih := Kit.hbox(8)
-	ih.add_child(Kit.button("СМОТРЕТЬ", func(): Intro.play(func(): pass), "", "sm"))
+	ih.add_child(Kit.button(Lang.t("СМОТРЕТЬ"), func(): Intro.play(func(): pass), "", "sm"))
 	ih.add_child(Kit.toggle(st.intro, func(on):
 		st.intro = on; M.soon()))
-	v.add_child(_row("Заставка при запуске", ih))
-	v = sec.call("УПРАВЛЕНИЕ").get_child(0)
-	v.add_child(Kit.label("Чувствительность", 14, Kit.TEXT, 700)); v.add_child(_slider("sens", 0.6, 2.4, 0.05, func(x): return "×%.2f" % x))
-	v.add_child(_row("Бомба двойным тапом", Kit.toggle(st.dblBomb, func(on):
+	v.add_child(_row(Lang.t("Заставка при запуске"), ih))
+	v = sec.call(Lang.t("УПРАВЛЕНИЕ")).get_child(0)
+	v.add_child(Kit.label(Lang.t("Чувствительность"), 14, Kit.TEXT, 700)); v.add_child(_slider("sens", 0.6, 2.4, 0.05, func(x): return "×%.2f" % x))
+	v.add_child(_row(Lang.t("Бомба двойным тапом"), Kit.toggle(st.dblBomb, func(on):
 		st.dblBomb = on; M.soon())))
-	v.add_child(_row("Вибрация", Kit.toggle(st.vibro, func(on):
+	v.add_child(_row(Lang.t("Вибрация"), Kit.toggle(st.vibro, func(on):
 		st.vibro = on; M.soon()
 		if on: Haptic.medium())))
-	v = sec.call("ПРОГРЕСС").get_child(0)
-	v.add_child(_row("Сохранение", Kit.label("на этом устройстве", 12, Kit.MUTED, 700)))
-	v.add_child(_row("Сбросить прогресс", Kit.button("СБРОС", func():
+	v = sec.call(Lang.t("ПРОГРЕСС")).get_child(0)
+	v.add_child(_row(Lang.t("Сохранение"), Kit.label(Lang.t("на этом устройстве"), 12, Kit.MUTED, 700)))
+	v.add_child(_row(Lang.t("Сбросить прогресс"), Kit.button(Lang.t("СБРОС"), func():
 		var really := func():
-			M.reset(); A.play("explodeM"); Ui.toast({"ico": "🗑️", "title": "ГОТОВО", "text": "Прогресс сброшен", "info": true}); _rerender()
+			M.reset(); A.play("explodeM"); Ui.toast({"ico": "🗑️", "title": Lang.t("ГОТОВО"), "text": Lang.t("Прогресс сброшен"), "info": true}); _rerender()
 		var first := func():
-			Ui.dialog({"ico": "💀", "title": "ТОЧНО?", "text": "Последнее предупреждение.", "ok": "ДА, СБРОСИТЬ", "danger": true, "onOk": really})
-		Ui.dialog({"ico": "↺", "title": "СБРОС ПРОГРЕССА", "text": "Будут удалены кредиты, оружие, прокачка, корабли, импланты, рекорды и достижения.\nЭто нельзя отменить!", "ok": "УДАЛИТЬ ВСЁ", "danger": true, "onOk": first}), "danger", "sm")))
+			Ui.dialog({"ico": "💀", "title": Lang.t("ТОЧНО?"), "text": Lang.t("Последнее предупреждение."), "ok": Lang.t("ДА, СБРОСИТЬ"), "danger": true, "onOk": really})
+		Ui.dialog({"ico": "↺", "title": Lang.t("СБРОС ПРОГРЕССА"), "text": Lang.t("Будут удалены кредиты, оружие, прокачка, корабли, импланты, рекорды и достижения.\nЭто нельзя отменить!"), "ok": Lang.t("УДАЛИТЬ ВСЁ"), "danger": true, "onOk": first}), "danger", "sm")))
 	if M.DEV:
-		v = sec.call("РАЗРАБОТЧИК").get_child(0)
-		v.add_child(_row("+10 000 кредитов", Kit.button("ДАТЬ", func():
+		v = sec.call(Lang.t("РАЗРАБОТЧИК")).get_child(0)
+		v.add_child(_row(Lang.t("+10 000 кредитов"), Kit.button(Lang.t("ДАТЬ"), func():
 			M.addCoins(10000, false); A.play("buy"); refresh_wallet(), "", "sm")))
-		v.add_child(_row("+10 очков имплантов", Kit.button("ДАТЬ", func():
+		v.add_child(_row(Lang.t("+10 очков имплантов"), Kit.button(Lang.t("ДАТЬ"), func():
 			M.s.spBonus += 10; M.save(); A.play("buy"), "", "sm")))
 	body.add_child(Kit.label("Space Shooter · Godot", 11, Kit.DIM, 700, HORIZONTAL_ALIGNMENT_CENTER))
