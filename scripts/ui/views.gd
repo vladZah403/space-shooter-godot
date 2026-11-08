@@ -114,6 +114,8 @@ class MenuView extends Control:
 	var screens: Control
 	var hero: Control
 	var content: Control
+	var avatar: PanelContainer
+	var avatar_ico: TextureRect
 	var mission_sub: Label
 
 	## плитка раздела (.tile в JS): значок цвета раздела, название, подпись
@@ -169,6 +171,31 @@ class MenuView extends Control:
 		Kit.full(self)
 		visible = false
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# Godot: мягкое затемнение сверху (логотип) и снизу (плитки) — планеты и туманность не мешают читать
+		for top in [true, false]:
+			var g := Gradient.new()
+			g.offsets = PackedFloat32Array([0.0, 1.0])
+			var dark := Color(0.008, 0.016, 0.06, 0.82)
+			g.colors = PackedColorArray([dark, Color(dark, 0.0)] if top else [Color(dark, 0.0), dark])
+			var gt := GradientTexture2D.new()
+			gt.gradient = g
+			gt.fill_from = Vector2(0, 0)
+			gt.fill_to = Vector2(0, 1)
+			gt.width = 4
+			gt.height = 128
+			var r := TextureRect.new()
+			r.texture = gt
+			r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			r.stretch_mode = TextureRect.STRETCH_SCALE
+			r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			if top:
+				r.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+				r.anchor_bottom = 0.42
+			else:
+				r.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+				r.anchor_top = 0.62
+			r.offset_top = 0; r.offset_bottom = 0
+			add_child(r)
 		var m := Kit.margin(16, 14, 16, 16)
 		Kit.full(m)
 		m.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -179,16 +206,31 @@ class MenuView extends Control:
 		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		m.add_child(v)
 		# шапка: пилот и уровень корабля, кошелёк
-		var head := Kit.hbox(8)
+		# Godot (как в концепте): рамка-аватар с кораблём, имя пилота, плашка кредитов
+		var head := Kit.hbox(10)
+		avatar = Kit.panel(4, Color(0.05, 0.08, 0.2, 0.85), Color(Kit.CYAN, 0.65), 12)
+		avatar.custom_minimum_size = Vector2(50, 50)
+		avatar_ico = Kit.tex_icon(null, 40)
+		avatar.add_child(avatar_ico)
+		head.add_child(avatar)
 		var prof := Kit.vbox(0)
 		prof.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		lvl = Kit.label("", 13, Kit.MUTED, 700)
-		prof.add_child(Kit.label(Lang.t("ПИЛОТ"), 11, Kit.DIM, 800))
+		prof.alignment = BoxContainer.ALIGNMENT_CENTER
+		lvl = Kit.label("", 13, Kit.TEXT, 700)
+		prof.add_child(Kit.label(Lang.t("ПИЛОТ"), 11, Kit.CYAN, 800))
 		prof.add_child(lvl)
 		head.add_child(prof)
+		var wallet := Kit.panel(0, Color(0.05, 0.06, 0.15, 0.85), Color(Kit.GOLD, 0.5), 20)
+		var wh := Kit.hbox(6)
+		var wm := Kit.margin(10, 6, 14, 6)
+		wm.add_child(wh)
+		wallet.add_child(wm)
+		wh.add_child(Kit.tex_icon(G.proc("coin"), 22))
 		coins = Kit.label("", 18, Kit.GOLD, 900)
-		head.add_child(Kit.tex_icon(G.proc("coin"), 22))
-		head.add_child(coins)
+		coins.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		wh.add_child(coins)
+		wallet.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		head.add_child(wallet)
 		v.add_child(head)
 		# логотип и рекорд
 		# Godot: логотип нарисован кодом (scripts/ui/logo.gd) — металл, крылья, блик, плашка
@@ -243,6 +285,8 @@ class MenuView extends Control:
 		var s: Dictionary = M.s
 		var pil: Dictionary = D.PILOTS.get(s.pilot, D.PILOTS.kai)
 		lvl.text = Lang.t("%s %s • Корабль %d%s") % [pil.ico, pil.name, s.shipLvl, (" • ✦%d" % s.prestige) if s.prestige else ""]
+		var look: Dictionary = Game.drawLook(s.ship.model, s.ship.skin, s.ship.trail)
+		avatar_ico.texture = G.icon(look.get("sprite", D.SHIPS[s.ship.model].sprite))
 		best.text = Lang.t("Рекорд: %s  •  Волна %d") % [U.fmt(s.stats.bestScore), s.stats.bestWave]
 		var ms := M.missions()
 		mission_sub.text = "%d / %d" % [ms.filter(func(m): return m.done).size(), ms.size()]
@@ -859,6 +903,8 @@ class DialogView extends Control:
 		if o.has("color"): title.add_theme_color_override("font_color", U.col(o.color))
 		else: title.add_theme_color_override("font_color", Kit.TEXT)
 		text.text = o.get("text", "")
+		# список (например, «Что нового») — по левому краю
+		text.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if o.get("left", false) else HORIZONTAL_ALIGNMENT_CENTER
 		ok.text = o.get("ok", Lang.t("ОК"))
 		cancel.visible = not o.get("noCancel", false)
 		_onOk = o.get("onOk")

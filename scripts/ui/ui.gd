@@ -134,7 +134,30 @@ func toMenu() -> void:
 	cur = "menu"
 	menu.open()
 	Main.setMusic("menu")
-	_checkLogin()
+	if not _checkNotes(): _checkLogin()
+
+
+## Godot: «Что нового» после обновления (M.s.notes, заметка g44) — один раз, потом награда за вход
+func _checkNotes() -> bool:
+	var notes: Array = M.s.get("notes", [])
+	var show := notes.any(func(n): return n.get("type") == "g44")
+	if notes.is_empty(): return false
+	M.s.notes = []
+	M.soon()
+	if not show: return false
+	get_tree().create_timer(0.6).timeout.connect(func():
+		while Intro.playing: await get_tree().create_timer(0.3).timeout
+		dialog({"ico": "🚀", "title": Lang.t("ЧТО НОВОГО"), "noCancel": true, "ok": Lang.t("В БОЙ!"), "left": true,
+			"text": Lang.t("• Английский язык — Настройки → Язык
+• Карточка «Поделиться» на экране итогов
+• Живые фоны у каждого сектора
+• Новый логотип, иконка и экран загрузки
+• Обучение для новичков
+• Плавнее на телефоне: 60 FPS, загрузка на треть быстрее
+• Пузырь щита и ударные волны снова на айфоне
+• Кнопки не прячутся под полоской «домой»"),
+			"onOk": func(): _checkLogin()}))
+	return true
 
 
 ## награда за вход: если сегодня ещё не забрали — окно с наградой дня (Intro, если идёт, — сначала)

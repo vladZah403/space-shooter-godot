@@ -6,7 +6,7 @@ extends Node
 
 const PATH := "user://save.json"
 const TMP := "user://save.tmp"
-const PATCH := 43
+const PATCH := 44
 
 var s: Dictionary = {}
 var DEV := false             # SS.DEV: всё открыто и бесплатно (запуск с --dev)
@@ -187,6 +187,8 @@ func patchNotes(data: Dictionary) -> void:
 		s.chests.append("silver")
 	if patch >= 41 and patch < 42 and played and not has_note.call("v42"): s.notes.append({"type": "v42"})
 	if patch < 43 and played and not has_note.call("v43"): s.notes.append({"type": "v43"})
+	# Godot 44: окно «Что нового» тем, кто уже играл (старые заметки JS-версии здесь не показываются)
+	if patch < 44 and played and not has_note.call("g44"): s.notes.append({"type": "g44"})
 	s.patch = PATCH
 
 
