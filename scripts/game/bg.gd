@@ -7,6 +7,9 @@ extends Node
 const NEBULA := preload("res://assets/shaders/nebula.gdshader")
 const PLANET := preload("res://assets/shaders/planet.gdshader")
 ## своя деталь вдали у каждого сектора (по порядку D.SECTORS)
+## Godot: живая деталь фона по механике сектора (assets/shaders/nebula.gdshader, uniform style)
+const STYLES := {"sats": 1, "asteroids": 2, "nebula": 3, "ice": 4, "lava": 5, "toxic": 6, "gravity": 7, "wind": 8,
+	"prism": 9, "hive": 10, "portals": 11, "pillars": 12, "eye": 13}
 const KINDS := ["sun", "rocks", "galaxy", "moons", "giant", "galaxy", "blackhole", "core", "rocks", "moons", "rocks", "sun", "blackhole"]
 
 var sector := -1
@@ -97,6 +100,7 @@ func makeNebula(s: Dictionary) -> ShaderMaterial:
 	m.set_shader_parameter("neb1", U.col(neb[1 % neb.size()]))
 	m.set_shader_parameter("neb2", U.col(neb[2 % neb.size()]))
 	m.set_shader_parameter("seed", U.rand(0, 50))
+	m.set_shader_parameter("style", STYLES.get(s.get("mech", ""), 0))
 	return m
 
 
