@@ -603,6 +603,7 @@ class OverView extends Control:
 	var xp_lvl: Label
 	var chests: VBoxContainer
 	var events: HFlowContainer
+	var share_btn: Button
 	var sum: Dictionary = {}
 	var _t := 0.0
 	var _counts: Array = []
@@ -660,6 +661,17 @@ class OverView extends Control:
 		menu.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		bh.add_child(again); bh.add_child(menu)
 		v.add_child(bh)
+		# Godot: карточка забега картинкой — в браузере системное «Поделиться», на компьютере файл
+		share_btn = Kit.icon_button("share", "ПОДЕЛИТЬСЯ", func(): _share(), "ghost")
+		v.add_child(share_btn)
+
+	func _share() -> void:
+		if share_btn.disabled: return
+		share_btn.disabled = true
+		var img: Image = await ShareCard.render(self, sum)
+		var msg := ShareCard.share(img, int(sum.get("score", 0)))
+		share_btn.disabled = false
+		if msg != "": Ui.toast({"info": true, "ico": "info", "title": "КАРТОЧКА ЗАБЕГА", "text": msg})
 
 	func open(s: Dictionary) -> void:
 		sum = s
