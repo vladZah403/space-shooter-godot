@@ -191,11 +191,9 @@ class MenuView extends Control:
 		head.add_child(coins)
 		v.add_child(head)
 		# логотип и рекорд
-		var logo := Kit.vbox(0)
-		logo.add_child(Kit.label("SPACE", 46, Color.WHITE, 900, HORIZONTAL_ALIGNMENT_CENTER))
-		var l2 := Kit.label("SHOOTER", 27, Kit.CYAN, 900, HORIZONTAL_ALIGNMENT_CENTER)
-		logo.add_child(l2)
-		logo.add_child(Kit.label("GODOT EDITION", 12, Kit.GOLD, 800, HORIZONTAL_ALIGNMENT_CENTER))
+		# Godot: логотип нарисован кодом (scripts/ui/logo.gd) — металл, крылья, блик, плашка
+		var logo := Logo.new()
+		logo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		v.add_child(logo)
 		var best_row := Kit.hbox(6)
 		best_row.alignment = BoxContainer.ALIGNMENT_CENTER

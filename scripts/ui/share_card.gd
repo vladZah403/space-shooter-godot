@@ -81,9 +81,10 @@ static func _build(root: Control, sum: Dictionary) -> void:
 	v.position = Vector2(40, 60)
 	v.size = Vector2(W - 80, H - 120)
 	root.add_child(v)
-	v.add_child(Kit.label("SPACE", 84, Color.WHITE, 900, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(Kit.label("SHOOTER", 50, Kit.CYAN, 900, HORIZONTAL_ALIGNMENT_CENTER))
-	v.add_child(Kit.label("GODOT EDITION", 22, Kit.GOLD, 800, HORIZONTAL_ALIGNMENT_CENTER))
+	# тот же логотип, что в меню, только крупнее
+	var logo := Logo.new(1.75)
+	logo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	v.add_child(logo)
 	v.add_child(Kit.spacer(0, true))
 	var rec: bool = sum.get("isRecord", false)
 	v.add_child(Kit.label(Lang.t("НОВЫЙ РЕКОРД!") if rec else Lang.t("ИТОГ ЗАБЕГА"), 26, Kit.GOLD if rec else Kit.MUTED, 900, HORIZONTAL_ALIGNMENT_CENTER))
