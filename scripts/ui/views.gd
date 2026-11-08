@@ -214,7 +214,7 @@ class MenuView extends Control:
 		v.add_child(tiles)
 		var bar := Kit.hbox(6)
 		for it in [["trophy", "Рекорды", Kit.PINK, "leaders"], ["medal", "Награды", Kit.GREEN, "achievements"],
-				["chest", "Реликвии", Kit.GOLD, "relics"], ["list", "Справочник", Kit.CYAN, "codex"], ["gear", "Настройки", Color("#aab4d8"), "settings"]]:
+				["chest", "Ксенотех", Kit.GOLD, "relics"], ["list", "Справочник", Kit.CYAN, "codex"], ["gear", "Настройки", Color("#aab4d8"), "settings"]]:
 			bar.add_child(_bar_btn(it[0], it[1], it[2], it[3]))
 		v.add_child(bar)
 		diff = DiffView.new()
@@ -698,7 +698,7 @@ class OverView extends Control:
 		A.play("achievement")
 		Haptic.success()
 		var col: String = D.RELIC_RARITY[rel.rar].color
-		Ui.dialog({"ico": rel.ico, "title": ("ПОВТОР: " if r.dupe else "РЕЛИКВИЯ: ") + rel.name, "text": rel.desc + ("\n\nУже в коллекции — взамен ● %d" % r.coins if r.dupe else "\n\nДобавлена в коллекцию"), "ok": "ОТЛИЧНО", "noCancel": true, "color": col})
+		Ui.dialog({"ico": rel.ico, "title": ("ПОВТОР: " if r.dupe else "КСЕНОТЕХ: ") + rel.name, "text": rel.desc + ("\n\nУже в коллекции — взамен ● %d" % r.coins if r.dupe else "\n\nДобавлен в коллекцию"), "ok": "ОТЛИЧНО", "noCancel": true, "color": col})
 		_render_chests()
 
 

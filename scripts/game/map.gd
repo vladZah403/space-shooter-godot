@@ -155,7 +155,7 @@ func nodeReward(w: Dictionary, ev) -> bool:
 			var o := Game.merchantOffer()
 			# вместо реликвии — закрытый сундук (откроется после забега); значок рисует интерфейс по полю chest
 			o.cards.insert(o.cards.size() - 1, {"id": "chest:silver", "chest": "silver", "ico": "📦", "name": D.CHESTS.silver.name,
-				"desc": "Откроется после забега: реликвия в коллекцию", "rar": "epic", "price": roundf((300 + w.n * 25) * o.cut / 10) * 10})
+				"desc": "Откроется после забега: ксенотех в коллекцию", "rar": "epic", "price": roundf((300 + w.n * 25) * o.cut / 10) * 10})
 			return show(o)
 		"event":
 			var cards: Array = ev.cards.map(func(c):
@@ -337,7 +337,7 @@ func grant(id: String, quiet := false) -> void:
 		FX.glow_puff(p.x, p.y, col, 120 * G.S, 0.5)
 		FX.ring(p.x, p.y, p.w * 0.4, p.w * 1.8, col, 0.5, 4)
 		A.play("perk", {"rate": 0.9})
-		Bus.emit("toast", {"ico": def.ico, "title": "РЕЛИКВИЯ", "text": def.name, "info": true, "dur": 2200})
+		Bus.emit("toast", {"ico": def.ico, "title": "КСЕНОТЕХ", "text": def.name, "info": true, "dur": 2200})
 	Game.hudDirty = true
 
 

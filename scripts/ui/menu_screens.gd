@@ -4,7 +4,7 @@ extends Control
 ## содержимое раздела строится заново при каждом изменении (как innerHTML в ui.js).
 
 const HudView := preload("res://scripts/ui/hud_view.gd")
-const TITLES := {"hangar": "АНГАР", "arsenal": "АРСЕНАЛ", "skills": "НАВЫКИ", "missions": "ЗАДАНИЯ", "relics": "РЕЛИКВИИ",
+const TITLES := {"hangar": "АНГАР", "arsenal": "АРСЕНАЛ", "skills": "НАВЫКИ", "missions": "ЗАДАНИЯ", "relics": "КСЕНОТЕХ",
 	"achievements": "НАГРАДЫ", "codex": "СПРАВОЧНИК", "settings": "НАСТРОЙКИ", "leaders": "РЕКОРДЫ"}
 const W_LETTER := {"laser": "Л", "shotgun": "Д", "rocket": "Р", "arc": "С", "plasma": "П", "lightning": "М", "darkmatter": "Т"}
 
@@ -648,14 +648,14 @@ func _render_relics() -> void:
 		p.add_child(v)
 		v.add_child(Kit.label((rel.ico + " " + rel.name) if have else "??? · " + D.RELIC_RARITY[rel.rar].name, 16, col, 900))
 		v.add_child(Kit.label(D.RELIC_RARITY[rel.rar].name, 11, Color(col, 0.8), 800))
-		v.add_child(Kit.para(rel.desc if have else "Ещё не найдена — выпадает из сундуков", 13, Kit.TEXT))
+		v.add_child(Kit.para(rel.desc if have else "Ещё не найден — выпадает из сундуков", 13, Kit.TEXT))
 		if have:
 			var rid2 := relic_sel
 			var inLo := rid2 in lo
 			v.add_child(Kit.button("✓ В ЗАБЕГЕ • УБРАТЬ" if inLo else "+ ВЗЯТЬ В ЗАБЕГ", func():
 				var r = M.toggleRelic(rid2)
 				if r is String and r == "full":
-					A.play("error"); _toast("🔒", "СЛОТЫ ЗАНЯТЫ", "Уберите реликвию, чтобы взять другую")
+					A.play("error"); _toast("🔒", "СЛОТЫ ЗАНЯТЫ", "Уберите один ксенотех, чтобы взять другой")
 				else: A.play("click")
 				render(), "" if inLo else "primary"))
 		body.add_child(p)
