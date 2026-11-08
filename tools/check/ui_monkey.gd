@@ -19,6 +19,9 @@ func _ready() -> void:
 	var world: Node = load("res://scenes/world.tscn").instantiate()
 	get_tree().root.add_child.call_deferred(world)
 	for i in 30: await get_tree().process_frame
+	if "--game" in OS.get_cmdline_user_args():
+		await _game_phase()
+		return
 	var ids := ["hangar", "arsenal", "skills", "missions", "relics", "achievements", "codex", "leaders", "settings"]
 	var log := {}
 	for n in presses:
@@ -46,6 +49,39 @@ func _ready() -> void:
 			Ui.toMenu()
 			for i in 2: await get_tree().process_frame
 	print("нажатий: ", presses, ", разных кнопок: ", log.size())
+	var keys := log.keys()
+	keys.sort()
+	print(", ".join(keys.map(func(k): return "%s×%d" % [k, log[k]])))
+	print("UI MONKEY DONE")
+	get_tree().quit()
+
+
+## «-- --game»: то же в бою — пауза и её кнопки, выбор улучшений, карта, лавка, контейнеры на итогах, воскрешение
+func _game_phase() -> void:
+	var log := {}
+	var ui_root: Node = Ui.hud.get_parent()
+	for n in presses:
+		_rich()
+		if Game.state == "idle":
+			Ui.startRun(["normal", "hard", "zen"][n % 3], {"mode": ["normal", "bossrush", "survival"][(n / 3) % 3]})
+		var p = Game.player
+		if p and n % 50 < 40: p.inv = maxf(p.inv, 3.0)
+		for i in rng.randi_range(5, 90): await get_tree().process_frame
+		if Game.state == "cutscene": Game.skipScene()
+		# окна, где нужен выбор (улучшения, карта, лавка), и схема корабля не должны запирать бота навсегда
+		if Ui.ship.visible and rng.randf() < 0.6: Ui.ship.close()
+		if (Game.state == "perk" or Ui.map.visible) and rng.randf() < 0.4:
+			Ui.botPick()
+			continue
+		if Game.state == "tip" and rng.randf() < 0.5: Game.closeTip()
+		var btns: Array = []
+		_collect(ui_root, btns)
+		if btns.is_empty(): continue
+		var b: Button = btns[rng.randi() % btns.size()]
+		var name := _name(b)
+		log[name] = log.get(name, 0) + 1
+		b.pressed.emit()
+	print("в бою: нажатий ", presses, ", разных кнопок: ", log.size())
 	var keys := log.keys()
 	keys.sort()
 	print(", ".join(keys.map(func(k): return "%s×%d" % [k, log[k]])))
