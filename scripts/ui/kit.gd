@@ -264,6 +264,34 @@ static func hbox(sep := 8) -> HBoxContainer:
 	return h
 
 
+## Godot: отступы контейнера сверху/снизу растут на вырез и полоску «домой» (Hud.safe_*), следят за их сменой
+static func safe(m: MarginContainer, top := true, bottom := true) -> MarginContainer:
+	var f := SafeFit.new()
+	f.top = top
+	f.bottom = bottom
+	f.t0 = m.get_theme_constant("margin_top")
+	f.b0 = m.get_theme_constant("margin_bottom")
+	m.add_child(f)
+	f.fit()
+	return m
+
+
+class SafeFit extends Node:
+	var top := true
+	var bottom := true
+	var t0 := 0
+	var b0 := 0
+
+	func _ready() -> void:
+		Hud.safe_changed.connect(fit)
+
+	func fit() -> void:
+		var m := get_parent() as MarginContainer
+		if m == null: return
+		if top: m.add_theme_constant_override("margin_top", t0 + int(round(Hud.safe_top())))
+		if bottom: m.add_theme_constant_override("margin_bottom", b0 + int(round(Hud.safe_bottom())))
+
+
 static func margin(l := 16, t := 16, r := 16, b := 16) -> MarginContainer:
 	var m := MarginContainer.new()
 	m.add_theme_constant_override("margin_left", l)

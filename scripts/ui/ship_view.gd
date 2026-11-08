@@ -29,7 +29,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	tex = load("res://assets/ship_cutaway.webp")
 	add_child(Kit.dim(0.9))
-	var m := Kit.margin(14, 14, 14, 14)
+	var m := Kit.safe(Kit.margin(14, 14, 14, 14))
 	Kit.full(m)
 	add_child(m)
 	var v := Kit.vbox(8)

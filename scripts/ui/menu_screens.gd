@@ -25,7 +25,7 @@ func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	var bgc := ColorRect.new(); bgc.color = Color(Color(Kit.BG), 0.94); Kit.full(bgc); add_child(bgc)
-	var m := Kit.margin(14, 12, 14, 12)
+	var m := Kit.safe(Kit.margin(14, 12, 14, 12))
 	Kit.full(m)
 	add_child(m)
 	var v := Kit.vbox(10)

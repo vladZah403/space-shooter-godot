@@ -32,7 +32,7 @@ func _ready() -> void:
 	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.add_child(center)
-	var m := Kit.margin(16, 24, 16, 24)
+	var m := Kit.safe(Kit.margin(16, 24, 16, 24))
 	center.add_child(m)
 	box = Kit.vbox(10)
 	box.custom_minimum_size.x = 340

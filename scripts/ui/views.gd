@@ -174,6 +174,7 @@ class MenuView extends Control:
 		m.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(m)
 		content = m
+		Kit.safe(m)   # Godot: вырез сверху и полоска «домой» снизу (айфон) — меню не прилипает к краям
 		var v := Kit.vbox(10)
 		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		m.add_child(v)
@@ -290,7 +291,7 @@ class DiffView extends Control:
 		visible = false
 		mouse_filter = Control.MOUSE_FILTER_STOP
 		add_child(Kit.dim(0.8))
-		var m := Kit.margin(16, 20, 16, 16)
+		var m := Kit.safe(Kit.margin(16, 20, 16, 16))
 		Kit.full(m)
 		add_child(m)
 		var v := Kit.vbox(10)
@@ -620,7 +621,7 @@ class OverView extends Control:
 		c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		c.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		sc.add_child(c)
-		var m := Kit.margin(16, 24, 16, 24)
+		var m := Kit.safe(Kit.margin(16, 24, 16, 24))
 		c.add_child(m)
 		var v := Kit.vbox(10)
 		v.custom_minimum_size.x = 340

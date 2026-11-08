@@ -6,6 +6,8 @@ extends Node
 var view = null           # HudView, когда интерфейс построен
 var _safe_top := 0.0
 var _safe_bottom := 0.0
+## безопасная зона поменялась (поворот, панели браузера) — Kit.safe() двигает отступы экранов
+signal safe_changed
 
 
 func _ready() -> void:
@@ -15,6 +17,10 @@ func _ready() -> void:
 
 ## вырез экрана и системные полосы телефона в координатах игры
 func _safe() -> void:
+	if OS.has_feature("web"):
+		_safe_web()
+		safe_changed.emit()
+		return
 	var win := DisplayServer.window_get_size()
 	var safe := DisplayServer.get_display_safe_area()
 	var vis := get_viewport().get_visible_rect().size
@@ -24,6 +30,35 @@ func _safe() -> void:
 	var k := vis.y / float(win.y)
 	_safe_top = maxf(0.0, safe.position.y * k)
 	_safe_bottom = maxf(0.0, (win.y - safe.end.y) * k)
+	safe_changed.emit()
+
+
+## Godot (браузер): Godot не знает выреза и полоски «домой» — спрашиваем у страницы env(safe-area-inset-*)
+## (в index.html viewport-fit=cover, иначе Safari отдаёт нули). На айфоне без кнопки «Домой» снизу всегда
+## оставляем не меньше 22 точек — полоска жеста перекрывает край экрана
+func _safe_web() -> void:
+	var r = JavaScriptBridge.eval("""(function () {
+	var d = document.getElementById('ss-safe');
+	if (!d) {
+		d = document.createElement('div'); d.id = 'ss-safe';
+		d.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;' +
+			'padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)';
+		document.body.appendChild(d);
+	}
+	var s = getComputedStyle(d);
+	return [parseFloat(s.paddingTop) || 0, parseFloat(s.paddingBottom) || 0, window.innerWidth, window.innerHeight].join(',');
+})()""", true)
+	var v := str(r).split(",")
+	var vis := get_viewport().get_visible_rect().size
+	if v.size() < 4 or float(v[3]) <= 0:
+		_safe_top = 0.0; _safe_bottom = 0.0
+		return
+	var k := vis.y / float(v[3])
+	_safe_top = float(v[0]) * k
+	_safe_bottom = float(v[1]) * k
+	# айфон с полоской жеста (высокий экран): запас снизу, даже если Safari не сказал
+	if OS.has_feature("web_ios") and float(v[3]) / maxf(1.0, float(v[2])) > 1.9:
+		_safe_bottom = maxf(_safe_bottom, 22.0 * k)
 
 
 func safe_top() -> float:
