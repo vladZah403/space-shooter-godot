@@ -68,6 +68,14 @@ void fragment() {
 		vec2 d = (uv - b.xy) * asp;
 		float dist = length(d);
 		float x = dist / b.z;
+		if (b.w < 0.0) {
+			// марево маскировки (Невидимка): картинка дрожит внутри силуэта, без кромки и свечения
+			float m = 1.0 - smoothstep(0.4, 1.0, x);
+			vec2 wv = vec2(sin(d.y * 150.0 + TIME * 11.0), cos(d.x * 150.0 + TIME * 9.0));
+			off += wv / asp * m * (-b.w) * 0.0035;
+			ca += m * (-b.w) * 0.002;
+			continue;
+		}
 		if (x < 1.15 && dist > 0.0001) {
 			float rim = smoothstep(0.55, 1.0, x) * (1.0 - smoothstep(1.0, 1.15, x));
 			float wob = sin(x * 26.0 - TIME * 24.0 + atan(d.y, d.x) * 3.0) * bc.a * smoothstep(0.2, 1.0, x);

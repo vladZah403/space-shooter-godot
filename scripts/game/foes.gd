@@ -442,6 +442,11 @@ func heal(e: En) -> void:
 
 ## Невидимка: почти прозрачна; на миг проявляется, даёт очередь и снова исчезает
 func cloak(e: En, dt: float) -> void:
+	# Godot: попадание сбивает маскировку — корабль проявляется (и его видят ракеты и молния)
+	if e.revealT > 0:
+		e.revealT -= dt
+		e.alpha = minf(0.8, e.alpha + dt * 8)
+		return
 	if e.st != 1:
 		e.alpha = maxf(0.12, e.alpha - dt * 3)
 		return

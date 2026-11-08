@@ -125,6 +125,7 @@ var domeHitT := 0.0
 var healT := NAN
 var shown := 0.0
 var cloakT := NAN
+var revealT := 0.0   # Godot: Невидимку подбили — проявилась на время
 var extra := {}               # прочие редкие поля: ключ → значение
 
 # ── босс ──

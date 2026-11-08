@@ -1351,6 +1351,11 @@ func damageEnemy(e: En, dmg: float, o := {}) -> float:
 		dmg *= 1 + perk("sniper") * 0.2 * U.clamp(sqrt((e.x - player.x) * (e.x - player.x) + (e.y - player.y) * (e.y - player.y)) / (G.H * 0.8), 0, 1)
 	if e.frozen > 0: dmg *= 1.15
 	if e.emp > 0: dmg *= 1.3
+	# Godot: попадание по замаскированной Невидимке — маскировка сбоит, корабль проявляется
+	if e.def.cloak and e.alpha < 0.6 and e.revealT <= 0:
+		e.revealT = 0.9
+		FX.sparks(e.x, e.y, "#9fc8ff", 10, 220)
+		A.play("teleport", {"vol": 0.3, "rate": 2.2, "x": e.x})
 	# щит щитоносца / дредноута
 	if e.shield > 0:
 		var mul := 3.0 if o.get("heavy", false) or src == "rail" or src == "bomb" else 1.0

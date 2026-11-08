@@ -1317,12 +1317,29 @@ func horizFlip(e: En) -> float:
 # ════════════════════════════════════════════════════════════
 # ОТРИСОВКА
 # ════════════════════════════════════════════════════════════
-func drawFrame(ctx: Ctx, sprite: String, cv: Texture2D, w: float, h: float) -> void:
+func drawFrame(ctx: Ctx, sprite: String, cv: Texture2D, w: float, h: float, tint := Color.WHITE) -> void:
 	if cv:
-		ctx.draw_tex(cv, -w / 2, -h / 2, w, h)
+		ctx.draw_tex(cv, -w / 2, -h / 2, w, h, tint)
 		return
 	var f := G.frame(sprite)
-	if not f.is_empty(): ctx.draw_image(G.src(f), f[0], f[1], f[2], f[3], -w / 2, -h / 2, w, h)
+	if not f.is_empty(): ctx.draw_image(G.src(f), f[0], f[1], f[2], f[3], -w / 2, -h / 2, w, h, tint)
+
+
+var _cloak_mat: ShaderMaterial
+
+## Godot: Невидимка в маскировке — стеклянный контур (assets/shaders/cloak.gdshader) и марево (Post.bubble с k < 0)
+func drawCloaked(ctx: Ctx, e: En) -> void:
+	if _cloak_mat == null:
+		_cloak_mat = ShaderMaterial.new()
+		_cloak_mat.shader = load("res://assets/shaders/cloak.gdshader")
+	var vis := clampf((e.alpha - 0.12) / 0.83, 0.0, 1.0)
+	var oa := ctx.alpha
+	ctx.alpha = 1.0
+	ctx.material = _cloak_mat
+	drawFrame(ctx, e.sprite, e.cv, e.w, e.h, Color(1, 1, 1, vis))
+	ctx.material = null
+	ctx.alpha = oa
+	if vis < 0.6: Post.bubble(e.x, e.y, maxf(e.w, e.h) * 0.6, -(1.0 - vis), Color.BLACK)
 
 
 func _lighter(ctx: Ctx, a: float) -> void:
@@ -1417,7 +1434,8 @@ func drawAll(ctx: Ctx) -> void:
 			if (e.ai == "diver" and e.st == 2) or e.ai == "flank": rot = def.rot + e.dir - PI / 2
 			if e.larva: rot = e.dir - PI / 2
 			ctx.rotate(rot)
-		drawFrame(ctx, e.sprite, e.cv, e.w, e.h)
+		if def.cloak and e.alpha < 0.999 and FX.quality > 0: drawCloaked(ctx, e)
+		else: drawFrame(ctx, e.sprite, e.cv, e.w, e.h)
 		if e.flash > 0:
 			_lighter(ctx, minf(1, e.flash * 12) * 0.8)
 			var wh := G.white(e.sprite)
