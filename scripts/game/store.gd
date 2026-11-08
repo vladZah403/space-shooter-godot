@@ -722,6 +722,10 @@ func weaponDps(wid: String, full := false) -> float:
 		"plasma": dps = (b.dmg + b.aoe) * dm / cd * (b.min + b.max) / 2
 		"lightning": dps = b.dmg * dm / cd
 		"darkmatter": dps = (b.dmg * (b.life / b.tick) * 0.6 + b.burst) * dm / maxf(cd, b.life)
+		# Godot: клинок режет дважды за рейс; рейсов в секунду — сколько клинков в воздухе
+		"boomerang": dps = b.dmg * dm * 2 * (b.air + weaponLevel(wid, "air")) / (b.out * 2.2)
+		"gravgun": dps = b.dmg * dm / cd * (1 + b.impact * 0.5)
+		"flail": dps = b.dmg * dm / b.tick * 0.8
 	return dps * rate
 
 

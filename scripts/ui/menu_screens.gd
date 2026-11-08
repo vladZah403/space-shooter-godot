@@ -6,7 +6,7 @@ extends Control
 const HudView := preload("res://scripts/ui/hud_view.gd")
 const TITLES := {"hangar": "АНГАР", "arsenal": "АРСЕНАЛ", "skills": "НАВЫКИ", "missions": "ЗАДАНИЯ", "relics": "КСЕНОТЕХ",
 	"achievements": "НАГРАДЫ", "codex": "СПРАВОЧНИК", "settings": "НАСТРОЙКИ", "leaders": "РЕКОРДЫ"}
-const W_LETTER := {"laser": "Л", "shotgun": "Д", "rocket": "Р", "arc": "С", "plasma": "П", "lightning": "М", "darkmatter": "Т"}
+const W_LETTER := {"laser": "Л", "shotgun": "Д", "rocket": "Р", "arc": "С", "plasma": "П", "lightning": "М", "darkmatter": "Т", "boomerang": "Б", "gravgun": "Г", "flail": "Ц"}
 
 var cur := ""
 var tab := ""

@@ -162,6 +162,8 @@ class WeaponDemo extends Scene:
 	var charge := 0.0
 	var trail: Array = []
 	var baseY := 0.0
+	var flailA := 0.0   # Godot: угол пилы на цепи
+	var flailHit := {}
 
 	func init() -> void:
 		super.init()
@@ -210,10 +212,24 @@ class WeaponDemo extends Scene:
 					cx = b.x; cy = b.y
 				fx.append({"kind": "bolt", "pts": pts, "t": 0.0})
 			"darkmatter": sphere = {"x": n.x, "y": n.y, "vy": -200 * k, "age": 0.0, "tick": 0.0}
+			"boomerang":
+				if shots.filter(func(b): return b.k == "boom").size() < 2:
+					var sd := 1.0 if int(t * 10) % 2 else -1.0
+					shots.append({"k": "boom", "x": n.x, "y": n.y, "vx": sd * 90 * k, "vy": -380 * k, "sd": sd, "back": false, "hit": [], "age": 0.0})
+			"gravgun": shots.append({"k": "slug", "x": n.x, "y": n.y, "vx": 0.0, "vy": -420 * k, "age": 0.0})
 
 	func step(c: Ctx, dt: float) -> void:
 		var px: float = ship.x
 		ship.x = W / 2 + sin(t * (1.6 if wid == "arc" else 0.7)) * W * (0.22 if wid == "arc" else 0.1)
+		# пила: корабль подлетает к мишеням, пила кружит вокруг и режет
+		if wid == "flail":
+			ship.y = baseY - (0.5 + 0.5 * sin(t * 1.2)) * (baseY - 90 * k)
+			flailA += dt * 5.5
+			var sx: float = ship.x + cos(flailA) * 58 * k
+			var sy: float = ship.y + sin(flailA) * 58 * k
+			for e in _alive():
+				if Vector2(e.x - sx, e.y - sy).length() < 20 * k and t >= flailHit.get(e, -1.0):
+					flailHit[e] = t + 0.12; _hit(e, 7)
 		if evo and wid == "shotgun": ship.y = baseY - maxf(0, sin(t * 1.3)) * (baseY - 70 * k)
 		charge = clampf(charge + absf(ship.x - px) / (W * 0.8) - dt * 0.3, 0, 1)
 		for e in tg:
@@ -267,11 +283,22 @@ class WeaponDemo extends Scene:
 					var ca := atan2(b.vy, b.vx)
 					var na := ca + clampf(U.angle_diff(ca, a), -6 * dt, 6 * dt)
 					b.vx = cos(na) * sp; b.vy = sin(na) * sp
+			if b.k == "boom":
+				# вылет с дугой, потом возврат к кораблю
+				if not b.back:
+					b.vx += b.sd * 300 * k * dt; b.vy *= exp(-1.8 * dt)
+					if b.age > 0.6:
+						b.back = true; b.hit.clear()
+				else:
+					var to := Vector2(ship.x - b.x, ship.y - b.y)
+					var v := to.normalized() * minf(520 * k, Vector2(b.vx, b.vy).length() + 900 * k * dt)
+					b.vx = lerpf(b.vx, v.x, minf(1, dt * 7)); b.vy = lerpf(b.vy, v.y, minf(1, dt * 7))
+					if to.length() < 14 * k: b.dead = true
 			if b.k == "wave" or b.k == "plasma": b.y += b.vy * dt
 			else:
 				b.x += b.vx * dt; b.y += b.vy * dt
 			if b.get("life", 0.0) and b.age > b.life: b.dead = true
-			if b.y < -20 or b.x < -20 or b.x > W + 20: b.dead = true
+			if b.k != "boom" and (b.y < -20 or b.x < -20 or b.x > W + 20): b.dead = true
 			if b.get("dead", false): continue
 			if b.k == "wave":
 				var half: float = (40 + 60 * minf(1, b.age / b.life)) * k * (0.85 + 0.3 * b.ch)
@@ -283,8 +310,22 @@ class WeaponDemo extends Scene:
 				b.tr -= dt
 				if b.tr <= 0:
 					b.tr = 0.05; trail.append({"x": b.x, "y": b.y, "t": 0.0})
+			if b.k == "boom":
+				for e in _alive():
+					if not e in b.hit and Vector2(e.x - b.x, e.y - b.y).length() < e.w * 0.6:
+						b.hit.append(e); _hit(e, 12)
+				continue
 			for e in _alive():
 				if Vector2(e.x - b.x, e.y - b.y).length() > e.w * 0.55: continue
+				if b.k == "slug":
+					# отброс и «бильярд»: соседняя мишень получает удар
+					_hit(e, 16); e.y -= 18 * k
+					for o in _alive():
+						if o != e and Vector2(o.x - e.x, o.y - e.y).length() < 70 * k:
+							_hit(o, 10); fx.append({"kind": "ring", "x": (o.x + e.x) / 2, "y": (o.y + e.y) / 2, "t": 0.0, "r": 16 * k, "col": "#5cffb0"})
+					fx.append({"kind": "ring", "x": b.x, "y": b.y, "t": 0.0, "r": 22 * k, "col": "#5cffb0"})
+					b.dead = true
+					break
 				if b.get("pierce", false):
 					if e in b.hit: continue
 					b.hit.append(e); _hit(e, 12)
@@ -369,6 +410,8 @@ class WeaponDemo extends Scene:
 				"plasma":
 					var g := minf(1, b.age / 0.6)
 					G.draw_canvas(c, G.tinted("fx_plasma2" if G.has("fx_plasma2") else "eb_fire", {"hue": 305}), b.x, b.y, (18 + 22 * g) * k, b.age * 4)
+				"boom": Game.drawBlade(c, b.x, b.y, 11 * k, b.age * 22)
+				"slug": G.draw_canvas(c, G.tinted("pb_orb", {"hue": 150}), b.x, b.y, 13 * k)
 				"wave":
 					var half: float = (40 + 60 * minf(1, b.age / b.life)) * k * (0.85 + 0.3 * b.ch)
 					var R := half * 1.6
@@ -379,6 +422,14 @@ class WeaponDemo extends Scene:
 						c.begin_path(); c.arc(b.x, b.y + R, R, -PI / 2 - span, -PI / 2 + span); c.stroke_path()
 					c.alpha = 1.0
 		if sphere != null: G.draw(c, "fx_vortex" if G.has("fx_vortex") else "pb_orb", sphere.x, sphere.y, 54 * k, sphere.age * 5, 0.9)
+		if wid == "flail":
+			var sx: float = ship.x + cos(flailA) * 58 * k
+			var sy: float = ship.y + sin(flailA) * 58 * k
+			c.additive = false
+			c.fill = Color("#8b97a8")
+			for i in range(1, 6): c.fill_circle(lerpf(ship.x, sx, i / 6.0), lerpf(ship.y, sy, i / 6.0), 2.2 * k)
+			Game.drawSaw(c, sx, sy, 12 * k, t * 14, 0.7)
+			c.additive = true
 		for f in fx:
 			if f.kind == "bolt" and f.t < 0.14:
 				c.alpha = 1 - f.t / 0.14; c.stroke = U.col("#fff36b"); c.line_width = 2 * k

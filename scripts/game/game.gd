@@ -611,6 +611,7 @@ func update(dt: float, rdt: float) -> void:
 	Comp.update(dt)
 	RunMap.updateEscort(dt)
 	updateBullets(dt)
+	updateFlail(dt)
 	E.updateAll(edt, dt)
 	updateBurn(dt)
 	updateFire(dt)
@@ -804,6 +805,9 @@ func fireWeapons(dt: float) -> void:
 			if not b.dead and b.kind == "dark":
 				sphere = true
 				break
+	# Godot: бумеранг — не больше N клинков в воздухе; пила на цепи не стреляет вовсе
+	if wid == "boomerang": sphere = countShots("boom") >= int(def.base.air) + wl(wid, "air")
+	if wid == "flail": sphere = true
 	while p.wcd[wid] <= 0 and guard < 3:
 		guard += 1
 		# магазин пуст — ждём перезарядку, первый выстрел после неё сразу
@@ -956,6 +960,42 @@ func fire(wid: String) -> void:
 				shot({"x": p.x, "y": nose, "vx": sin(a) * base.speed * S, "vy": -cos(a) * base.speed * S, "dmg": base.dmg * dmgMul_ * mk, "r": radius, "kind": "dark",
 					"w": radius * 1.1, "tickT": base.tick, "pull": pull, "burst": base.burst * dmgMul_ * mk * (2.0 if evo("darkmatter") else 1.0), "burstR": radius * 1.25, "wid": wid, "life": base.life})
 			A.play("dark")
+		"boomerang":
+			# клинок уходит дугой то влево, то вправо, тормозит и возвращается (updateBullets)
+			p.side = -p.side
+			var n := 2 if multi > 0 else 1
+			var sp: float = base.speed * S * (1 + wl(wid, "range") * 0.1)
+			for i in n:
+				var sd: float = p.side * (1.0 if i == 0 else -1.0)
+				var a := sd * (0.28 + (0.2 if spread else 0.0))
+				var b := shot({"x": p.x, "y": nose, "vx": sin(a) * sp, "vy": -cos(a) * sp, "dmg": base.dmg * dmgMul_ * mk, "r": base.r * S,
+					"kind": "boom", "w": 36 * S, "pierce": 999, "wid": wid, "life": base.life})
+				b.ch = sd
+			A.play("arc", {"rate": 1.4, "vol": 0.7})
+		"gravgun":
+			# тяжёлый гравизаряд: попавшего отбрасывает, отлетевший сбивает других (E.knock)
+			var cv := G.tinted("pb_orb", {"hue": 150})
+			var n := 1 + multi
+			for i in n:
+				var a := (i - (n - 1) / 2.0) * 0.14 + U.rand(-0.03, 0.03)
+				shot({"x": p.x, "y": nose, "vx": sin(a) * base.speed * S, "vy": -cos(a) * base.speed * S, "dmg": base.dmg * dmgMul_ * mk, "r": 9 * S,
+					"kind": "slug", "cv": cv, "w": 22 * S, "wid": wid, "life": 1.6})
+			if spread:
+				for a in [-0.3, 0.3]:
+					shot({"x": p.x, "y": nose, "vx": sin(a) * base.speed * S, "vy": -cos(a) * base.speed * S, "dmg": base.dmg * dmgMul_ * 0.6, "r": 8 * S,
+						"kind": "slug", "cv": cv, "w": 18 * S, "wid": wid, "life": 1.6})
+			FX.glow_puff(p.x, nose, "#5cffb0", 40 * S, 0.12)
+			A.play("plasma", {"rate": 1.5, "vol": 0.7})
+		"flail":
+			pass   # пила на цепи не стреляет — её ведёт updateFlail
+
+
+## Godot: сколько снарядов этого вида сейчас в полёте
+func countShots(kind: String) -> int:
+	var n := 0
+	for b in bullets:
+		if not b.dead and b.kind == kind: n += 1
+	return n
 
 
 ## цепная молния: ищет ближайшую цель выше корабля, затем прыгает; weak — искра без энергии
@@ -1088,6 +1128,29 @@ func updateBullets(dt: float) -> void:
 			b.vx = cos(ang) * sp; b.vy = sin(ang) * sp
 			if U.random() < (0.3 if G.has("fx_tr_rocket") else 0.7): FX.glow_puff(b.x - b.vx * 0.02, b.y - b.vy * 0.02, "#ff9f3d", 14 * S, 0.18)
 			if FX.quality > 0 and U.random() < 0.35: FX.smoke(b.x - b.vx * 0.03, b.y - b.vy * 0.03, 1, 7 * S)
+		elif b.kind == "boom":
+			b.rot += dt * 24
+			var pl := player
+			var tOut: float = D.WEAPONS.boomerang.base.out * (1 + wl("boomerang", "range") * 0.1)
+			if not b.bounced:
+				# вылет: тормозит и загибает дугу в свою сторону
+				b.vx += b.ch * 520 * S * dt
+				b.vx *= exp(-1.1 * dt); b.vy *= exp(-1.6 * dt)
+				if b.age >= tOut:
+					b.bounced = true
+					b.hit.clear()   # на обратном пути режет тех же врагов ещё раз
+			else:
+				# возврат: тянется к кораблю всё быстрее
+				var dx := pl.x - b.x
+				var dy := pl.y - b.y
+				var dl := maxf(1.0, sqrt(dx * dx + dy * dy))
+				var sp := minf(1100 * S, sqrt(b.vx * b.vx + b.vy * b.vy) + 1400 * S * dt)
+				var kk := minf(1.0, dt * 7)
+				b.vx = lerpf(b.vx, dx / dl * sp, kk); b.vy = lerpf(b.vy, dy / dl * sp, kk)
+				if dl < pl.w * 0.45 or not pl.alive:
+					b.dead = true
+					if pl.alive: FX.glow_puff(pl.x, pl.y, "#ffb347", 30 * S, 0.15)
+					continue
 		elif b.kind == "dark":
 			b.vx *= exp(-0.85 * dt); b.vy *= exp(-0.85 * dt)
 			b.rot += dt * 5
@@ -1149,7 +1212,7 @@ func updateBullets(dt: float) -> void:
 				b.life = minf(b.life, 0.45)
 				b.fade = b.life
 				if U.random() < 0.5: FX.hit(b.x, 2, "#7fe7ff")
-		if b.life <= 0 or b.y < -60 or b.y > H + 60 or b.x < -60 or b.x > FW + 60:
+		if b.life <= 0 or (b.kind != "boom" and (b.y < -60 or b.y > H + 60 or b.x < -60 or b.x > FW + 60)):
 			if b.kind == "rocket" and b.life <= 0: rocketBlast(b, null)
 			if b.kind == "plasma" and b.life <= 0: plasmaBlast(b, null)
 			b.dead = true
@@ -1288,6 +1351,9 @@ func collide() -> void:
 				break
 			if mul >= 1.3: hitCol = "#ffffff"
 			damageEnemy(e, b.dmg * mul, {"crit": true, "src": b.wid, "cryo": true, "conductor": true})
+			if b.kind == "slug":
+				E.knock(e, b.vx, b.vy, b.dmg)
+				FX.ring(b.x, b.y, 4 * G.S, 30 * G.S, "#5cffb0", 0.25, 3)
 			FX.hit(b.x, b.y, hitCol)
 			if b.pierce > 0:
 				b.pierce -= 1
@@ -3411,6 +3477,149 @@ func crescent(ctx: Ctx, w: Dictionary, th: float) -> void:
 	ctx.fill_path()
 
 
+# ── Godot: пила на цепи — цепочка звеньев с физикой (Верле), держится за корабль; мотор гонит пилу по кругу,
+#    манёвры корабля её раскручивают. Режет врагов (урон растёт со скоростью пилы) и вражеские пули ──
+var flail = null   # { pts: [{x, y, px, py}], tick: {uid: время}, spin, spd }
+
+
+func updateFlail(dt: float) -> void:
+	var p := player
+	if p == null or not p.alive or p.weapon != "flail" or state != "play":
+		flail = null
+		return
+	var S := G.S
+	var base: Dictionary = D.WEAPONS.flail.base
+	var n: int = int(base.links) + wl("flail", "len")
+	var seg: float = base.seg * S
+	if flail == null or flail.pts.size() != n + 1:
+		var pts0: Array = []
+		for i in n + 1: pts0.append({"x": p.x + i * seg, "y": p.y, "px": p.x + i * seg, "py": p.y})
+		flail = {"pts": pts0, "tick": {}, "spin": 0.0, "spd": 0.0}
+	var pts: Array = flail.pts
+	var h := minf(dt, 1.0 / 30)
+	var spinK: float = 1 + wl("flail", "spin") * 0.15
+	var last := pts.size() - 1
+	for i in pts.size():
+		var q: Dictionary = pts[i]
+		if i == 0:
+			q.x = p.x; q.y = p.y; q.px = p.x; q.py = p.y
+			continue
+		var vx: float = (q.x - q.px) * 0.985
+		var vy: float = (q.y - q.py) * 0.985
+		q.px = q.x; q.py = q.y
+		var ax := 0.0
+		var ay := 0.0
+		if i == last:
+			# мотор пилы: тянет по касательной вокруг корабля, даже когда корабль стоит
+			var dx: float = q.x - p.x
+			var dy: float = q.y - p.y
+			var dl := maxf(1.0, sqrt(dx * dx + dy * dy))
+			ax = -dy / dl * 2600 * S * spinK; ay = dx / dl * 2600 * S * spinK
+		q.x += vx + ax * h * h; q.y += vy + ay * h * h
+	for it in 5:
+		for i in range(1, pts.size()):
+			var q0: Dictionary = pts[i - 1]
+			var q1: Dictionary = pts[i]
+			var dx: float = q1.x - q0.x
+			var dy: float = q1.y - q0.y
+			var dl := maxf(0.001, sqrt(dx * dx + dy * dy))
+			var dd := (dl - seg) / dl
+			if i == 1:
+				q1.x -= dx * dd; q1.y -= dy * dd
+			else:
+				q0.x += dx * dd * 0.5; q0.y += dy * dd * 0.5
+				q1.x -= dx * dd * 0.5; q1.y -= dy * dd * 0.5
+	var sw: Dictionary = pts[last]
+	var spd := sqrt((sw.x - sw.px) * (sw.x - sw.px) + (sw.y - sw.py) * (sw.y - sw.py)) / maxf(h, 0.001)
+	flail.spd = spd
+	flail.spin += dt * (8 + spd * 0.04)
+	var r: float = base.r * S
+	var k := U.clamp(spd / (500 * S), 0.6, 2.2)
+	var dmg: float = base.dmg * dmgMul("flail") * k
+	if flail.tick.size() > 200: flail.tick.clear()
+	for e in enemies:
+		if not e.alive or not e.hittable: continue
+		var rr := r + (maxf(e.rx, e.ry) if e.rx != 0.0 else e.r)
+		if absf(e.x - sw.x) > rr or absf(e.y - sw.y) > rr: continue
+		if e.rx != 0.0:
+			if not E.hitTest(e, sw.x, sw.y, r): continue
+		elif (e.x - sw.x) * (e.x - sw.x) + (e.y - sw.y) * (e.y - sw.y) > rr * rr: continue
+		if t < flail.tick.get(e.uid, -1.0): continue
+		flail.tick[e.uid] = t + base.tick
+		run.hits += 1
+		damageEnemy(e, dmg, {"crit": true, "src": "flail"})
+		FX.sparks(sw.x, sw.y, "#ffb03d", 5, 280)
+		if U.random() < 0.3: A.play("hitArmor", {"x": sw.x, "vol": 0.5, "rate": 1.6})
+	# вражеские пули о пилу разбиваются
+	for eb in ebullets:
+		if eb.dead: continue
+		var er: float = r + eb.r
+		if (eb.x - sw.x) * (eb.x - sw.x) + (eb.y - sw.y) * (eb.y - sw.y) < er * er:
+			eb.dead = true
+			FX.hit(eb.x, eb.y, "#ffb03d")
+
+
+func drawFlail(ctx: Ctx) -> void:
+	if flail == null: return
+	var S := G.S
+	var pts: Array = flail.pts
+	ctx.additive = false
+	ctx.alpha = 1.0
+	for i in range(1, pts.size() - 1):
+		var q: Dictionary = pts[i]
+		ctx.fill = Color("#0b0f16"); ctx.fill_circle(q.x, q.y, 4.2 * S)
+		ctx.fill = Color("#8b97a8") if i % 2 else Color("#5b6678"); ctx.fill_circle(q.x, q.y, 3 * S)
+	var sw: Dictionary = pts[pts.size() - 1]
+	drawSaw(ctx, sw.x, sw.y, D.WEAPONS.flail.base.r * S, flail.spin, U.clamp(flail.spd / (700 * S), 0.0, 1.0))
+
+
+## пила: диск с зубьями, крутится; heat 0…1 — насколько раскалена кромка (от скорости)
+func drawSaw(ctx: Ctx, x: float, y: float, r: float, spin: float, heat := 0.5) -> void:
+	var teeth := 12
+	var tp := PackedVector2Array()
+	var tc := PackedColorArray()
+	for i in teeth * 2:
+		var a := spin + i * PI / teeth
+		var rr := r * (1.0 if i % 2 == 0 else 0.78)
+		tp.append(Vector2(x + cos(a) * rr, y + sin(a) * rr))
+		tc.append(Color("#d6dde8") if i % 2 == 0 else Color("#8a95a6"))
+	var oa := ctx.additive
+	ctx.additive = false
+	ctx.fill_poly(tp, tc)
+	ctx.fill = Color("#3a4250"); ctx.fill_circle(x, y, r * 0.55)
+	ctx.fill = Color("#ff5c4d"); ctx.fill_circle(x, y, r * 0.18)
+	ctx.additive = true
+	ctx.alpha = 0.3 + 0.5 * heat
+	ctx.stroke = U.col("#ffb03d"); ctx.line_width = 2 * G.S
+	ctx.begin_path(); ctx.arc(x, y, r * 0.9, 0, TAU); ctx.stroke_path()
+	ctx.alpha = 0.25 + 0.35 * heat
+	ctx.draw_tex(G.glow("#ff6a2a", 64), x - r * 1.7, y - r * 1.7, r * 3.4, r * 3.4)
+	ctx.alpha = 1.0
+	ctx.additive = oa
+
+
+## клинок бумеранга: три загнутых лезвия вокруг ступицы
+func drawBlade(ctx: Ctx, x: float, y: float, r: float, rot: float) -> void:
+	var oa := ctx.additive
+	ctx.additive = true
+	ctx.alpha = 0.35
+	ctx.draw_tex(G.glow("#ffb347", 64), x - r * 1.5, y - r * 1.5, r * 3, r * 3)
+	ctx.alpha = 1.0
+	ctx.additive = false
+	for k in 3:
+		var a := rot + k * TAU / 3
+		var pts := PackedVector2Array([
+			Vector2(x + cos(a - 0.7) * r * 0.25, y + sin(a - 0.7) * r * 0.25),
+			Vector2(x + cos(a - 0.2) * r * 0.85, y + sin(a - 0.2) * r * 0.85),
+			Vector2(x + cos(a + 0.08) * r, y + sin(a + 0.08) * r),
+			Vector2(x + cos(a + 0.4) * r * 0.55, y + sin(a + 0.4) * r * 0.55),
+			Vector2(x + cos(a + 0.8) * r * 0.3, y + sin(a + 0.8) * r * 0.3)])
+		ctx.fill_poly(pts, PackedColorArray([Color("#7a3d0a"), Color("#ffd27a"), Color("#fff3d1"), Color("#ffb347"), Color("#a8560f")]))
+	ctx.fill = Color("#3a2a1a"); ctx.fill_circle(x, y, r * 0.22)
+	ctx.fill = Color("#ffd27a"); ctx.fill_circle(x, y, r * 0.1)
+	ctx.additive = oa
+
+
 func drawBullets(ctx: Ctx) -> void:
 	ctx.additive = true
 	var trail: bool = G.has("fx_tr_rocket") and Main.quality > 0
@@ -3459,6 +3668,9 @@ func drawBullets(ctx: Ctx) -> void:
 				ctx.fill = U.col(pass_[0])
 				crescent(ctx, w, b.r * pass_[2])
 			ctx.alpha = 1.0
+		elif b.kind == "boom":
+			drawBlade(ctx, b.x, b.y, b.r * 1.3, b.rot)
+			ctx.additive = true
 		elif b.cv or b.sprite != "":
 			# отскочившие от верха снаряды тают
 			if b.fade != 0.0: ctx.alpha = U.clamp(b.life / b.fade, 0, 1) * 0.85
@@ -3466,6 +3678,7 @@ func drawBullets(ctx: Ctx) -> void:
 			else: G.draw(ctx, b.sprite, b.x, b.y, b.w, ang)
 			ctx.alpha = 1.0
 	ctx.additive = false
+	drawFlail(ctx)
 
 
 ## шкала ресурса: магазин — деления по числу выстрелов, остальное — заполнение снизу вверх

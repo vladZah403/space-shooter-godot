@@ -9,8 +9,8 @@ extends Node
 ## Поведение подхватывает enemies.gd: _init_<ai> / _ai_<ai> отсюда, стрельба «lob» — _fire_lob.
 
 ## источник урона → оружие: для значка и привыкания Мимика
-const SRC_W := {"laser": "laser", "shotgun": "shotgun", "rocket": "rocket", "arc": "arc", "plasma": "plasma", "lightning": "lightning", "dark": "darkmatter"}
-const W_LETTER := {"laser": "Л", "shotgun": "Д", "rocket": "Р", "arc": "С", "plasma": "П", "lightning": "М", "darkmatter": "Т"}
+const SRC_W := {"laser": "laser", "shotgun": "shotgun", "rocket": "rocket", "arc": "arc", "plasma": "plasma", "lightning": "lightning", "dark": "darkmatter", "boomerang": "boomerang", "gravgun": "gravgun", "flail": "flail"}
+const W_LETTER := {"laser": "Л", "shotgun": "Д", "rocket": "Р", "arc": "С", "plasma": "П", "lightning": "М", "darkmatter": "Т", "boomerang": "Б", "gravgun": "Г", "flail": "Ц"}
 const ARMOR_TXT := {"icebreaker": "ЛЁД"}
 ## Мимик: столько прочности от одного оружия — и он к нему привыкает на ADAPT_T с
 const ADAPT_SHARE := 0.22

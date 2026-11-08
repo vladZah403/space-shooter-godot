@@ -375,6 +375,19 @@ static func weaponIcon(c: Ctx, wid: String, cx: float, cy: float, s: float) -> v
 				c.begin_path(); c.arc(cx, cy + s * 0.3, s * (0.25 + i * 0.13), -PI * 0.82, -PI * 0.18); c.stroke_path()
 		"darkmatter":
 			G.draw(c, "fx_vortex", cx, cy, s * 0.82)
+		"boomerang":
+			Game.drawBlade(c, cx, cy, s * 0.36, 0.5)
+		"gravgun":
+			c.alpha = 0.6
+			c.stroke = U.col("#5cffb0"); c.line_width = s * 0.04
+			for i in 2:
+				c.begin_path(); c.arc(cx, cy, s * (0.24 + i * 0.12), 0, TAU); c.stroke_path()
+			c.alpha = 1.0
+			G.draw_canvas(c, G.tinted("pb_orb", {"hue": 150, "alpha": true}), cx, cy, s * 0.36)
+		"flail":
+			c.fill = Color("#8b97a8")
+			for i in 3: c.fill_circle(cx - s * 0.3 + i * s * 0.1, cy + s * 0.3 - i * s * 0.1, s * 0.035)
+			Game.drawSaw(c, cx + s * 0.08, cy - s * 0.08, s * 0.24, 0.3, 0.6)
 			c.additive = false
 			c.draw_tex(G.proc("voidcore"), cx - s * 0.14, cy - s * 0.14, s * 0.28, s * 0.28)
 	c.restore()

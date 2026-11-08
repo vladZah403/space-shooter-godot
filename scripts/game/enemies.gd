@@ -1203,6 +1203,54 @@ func runAI(name: String, e: En, dt: float) -> void:
 # ОБНОВЛЕНИЕ
 # ════════════════════════════════════════════════════════════
 ## зависшие наверху враги расходятся в стороны, а не лежат друг на друге
+## Godot: гравипушка — враг отлетает (боссы не двигаются, мини-боссы и крупные — меньше)
+func knock(e: En, vx: float, vy: float, dmg: float) -> void:
+	if not e.alive or e.boss or e.def.prop or e.ai == "bturret": return
+	var base: Dictionary = D.WEAPONS.gravgun.base
+	var f: float = base.force * G.S * (1 + Game.wl("gravgun", "force") * 0.2) * (0.35 if e.mini else 1.0) * clampf(60.0 * G.S / maxf(e.w, 1.0), 0.45, 1.3)
+	var sp := maxf(1.0, sqrt(vx * vx + vy * vy))
+	e.kbx += vx / sp * f; e.kby += vy / sp * f
+	e.kbT = 0.7
+	e.kbDmg = dmg * base.impact * (1 + Game.wl("gravgun", "impact") * 0.25)
+	e.kbHit = []
+
+
+## полёт отброшенного врага: тормозит, отскакивает от краёв, врезается в других — урон обоим, толчок дальше
+func knockStep(e: En, dt: float) -> void:
+	var S := G.S
+	var dx := e.kbx * dt
+	var dy := e.kby * dt
+	e.x += dx; e.y += dy
+	# поведение продолжит уже с нового места
+	e.baseX += dx; e.baseY += dy
+	if e.ty != 0.0: e.ty += dy
+	var k := exp(-3.2 * dt)
+	e.kbx *= k; e.kby *= k
+	e.kbT -= dt
+	if e.x < e.w * 0.5 or e.x > G.FW - e.w * 0.5:
+		e.kbx = -e.kbx * 0.6; e.x = U.clamp(e.x, e.w * 0.5, G.FW - e.w * 0.5)
+	if e.y < e.h * 0.4 and e.kby < 0: e.kby = -e.kby * 0.5
+	var sp := sqrt(e.kbx * e.kbx + e.kby * e.kby)
+	if sp < 50 * S: e.kbT = 0.0
+	for o: En in Game.enemies:
+		if o == e or not o.alive or not o.hittable or o.uid in e.kbHit: continue
+		var rr := (e.r + o.r) * 0.9
+		var ox := o.x - e.x
+		var oy := o.y - e.y
+		if absf(ox) > rr or absf(oy) > rr or ox * ox + oy * oy > rr * rr: continue
+		e.kbHit.append(o.uid)
+		var hit := e.kbDmg * U.clamp(sp / (300 * S), 0.5, 1.6)
+		FX.sparks((e.x + o.x) / 2, (e.y + o.y) / 2, "#5cffb0", 10, 260)
+		A.play("hitArmor", {"x": e.x, "vol": 0.6})
+		Game.damageEnemy(o, hit, {"src": "gravgun"})
+		if o.alive and not o.boss and not o.def.prop and o.ai != "bturret":
+			o.kbx += e.kbx * 0.6; o.kby += e.kby * 0.6; o.kbT = 0.6
+			o.kbDmg = e.kbDmg * 0.7; o.kbHit = [e.uid]
+		e.kbx *= 0.4; e.kby *= 0.4
+		Game.damageEnemy(e, hit * 0.5, {"src": "gravgun", "noText": true})
+		if not e.alive: return
+
+
 func separate(dt: float) -> void:
 	var es: Array = Game.enemies
 	var S := G.S
@@ -1234,6 +1282,9 @@ func updateAll(edt: float, dt: float) -> void:
 		if e.shieldHitT > 0: e.shieldHitT -= dt
 		if e.boss:
 			B.updateBoss(e, edt, dt)
+			continue
+		if e.kbT > 0:
+			knockStep(e, dt)
 			continue
 		var edt2 := edt
 		if e.frozen > 0:
