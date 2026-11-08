@@ -61,6 +61,9 @@ var _off := "--nopost" in OS.get_cmdline_user_args()   # проверки: бе�
 
 func level() -> int:
 	if _off or not M.s.settings.get("post", true): return 0
+	# телефон: копия экрана каждый кадр (пузырь щита, волны бомбы, цвет при перках) вешала Safari на айфоне —
+	# эффекты экрана только при «Высоком», выбранном вручную; щит и взрывы остаются обычными спрайтами
+	if Main.is_mobile() and M.s.settings.get("quality", "auto") != "high": return 0
 	return Main.quality
 
 

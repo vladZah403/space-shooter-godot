@@ -69,9 +69,10 @@ func measure(dt: float) -> void:
 		_fast = 0; _upgraded = true; _setQ(quality + 1)
 
 
-## телефон (приложение или браузер на телефоне)
+## телефон или планшет (приложение или браузер). Safari на iPad называет себя «macOS» — узнаём его по сенсорному экрану
 func is_mobile() -> bool:
-	return OS.has_feature("mobile") or OS.has_feature("web_android") or OS.has_feature("web_ios")
+	if OS.has_feature("mobile") or OS.has_feature("web_android") or OS.has_feature("web_ios"): return true
+	return OS.has_feature("web_macos") and DisplayServer.is_touchscreen_available()
 
 
 ## свечение (bloom) — самая дорогая часть постобработки: на телефоне только если «Высокое» выбрано вручную
