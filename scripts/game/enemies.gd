@@ -1296,6 +1296,7 @@ func updateAll(edt: float, dt: float) -> void:
 			edt2 = 0.0
 		e.age += edt2
 		e.lastX = e.x
+		_damaged(e, dt)
 		var ai: String = e.ai if e.ai != "" else e.def.ai
 		if hasAI(ai): runAI(ai, e, edt2)
 		elif Foes.hasAI(ai): Foes.runAI(ai, e, edt2)
@@ -1326,6 +1327,42 @@ func updateAll(edt: float, dt: float) -> void:
 			Haptic.boom()
 
 
+## Godot: из чего враг — от этого зависят дым подбитого и взрыв (живые брызгают, кристаллы рассыпаются искрами)
+const ORGANIC := ["bug", "swarm", "parasite", "biomech", "hive_egg", "mimic"]
+const CRYSTAL := ["crystal", "prism_rock", "ice_rock"]
+const ROCK := ["asteroid", "lava_rock", "toxic_rock", "debris"]
+
+
+func matter(e: En) -> String:
+	if e.type in ORGANIC: return "organic"
+	if e.type in CRYSTAL: return "crystal"
+	if e.type in ROCK: return "rock"
+	return "metal"
+
+
+## подбитый враг (меньше 40% прочности, не одноразовый): металл дымит и искрит, живой — сочится, кристалл мерцает
+func _damaged(e: En, dt: float) -> void:
+	if FX.quality == 0 or e.maxHp < 3.0 or e.hp > e.maxHp * 0.4 or e.y < 0: return
+	e.dmgFx -= dt
+	if e.dmgFx > 0: return
+	var k := 1.0 - e.hp / maxf(1.0, e.maxHp * 0.4)   # чем ближе к гибели, тем чаще
+	e.dmgFx = lerpf(0.22, 0.08, k)
+	var S := G.S
+	var ox := U.rand(-0.3, 0.3) * e.w
+	var oy := U.rand(-0.25, 0.2) * e.h
+	match matter(e):
+		"organic":
+			var c: String = COLORS.get(e.type, "#a6ff3d")
+			FX.embers(e.x + ox, e.y + oy, c, 1, 40.0)
+		"crystal":
+			FX.sparks(e.x + ox, e.y + oy, "#bff4ff", 2, 90.0, 0.3)
+		"rock":
+			pass
+		_:
+			FX.smoke(e.x + ox, e.y + oy, 1, 11.0 * S * (0.8 + k))
+			if U.random() < 0.35 + k * 0.4: FX.sparks(e.x + ox, e.y + oy, "#ffd27a", 2, 150.0, 0.25)
+
+
 # ════════════════════════════════════════════════════════════
 # УНИЧТОЖЕНИЕ
 # ════════════════════════════════════════════════════════════
@@ -1347,7 +1384,23 @@ func kill(e: En, src: String) -> void:
 	if e.mini:
 		FX.explode(e.x - e.w * 0.25, e.y, 1.4, col)
 		FX.explode(e.x + e.w * 0.25, e.y, 1.4, "#ffb03d")
-	if FX.quality > 0: FX.debris(e.x, e.y, col, int(round(size * 3)), 140)
+	# Godot: взрыв по материалу — металл: обломки, искры, дым; живое: брызги и облачко; кристалл: звонкие осколки
+	if FX.quality > 0:
+		match matter(e):
+			"organic":
+				FX.embers(e.x, e.y, col, int(round(size * 10)), 180.0)
+				FX.glow_puff(e.x, e.y, col, 30.0 * S * size, 0.4)
+				FX.ring(e.x, e.y, 4 * S, 34 * S * size, col, 0.35, 2.0)
+			"crystal":
+				FX.sparks(e.x, e.y, "#e6fbff", int(round(size * 12)), 320.0, 0.5)
+				FX.debris(e.x, e.y, col, int(round(size * 3)), 200)
+				FX.ring(e.x, e.y, 6 * S, 46 * S * size, "#bff4ff", 0.3, 2.0)
+			"rock":
+				FX.debris(e.x, e.y, col, int(round(size * 4)), 140)
+			_:
+				FX.debris(e.x, e.y, col, int(round(size * 3)), 140)
+				FX.sparks(e.x, e.y, "#ffd27a", int(round(size * 6)), 260.0, 0.35)
+				FX.smoke(e.x, e.y, int(round(size * 2)), 12.0 * S * size)
 	A.play("explodeM" if size > 1.5 else "explodeS", {"vol": 0.8 if size > 1.5 else 0.6, "x": e.x})
 	if size > 1.5: FX.shake(0.45 if e.mini else 0.18)
 	if e.mini:

@@ -217,6 +217,9 @@ class MenuView extends Control:
 		prof.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		prof.alignment = BoxContainer.ALIGNMENT_CENTER
 		lvl = Kit.label("", 13, Kit.TEXT, 700)
+		# длинная строка (престиж, большой уровень) обрезается многоточием, а не раздвигает шапку
+		lvl.clip_text = true
+		lvl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		prof.add_child(Kit.label(Lang.t("ПИЛОТ"), 11, Kit.CYAN, 800))
 		prof.add_child(lvl)
 		head.add_child(prof)
@@ -295,7 +298,7 @@ class MenuView extends Control:
 		refresh_wallet()
 
 	func refresh_wallet() -> void:
-		if coins: coins.text = U.fmt(M.s.coins)
+		if coins: coins.text = U.fmt(M.s.coins) if M.s.coins < 1000000 else U.fmt_short(M.s.coins)
 		if screens and screens.visible: screens.refresh_wallet()
 
 	func show_diff() -> void:
@@ -453,8 +456,20 @@ class DiffView extends Control:
 			M.s.settings.diff = id; M.soon()
 		_render()
 
+	var _jumping := false
+
 	func _go() -> void:
+		if _jumping: return
+		_jumping = true
 		visible = false
+		# Godot: гиперпрыжок — звёзды вытягиваются в лучи, вспышка, и уже в бою они замедляются (Bg.warp гаснет сам)
+		Ui.menu.content.visible = false
+		A.play("teleport", {"rate": 1.25, "vol": 0.8})
+		Haptic.medium()
+		Bg.warp = 1.35
+		await get_tree().create_timer(0.42).timeout
+		FX.flash("#d8f6ff", 0.55)
+		_jumping = false
 		if sel == "daily":
 			Ui.startRun("normal", {"challenge": M.challenge()})
 		else:
@@ -781,14 +796,12 @@ class OverView extends Control:
 		chests.add_child(Kit.button(Lang.t("ОТКРЫТЬ КОНТЕЙНЕР (%d)") % n, func(): _open_chest(), "gold"))
 
 	func _open_chest() -> void:
+		if Ui.chest_v.visible: return
 		var r = M.openChest()
 		if r == null: return
-		var rel: Dictionary = D.RELICS[r.id]
-		A.play("achievement")
-		Haptic.success()
-		var col: String = D.RELIC_RARITY[rel.rar].color
-		Ui.dialog({"ico": rel.ico, "title": (Lang.t("ПОВТОР: ") if r.dupe else Lang.t("КСЕНОТЕХ: ")) + rel.name, "text": rel.desc + (Lang.t("\n\nУже в коллекции — взамен ◆ %d") % r.coins if r.dupe else Lang.t("\n\nДобавлен в коллекцию")), "ok": Lang.t("ОТЛИЧНО"), "noCancel": true, "color": col})
 		_render_chests()
+		# Godot: открытие с анимацией (scripts/ui/chest_view.gd) вместо простого окна
+		Ui.chest_v.play(r.tier, r, func(): _render_chests())
 
 
 # ════════════════════════════════════════════════════════════

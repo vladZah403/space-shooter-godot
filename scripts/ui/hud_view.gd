@@ -18,6 +18,13 @@ var _loseT := 0.0
 var _scorePop := 0.0
 var _lastScore := 0
 var _comboA := 0.0
+## Godot: полоса босса — белая «отложенная» часть догоняет урон; на смене фазы полоса трескается и вздрагивает
+var _bossRef = null
+var _bossLag := 1.0
+var _bossHold := 0.0
+var _bossK := 1.0
+var _bossPhase := 1
+var _crackT := 0.0
 var t := 0.0
 
 
@@ -94,6 +101,21 @@ func update_hud(dt: float) -> void:
 	_coinBump = maxf(0, _coinBump - dt)
 	_loseT = maxf(0, _loseT - dt)
 	_scorePop = maxf(0, _scorePop - dt)
+	_crackT = maxf(0, _crackT - dt)
+	var bs = Game.boss
+	if bs and bs.alive:
+		var k: float = clampf(bs.hp / maxf(1.0, bs.maxHp), 0.0, 1.0)
+		if not is_same(bs, _bossRef):
+			_bossRef = bs; _bossLag = k; _bossK = k; _bossPhase = bs.phase
+		if k < _bossK - 0.0001: _bossHold = 0.45   # новый урон — белая часть ждёт, потом догоняет
+		_bossK = k
+		if _bossLag < k: _bossLag = k
+		if _bossHold > 0: _bossHold -= dt
+		else: _bossLag = maxf(k, _bossLag - dt * (0.35 + (_bossLag - k) * 2.0))
+		if bs.phase != _bossPhase:
+			_bossPhase = bs.phase
+			_crackT = 0.7
+			_bossLag = k
 	_layout()
 	_draw_hud()
 
@@ -239,9 +261,15 @@ func _draw_hud() -> void:
 		_txt(nm, cx, y, 11, U.col("#ff6b81"), 900, 1, 3)
 		var x0 := fx + 14
 		var w := fw - 28
+		# на смене фазы полоса вздрагивает
+		if _crackT > 0: x0 += sin(_crackT * 70.0) * 3.0 * (_crackT / 0.7)
 		ctx.fill = Color(40 / 255.0, 0, 10 / 255.0, 0.65); ctx.stroke = Color(1, 77 / 255.0, 109 / 255.0, 0.45); ctx.line_width = 1
 		ctx.begin_path(); ctx.round_rect(x0, y + 5, w, 9, 5); ctx.fill_path(); ctx.stroke_path()
 		var k := maxf(0, boss.hp / boss.maxHp)
+		# отложенный урон — белым, от текущего здоровья до «догоняющей» отметки
+		if _bossLag > k + 0.002:
+			ctx.fill = Color(1, 0.96, 0.9, 0.85)
+			ctx.fill_rect(x0 + 1 + (w - 2) * k, y + 6, (w - 2) * (_bossLag - k), 7)
 		if k > 0:
 			ctx.fill_poly(PackedVector2Array([Vector2(x0 + 1, y + 6), Vector2(x0 + 1 + (w - 2) * k, y + 6), Vector2(x0 + 1 + (w - 2) * k, y + 13), Vector2(x0 + 1, y + 13)]),
 				PackedColorArray([U.col("#ff2d55"), U.col("#ff7a45"), U.col("#ff7a45"), U.col("#ff2d55")]))
@@ -249,6 +277,18 @@ func _draw_hud() -> void:
 			ctx.fill = U.col("#bfefff"); ctx.fill_rect(x0 + 1, y + 6, (w - 2) * boss.shield / boss.shieldMax, 3)
 		ctx.fill = Color(12 / 255.0, 0, 6 / 255.0, 0.9)
 		ctx.fill_rect(x0 + w / 3.0 - 1, y + 5, 2, 9); ctx.fill_rect(x0 + w * 2 / 3.0 - 1, y + 5, 2, 9)
+		# трещина на границе пройденной фазы: белая вспышка и ломаная линия
+		if _crackT > 0:
+			var a := _crackT / 0.7
+			var cxp: float = x0 + w * (1.0 - (_bossPhase - 1) / 3.0)
+			ctx.alpha = a
+			ctx.fill = Color(1, 1, 1, 0.5)
+			ctx.fill_rect(x0, y + 5, w, 9)
+			ctx.stroke = Color(1, 0.95, 0.85); ctx.line_width = 1.5
+			ctx.begin_path(); ctx.move_to(cxp - 2, y + 2); ctx.line_to(cxp + 3, y + 7); ctx.line_to(cxp - 2, y + 11); ctx.line_to(cxp + 2, y + 17); ctx.stroke_path()
+			ctx.begin_path(); ctx.move_to(cxp + 3, y + 7); ctx.line_to(cxp + 9, y + 5); ctx.stroke_path()
+			ctx.begin_path(); ctx.move_to(cxp - 2, y + 11); ctx.line_to(cxp - 8, y + 13); ctx.stroke_path()
+			ctx.alpha = 1.0
 		extra = 30
 	# ── значки бонусов (слева) и комбо (справа) ──
 	var chips: Array = []

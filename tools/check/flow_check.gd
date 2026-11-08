@@ -43,8 +43,14 @@ func _ready() -> void:
 	_step("контейнеров до", M.s.chests.size(), _buttons(Ui.over).map(func(b): return b.text))
 	for i in 4:
 		if not _press(Ui.over, "КОНТЕЙНЕР"): break
+		await _f(40)
+		# анимация открытия: касание — к карточке, ещё касание — закрыть
+		var tap := InputEventMouseButton.new()
+		tap.pressed = true
+		tap.button_index = MOUSE_BUTTON_LEFT
+		if Ui.chest_v.visible: Ui.chest_v._gui_input(tap)
 		await _f(5)
-		if Ui.dialog_v.visible: Ui.dialog_v.ok.pressed.emit()
+		if Ui.chest_v.visible: Ui.chest_v._gui_input(tap)
 		await _f(5)
 	_step("контейнеры открыты, осталось", M.s.chests.size())
 	_press(Ui.over, "ЕЩЁ РАЗ"); await _f(40)

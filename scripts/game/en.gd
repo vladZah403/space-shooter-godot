@@ -165,6 +165,7 @@ var drained := 0.0
 var vtAll := 0.0
 var xn := 0
 var _dt := 0.0
+var dmgFx := 0.0          # Godot: таймер дыма/искр подбитого врага
 
 
 func g(key: String, default = null) -> Variant:

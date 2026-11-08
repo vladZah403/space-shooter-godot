@@ -22,6 +22,7 @@ var dialog_v: Control
 var ship: Control
 var toasts: VBoxContainer
 var tutor: TutorView       # Godot: обучение в первом забеге
+var chest_v: ChestOpenView # Godot: анимация открытия контейнера
 var banner_box: Control
 var cur := "menu"
 var runEvents: Array = []
@@ -55,6 +56,7 @@ func build(world: Node) -> void:
 	root.add_child(toasts)
 	tutor = TutorView.new(); root.add_child(tutor)
 	ship = preload("res://scripts/ui/ship_view.gd").new(); root.add_child(ship)
+	chest_v = ChestOpenView.new(); root.add_child(chest_v)
 	dialog_v = Views.DialogView.new(); root.add_child(dialog_v)
 	# окна появляются плавно (Tween), разделы меню въезжают сбоку
 	for v in [pause_v, revive, over, tip, dialog_v, ship, menu.diff]: Kit.animate_on_show(v)
