@@ -604,7 +604,7 @@ func _render_skills() -> void:
 			c.custom_minimum_size = Vector2(76, 0)
 			if st.locked: c.modulate.a = 0.55
 			var v := Kit.vbox(1)
-			v.add_child(Kit.icon("sk_" + id, sk.ico, 34))
+			v.add_child(Kit.icon(id, sk.ico, 34))
 			v.add_child(Kit.label(sk.name, 10, Kit.TEXT, 800, HORIZONTAL_ALIGNMENT_CENTER))
 			var rk := ("✓" if st.maxed else "очки: %d" % sk.cost) + (" · %d/%d" % [st.rank, st.max] if st.max > 1 else "") + (" ⚡" if sk.type == "active" else "")
 			v.add_child(Kit.label(rk, 10, col, 800, HORIZONTAL_ALIGNMENT_CENTER))
@@ -619,7 +619,7 @@ func _render_skills() -> void:
 	var v := Kit.vbox(6)
 	p.add_child(v)
 	var hh := Kit.hbox(10)
-	hh.add_child(Kit.icon("sk_" + sk_sel, sk.ico, 44))
+	hh.add_child(Kit.icon(sk_sel, sk.ico, 44))
 	var hv := Kit.vbox(2)
 	hv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hv.add_child(Kit.label(sk.name, 17, bc, 900))

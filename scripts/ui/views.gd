@@ -480,14 +480,32 @@ class PauseView extends Control:
 		Kit.clear(build)
 		var pil: Dictionary = D.PILOTS.get(run.pilot, D.PILOTS.kai)
 		build.add_child(Kit.label(pil.ico + " " + pil.name + "  · СБОРКА ЗАБЕГА", 12, U.col(pil.color), 800))
-		var chips: Array = []
+		# значки сборки — спрайты (модули md_, улучшения pk_, ксенотех r_), уровень — цифрой в углу
+		var items: Array = []
 		for m in D.MODULES:
-			if run.mods.get(m.id): chips.append(m.ico + (str(run.mods[m.id]) if run.mods[m.id] > 1 else ""))
+			if run.mods.get(m.id): items.append(["md_" + m.id, m.ico, int(run.mods[m.id])])
 		for pk in D.PERKS:
-			if run.perks.get(pk.id) and not pk.filler: chips.append(pk.ico + (str(run.perks[pk.id]) if run.perks[pk.id] > 1 else ""))
+			if run.perks.get(pk.id) and not pk.filler: items.append(["pk_" + pk.id, pk.ico, int(run.perks[pk.id])])
 		for id in run.relics:
-			if D.RELICS.has(id): chips.append(D.RELICS[id].ico)
-		build.add_child(Kit.para(" ".join(chips) if not chips.is_empty() else "Пока пусто — модули на станциях, улучшения за кристаллы", 15, Kit.TEXT))
+			if D.RELICS.has(id): items.append([id, D.RELICS[id].ico, 1])
+		if items.is_empty():
+			build.add_child(Kit.para("Пока пусто — модули на станциях, улучшения за кристаллы", 13, Kit.MUTED))
+		else:
+			var grid := HFlowContainer.new()
+			grid.add_theme_constant_override("h_separation", 4)
+			grid.add_theme_constant_override("v_separation", 4)
+			for it in items:
+				var cell := Control.new()
+				cell.custom_minimum_size = Vector2(34, 34)
+				cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				var ic := Kit.icon(it[0], it[1], 34)
+				cell.add_child(ic)
+				if it[2] > 1:
+					var n := Kit.label(str(it[2]), 11, Kit.GOLD, 900)
+					n.position = Vector2(24, 20)
+					cell.add_child(n)
+				grid.add_child(cell)
+			build.add_child(grid)
 		_sync()
 		visible = true
 		A.muffle(true)
@@ -584,7 +602,7 @@ class OverView extends Control:
 	var xp_bar: ProgressBar
 	var xp_lvl: Label
 	var chests: VBoxContainer
-	var events: Label
+	var events: HFlowContainer
 	var sum: Dictionary = {}
 	var _t := 0.0
 	var _counts: Array = []
@@ -629,7 +647,12 @@ class OverView extends Control:
 		xh.add_child(xp_bar)
 		v.add_child(xh)
 		chests = Kit.vbox(6); v.add_child(chests)
-		events = Kit.para("", 12, Kit.MUTED, HORIZONTAL_ALIGNMENT_CENTER); v.add_child(events)
+		# события забега: значок (у достижений — медаль) и подпись
+		events = HFlowContainer.new()
+		events.alignment = FlowContainer.ALIGNMENT_CENTER
+		events.add_theme_constant_override("h_separation", 10)
+		events.add_theme_constant_override("v_separation", 4)
+		v.add_child(events)
 		var bh := Kit.hbox(8)
 		var again := Kit.button("↻ ЕЩЁ РАЗ", func(): Ui.again(), "primary", "big")
 		again.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -670,8 +693,14 @@ class OverView extends Control:
 		xp_bar.max_value = D.ship_xp_need(M.s.shipLvl)
 		xp_bar.value = M.s.shipXP
 		_render_chests()
-		var evs: Array = Ui.runEvents.slice(0, 8).map(func(a): return a.ico + " " + a.text)
-		events.text = "   ".join(evs)
+		Kit.clear(events)
+		for a in Ui.runEvents.slice(0, 8):
+			var h := Kit.hbox(4)
+			h.add_child(Kit.ach_icon(a.ach, 22) if a.has("ach") else Kit.icon("", a.ico, 20))
+			var l := Kit.label(a.text, 12, Kit.MUTED, 700)
+			l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			h.add_child(l)
+			events.add_child(h)
 		_t = 0.0
 		visible = true
 

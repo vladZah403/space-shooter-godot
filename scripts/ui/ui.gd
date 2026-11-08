@@ -65,7 +65,7 @@ func build(world: Node) -> void:
 func _wire() -> void:
 	Bus.on("toast", func(t): toast(t))
 	Bus.on("achievement", func(a):
-		if inRun(): runEvents.append({"ico": a.ico, "text": a.name})
+		if inRun(): runEvents.append({"ico": a.ico, "text": a.name, "ach": a})
 		toast({"ico": a.ico, "ach": a, "title": "ДОСТИЖЕНИЕ", "text": a.name, "rew": "+%d" % a.reward}))
 	Bus.on("mission", func(m):
 		if inRun():

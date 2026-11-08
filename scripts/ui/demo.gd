@@ -710,7 +710,7 @@ class SkillDemo extends Scene:
 		var ir := 13 * k
 		c.fill = Color(0, 0, 0, 0.55); c.fill_circle(ix, iy, ir + 2 * k)
 		c.alpha = 1.0 if on else 0.55
-		if G.has("sk_" + id): G.draw(c, "sk_" + id, ix, iy, ir * 2)
+		if G.has(id): G.draw(c, id, ix, iy, ir * 2)
 		else:
 			c.font = Kit.font(600); c.fill = Color.WHITE; c.fill_text(sk.ico, ix, iy + ir * 0.5, int(ir * 1.3), 1)
 		c.alpha = 1.0

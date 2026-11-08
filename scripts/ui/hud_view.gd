@@ -261,7 +261,7 @@ func _draw_hud() -> void:
 	if run.waveDamage == 0 and g.wave and not g.wave.cleared and g.state == "play": chips.append(["#3dffa2", "", "★", 1.0, "×2"])
 	for k in g.buffs: chips.append([D.POWERUPS[k].color, "", BUFF_ICONS.get(k, "★"), g.buffs[k] / D.POWERUPS[k].dur, ""])
 	for id in run.skillFx:
-		if run.skillFx[id] > 0 and D.SKILLS.has(id): chips.append(["#3de0ff", "sk_" + id, D.SKILLS[id].ico, run.skillFx[id] / maxf(0.01, D.SKILLS[id].dur), ""])
+		if run.skillFx[id] > 0 and D.SKILLS.has(id): chips.append(["#3de0ff", id, D.SKILLS[id].ico, run.skillFx[id] / maxf(0.01, D.SKILLS[id].dur), ""])
 	if run.overload > 0: chips.append(["#ffc83d", "", "⚡", 1.0, ""])
 	var chx2 := fx + 12
 	var chy := top + 92 + extra
@@ -322,7 +322,7 @@ func _draw_hud() -> void:
 		var frac := fxv / maxf(0.01, sk.dur) if fxv > 0 else (1 - cd / maxf(0.01, sk.cd * g.st.cdMul) if cd > 0 else 1.0)
 		_ring(c.x, c.y, 26, frac, Kit.GREEN if fxv > 0 else (Kit.MUTED if cd > 0 else Kit.CYAN), 3)
 		ctx.alpha = 0.45 if cd > 0 and fxv <= 0 else 1.0
-		_icon("sk_" + id, sk.ico, c.x, c.y, 30)
+		_icon(id, sk.ico, c.x, c.y, 30)
 		ctx.alpha = 1.0
 		if cd > 0 and fxv <= 0: _txt(str(int(ceil(cd))), c.x, c.y + 6, 16, Kit.TEXT, 900, 1, 4)
 	# бомба
