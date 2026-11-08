@@ -981,10 +981,10 @@ func _render_settings() -> void:
 		body.add_child(p)
 		return p
 	# Godot: язык — смена через перезапуск (данные переводятся при загрузке)
-	var v: VBoxContainer = sec.call("ЯЗЫК · LANGUAGE").get_child(0)
+	var v: VBoxContainer = sec.call(Lang.t("ЯЗЫК · LANGUAGE")).get_child(0)
 	var lh := Kit.hbox(4)
 	var cur_lang := Lang.setting()
-	for o in [["auto", Lang.t("Авто")], ["ru", "Русский"], ["en", "English"]]:
+	for o in [["auto", Lang.t("Авто")], ["ru", Lang.t("Русский")], ["en", "English"]]:
 		var code: String = o[0]
 		var b := Kit.button(o[1], func():
 			if Lang.setting() == code: return
@@ -1028,6 +1028,10 @@ func _render_settings() -> void:
 		if on: Haptic.medium())))
 	v = sec.call(Lang.t("ПРОГРЕСС")).get_child(0)
 	v.add_child(_row(Lang.t("Сохранение"), Kit.label(Lang.t("на этом устройстве"), 12, Kit.MUTED, 700)))
+	v.add_child(_row(Lang.t("Обучение"), Kit.button(Lang.t("ПРОЙТИ ЗАНОВО"), func():
+		M.s.tutor = false
+		M.soon()
+		Ui.toast({"ico": "🎓", "title": Lang.t("ОБУЧЕНИЕ"), "text": Lang.t("Подсказки появятся в следующем забеге"), "info": true}), "", "sm")))
 	v.add_child(_row(Lang.t("Сбросить прогресс"), Kit.button(Lang.t("СБРОС"), func():
 		var really := func():
 			M.reset(); A.play("explodeM"); Ui.toast({"ico": "🗑️", "title": Lang.t("ГОТОВО"), "text": Lang.t("Прогресс сброшен"), "info": true}); _rerender()

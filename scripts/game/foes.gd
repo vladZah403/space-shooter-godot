@@ -84,7 +84,7 @@ func resist(e: En, src: String, dmg: float) -> float:
 		e.shieldHitT = 0.1
 		if U.random() < 0.2: A.play("hitArmor", {"vol": 0.4})
 	elif k < 1:
-		nope(e, Lang.t(ARMOR_TXT.get(e.type, "БРОНЯ")), "#bff4ff")
+		nope(e, Lang.t(ARMOR_TXT.get(e.type, Lang.t("БРОНЯ"))), "#bff4ff")
 		if U.random() < 0.3: FX.sparks(e.x + U.rand(-0.3, 0.3) * e.w, e.y + e.h * 0.3, "#bff4ff", 3, 160)
 	elif k > 1 and U.random() < 0.3:
 		FX.sparks(e.x, e.y, "#e0fbff", 5, 220)

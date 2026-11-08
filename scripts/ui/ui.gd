@@ -21,6 +21,7 @@ var revive: Control
 var dialog_v: Control
 var ship: Control
 var toasts: VBoxContainer
+var tutor: TutorView       # Godot: обучение в первом забеге
 var banner_box: Control
 var cur := "menu"
 var runEvents: Array = []
@@ -52,6 +53,7 @@ func build(world: Node) -> void:
 	toasts.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	toasts.offset_left = 12; toasts.offset_right = -12
 	root.add_child(toasts)
+	tutor = TutorView.new(); root.add_child(tutor)
 	ship = preload("res://scripts/ui/ship_view.gd").new(); root.add_child(ship)
 	dialog_v = Views.DialogView.new(); root.add_child(dialog_v)
 	# окна появляются плавно (Tween), разделы меню въезжают сбоку
@@ -168,8 +170,8 @@ func startRun(diffId: String, opts = null) -> void:
 	if not M.s.seenIntro:
 		M.s.seenIntro = true
 		M.soon()
-		get_tree().create_timer(2.4).timeout.connect(func(): banner([[Lang.t("ВЕДИТЕ ПАЛЬЦЕМ ПО ЭКРАНУ"), 2], [Lang.t("Стрельба автоматическая • двойной тап — бомба"), 3]], "#3de0ff", 3200))
-		get_tree().create_timer(6.2).timeout.connect(func(): banner([[Lang.t("СОБИРАЙТЕ ЗЕЛЁНЫЕ КРИСТАЛЛЫ"), 2], [Lang.t("Новый уровень — выбор улучшения"), 3]], "#3dffa2", 3200))
+	# Godot: вместо двух баннеров первого забега — пошаговое обучение (scripts/ui/tutor_view.gd)
+	tutor.start()
 
 
 func again() -> void:
