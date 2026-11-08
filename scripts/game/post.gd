@@ -18,6 +18,8 @@ var rect: ColorRect
 var mat: ShaderMaterial
 var mat_full: ShaderMaterial   # со свечением и размытием (копия экрана с мип-уровнями — дорого)
 var mat_lite: ShaderMaterial   # только волны, воронки, аберрация, щиты, цвет
+var mat_tex: ShaderMaterial    # то же, но шейдер на картинке мира (world.gd: wview) — без копии экрана
+var world_view: Control        # картинка мира; задаёт world.gd
 var waves: Array = []        # { x, y (экран), t, dur, r1 (доли высоты), k }
 var lenses: Array = []       # Vector4(x, y (экран), r, k) — на один кадр
 var bubbles: Array = []      # [Vector4(x, y (UV), r, k), Color(цвет, удар)] — на один кадр
@@ -46,6 +48,8 @@ func _ready() -> void:
 	mat_full.shader = load("res://assets/shaders/post.gdshader")
 	mat_lite = ShaderMaterial.new()
 	mat_lite.shader = load("res://assets/shaders/post_lite.gdshader")
+	mat_tex = ShaderMaterial.new()
+	mat_tex.shader = load("res://assets/shaders/post_tex.gdshader")
 	mat = mat_lite
 	rect.material = mat
 	rect.visible = false
@@ -61,10 +65,13 @@ var _off := "--nopost" in OS.get_cmdline_user_args()   # проверки: бе�
 
 func level() -> int:
 	if _off or not M.s.settings.get("post", true): return 0
-	# телефон: копия экрана каждый кадр (пузырь щита, волны бомбы, цвет при перках) вешала Safari на айфоне —
-	# эффекты экрана только при «Высоком», выбранном вручную; щит и взрывы остаются обычными спрайтами
-	if Main.is_mobile() and M.s.settings.get("quality", "auto") != "high": return 0
 	return Main.quality
+
+
+## копия экрана (свечение, размытие под окнами) — на телефоне только при «Высоком», выбранном вручную:
+## Safari на айфоне от неё захлёбывался. Остальные эффекты идут шейдером на картинке мира — им копия не нужна
+func full_ok() -> bool:
+	return not Main.is_mobile() or M.s.settings.get("quality", "auto") == "high"
 
 
 ## ударная волна из точки поля; power ≈ 0.4 — крупный взрыв, 1 — бомба/супервзрыв, 2 — смерть босса
@@ -133,14 +140,24 @@ func frame(dt: float) -> void:
 	bubbles.clear()
 	aberr = maxf(0.0, aberr - dt * 0.012)
 	var bl := bloom if lv >= 2 and Main.bloom_ok() else 0.0
+	var fok := full_ok()
+	if not fok:
+		bl = 0.0
 	var wp := warp if lv > 0 else 0.0
 	warp = 0.0
 	_mood(dt)
-	var on := lv > 0 and (bl > 0 or n > 0 or ln > 0 or bn > 0 or aberr > 0.0004 or wp > 0.005 or blur > 0.01 or sat < 0.99 or not grade.is_equal_approx(Vector3.ONE))
-	rect.visible = on
+	var bk := blur if fok else 0.0
+	var on := lv > 0 and (bl > 0 or n > 0 or ln > 0 or bn > 0 or aberr > 0.0004 or wp > 0.005 or bk > 0.01 or sat < 0.99 or not grade.is_equal_approx(Vector3.ONE))
+	# свечение и размытие — полноэкранный слой с копией экрана; остальное — шейдер на картинке мира
+	var full := on and (bl > 0 or bk > 0.01)
+	var tex := on and not full and world_view != null
+	rect.visible = full or (on and world_view == null)
+	if world_view:
+		var want: Material = mat_tex if tex else null
+		if world_view.material != want: world_view.material = want
 	if not on: return
-	mat = mat_full if bl > 0 or blur > 0.01 else mat_lite
-	if rect.material != mat: rect.material = mat
+	mat = mat_full if full else (mat_tex if tex else mat_lite)
+	if rect.visible and rect.material != mat: rect.material = mat
 	mat.set_shader_parameter("aspect", G.W / G.H)
 	mat.set_shader_parameter("waves", _wv)
 	mat.set_shader_parameter("wave_n", n)
@@ -153,7 +170,7 @@ func frame(dt: float) -> void:
 	mat.set_shader_parameter("bloom", bl)
 	mat.set_shader_parameter("warp", wp)
 	mat.set_shader_parameter("warp_c", Vector2((warp_at.x + G.FX) / G.W, warp_at.y / G.H))
-	mat.set_shader_parameter("blur", blur)
+	mat.set_shader_parameter("blur", bk)
 	mat.set_shader_parameter("sat", sat)
 	mat.set_shader_parameter("grade", grade)
 

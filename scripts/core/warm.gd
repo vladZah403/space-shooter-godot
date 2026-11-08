@@ -11,7 +11,7 @@ static func run(host: Node) -> void:
 	vp.render_target_update_mode = SubViewport.UPDATE_ONCE
 	host.add_child(vp)
 	var mats: Array = [Bg.makeNebula(D.SECTORS[0]), Bg.makePlanet(D.SECTORS[0]).mat, E._burnMat(), E.cloakMat(), Game.darkMat(),
-		Post.mat_full, Post.mat_lite]
+		Post.mat_full, Post.mat_lite, Post.mat_tex]
 	for m in mats:
 		var r := ColorRect.new()
 		r.size = Vector2(8, 8)

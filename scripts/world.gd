@@ -14,6 +14,12 @@ const KEYS := {
 }
 
 var ctx: Ctx
+## Godot: мир (фон, враги, пули, частицы) рисуется в свой буфер wvp и выводится на экран картинкой wview.
+## Эффекты экрана (Post: волны, воронки, пузыри щитов, цвет) — шейдер на этой картинке: копировать экран не нужно,
+## а именно копия экрана каждый кадр вешала Safari на айфоне
+var wvp: SubViewport
+var wcanvas: Node2D
+var wview: TextureRect
 var autoplay := false
 var shots_dir := ""
 var max_seconds := 0.0
@@ -31,7 +37,23 @@ var _prof := {"frame": 0.0, "draw": 0.0, "ui": 0.0, "n": 0, "max": 0.0, "t": 0.0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	ctx = Ctx.new(get_canvas_item())
+	wvp = SubViewport.new()
+	wvp.disable_3d = true
+	wvp.transparent_bg = false
+	wvp.gui_disable_input = true
+	wvp.size_2d_override_stretch = true   # рисуем в точках вёрстки, буфер — в пикселях экрана (шрифты чёткие)
+	wvp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	add_child(wvp)
+	wcanvas = Node2D.new()
+	wvp.add_child(wcanvas)
+	wview = TextureRect.new()
+	wview.texture = wvp.get_texture()
+	wview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	wview.stretch_mode = TextureRect.STRETCH_SCALE
+	wview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(wview)
+	Post.world_view = wview
+	ctx = Ctx.new(wcanvas.get_canvas_item())
 	ctx.font = Kit.font(700)   # надписи на поле (реплики, «КОМБО», числа урона) — тем же шрифтом с кириллицей
 	for a in OS.get_cmdline_user_args():
 		if a == "--autoplay": autoplay = true
@@ -47,7 +69,7 @@ func _ready() -> void:
 	if prof: print("[prof] ядер %d, качество Q%d (авто %s), телефон %s, свечение %s" % [OS.get_processor_count(), Main.quality, Main.autoQ, Main.is_mobile(), Main.bloom_ok()])
 	get_viewport().size_changed.connect(_on_resize)
 	_on_resize()
-	Vfx.attach(self)
+	Vfx.attach(wcanvas)
 	Ui.build(self)
 	(func(): Warm.run(self)).call_deferred()   # шейдеры и глифы — заранее, а не в бою
 	# заставка при запуске (её можно выключить в настройках)
@@ -60,6 +82,11 @@ func _ready() -> void:
 
 func _on_resize() -> void:
 	G.resize()
+	var px := get_tree().root.size
+	wvp.size = Vector2i(maxi(px.x, 1), maxi(px.y, 1))
+	wvp.size_2d_override = Vector2i(maxi(roundi(G.W), 1), maxi(roundi(G.H), 1))
+	wview.position = Vector2.ZERO
+	wview.size = Vector2(G.W, G.H)
 	Bg.resize()
 	if Game.player: Game.clampPlayer()
 

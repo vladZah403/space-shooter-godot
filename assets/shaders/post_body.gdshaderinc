@@ -6,10 +6,18 @@
 
 // Godot: копия экрана с мип-уровнями нужна только свечению и размытию — их строит видеокарта каждый кадр, это дорого.
 // post.gdshader (POST_MIPS) — полный вариант, post_lite.gdshader — без мип-уровней: волны, воронки, аберрация, щиты
+// post_tex.gdshader (POST_TEX) — шейдер на картинке мира (world.gd: wview): читает её TEXTURE, без копии экрана
+#ifdef POST_TEX
+#define SRC TEXTURE
+#define SUV UV
+#else
+#define SRC screen_tex
+#define SUV SCREEN_UV
 #ifdef POST_MIPS
 uniform sampler2D screen_tex : hint_screen_texture, repeat_disable, filter_linear_mipmap;
 #else
 uniform sampler2D screen_tex : hint_screen_texture, repeat_disable, filter_linear;
+#endif
 #endif
 uniform float aspect = 0.46;
 uniform vec4 waves[6];      // x, y (UV), радиус, сила
@@ -35,7 +43,7 @@ vec2 rot(vec2 v, float a) {
 }
 
 void fragment() {
-	vec2 uv = SCREEN_UV;
+	vec2 uv = SUV;
 	vec2 asp = vec2(aspect, 1.0);
 	vec2 off = vec2(0.0);
 	float ca = aberr;
@@ -94,11 +102,11 @@ void fragment() {
 	vec3 col;
 	if (ca > 0.0004) {
 		vec2 cd = (suv - vec2(0.5)) * ca * 2.0;
-		col.r = textureLod(screen_tex, suv + cd, 0.0).r;
-		col.g = textureLod(screen_tex, suv, 0.0).g;
-		col.b = textureLod(screen_tex, suv - cd, 0.0).b;
+		col.r = textureLod(SRC, suv + cd, 0.0).r;
+		col.g = textureLod(SRC, suv, 0.0).g;
+		col.b = textureLod(SRC, suv - cd, 0.0).b;
 	} else {
-		col = textureLod(screen_tex, suv, 0.0).rgb;
+		col = textureLod(SRC, suv, 0.0).rgb;
 	}
 	col += rim_glow;
 	// форсаж: размытие по лучам к точке прыжка
@@ -108,22 +116,22 @@ void fragment() {
 		vec2 wd = (warp_c - suv) * warp * 0.03;
 		vec3 acc = col;
 		for (int k = 1; k <= 8; k++) {
-			acc += textureLod(screen_tex, suv + wd * (float(k) - j), 0.0).rgb;
+			acc += textureLod(SRC, suv + wd * (float(k) - j), 0.0).rgb;
 		}
 		col = acc / 9.0;
 	}
 #ifdef POST_MIPS
 	// свечение: размытые мип-уровни, только яркое (мягкий порог)
 	if (bloom > 0.0) {
-		vec3 b = textureLod(screen_tex, suv, 1.2).rgb * 0.4
-			+ textureLod(screen_tex, suv, 2.5).rgb * 0.4
-			+ textureLod(screen_tex, suv, 4.0).rgb * 0.3
-			+ textureLod(screen_tex, suv, 5.5).rgb * 0.2;
+		vec3 b = textureLod(SRC, suv, 1.2).rgb * 0.4
+			+ textureLod(SRC, suv, 2.5).rgb * 0.4
+			+ textureLod(SRC, suv, 4.0).rgb * 0.3
+			+ textureLod(SRC, suv, 5.5).rgb * 0.2;
 		b = max(b - vec3(bloom_thr), vec3(0.0));
 		col += b * b * bloom * 3.0;
 	}
 	if (blur > 0.0) {
-		vec3 bl = textureLod(screen_tex, suv, 2.5).rgb * 0.6 + textureLod(screen_tex, suv, 3.5).rgb * 0.4;
+		vec3 bl = textureLod(SRC, suv, 2.5).rgb * 0.6 + textureLod(SRC, suv, 3.5).rgb * 0.4;
 		col = mix(col, bl, blur);
 	}
 #endif
