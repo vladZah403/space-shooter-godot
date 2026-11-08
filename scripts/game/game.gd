@@ -49,6 +49,10 @@ var slowT := 0.0
 ## камера (Godot): наезд на точку поля — смерть босса, его появление. z — текущее увеличение, tz — цель,
 ## hold — сколько ещё держать (с, по реальному времени: замедление мира камеру не тормозит)
 var cam := {"x": 0.0, "y": 0.0, "z": 1.0, "tz": 1.0, "hold": 0.0}
+## аномалия «Затмение» (Godot): насколько сгустилась тьма 0…1 (плавно приходит и уходит)
+var darkK := 0.0
+var _dark_mat: ShaderMaterial
+var _dark_l := PackedVector4Array()
 var stopT := 0.0
 var player: Pl = null
 var bullets: Array[Bl] = []
@@ -175,6 +179,7 @@ func start(newDiffId: String, o := {}) -> void:
 	wave = null
 	t = 0.0; timeScale = 1.0; slowT = 0.0; stopT = 0.0
 	cam = {"x": 0.0, "y": 0.0, "z": 1.0, "tz": 1.0, "hold": 0.0}
+	darkK = 0.0
 	Bg.setSector(0, true)
 	Bg.warp = 0.6
 	state = "play"
@@ -471,6 +476,7 @@ func frame(rdt: float) -> void:
 		return
 	if state == "play" or state == "dying" or state == "cutscene":
 		updateCam(rdt)
+		darkK = move_toward(darkK, 1.0 if anomaly("eclipse") and state == "play" else 0.0, rdt * 0.5)
 		# хитстоп: мир замирает на пару кадров (кадр при этом рисуется)
 		if stopT > 0:
 			stopT -= rdt
@@ -489,6 +495,45 @@ func frame(rdt: float) -> void:
 	else:
 		# пауза / выбор улучшения / экран итогов — фон слегка живёт
 		Bg.update(rdt, 0.4 if state == "over" else 0.05)
+
+
+## Godot: аномалия «Затмение» — тьма поверх фона и врагов (assets/shaders/dark.gdshader); свет дают корабль,
+## взрывы, свежие выстрелы и вражеские снаряды. Пули, корабль и вспышки рисуются уже поверх тьмы
+func drawDark(ctx: Ctx) -> void:
+	if _dark_mat == null:
+		_dark_mat = ShaderMaterial.new()
+		_dark_mat.shader = load("res://assets/shaders/dark.gdshader")
+		_dark_l.resize(20)
+	var S := G.S
+	# прямоугольник с запасом на тряску и наезд камеры; огни — в его координатах
+	var rx := -G.FX - 40.0
+	var ry := -40.0
+	var rw := G.W + 80.0
+	var rh := G.H + 80.0
+	var L: Array[Vector4] = []
+	var p := player
+	if p.alive: L.append(Vector4(p.x, p.y, 175 * S, 1.0))
+	var k := 0
+	for i in range(FX.expl.size() - 1, -1, -1):
+		var ex: Dictionary = FX.expl[i]
+		if k >= 8: break
+		L.append(Vector4(ex.x, ex.y, ex.w * 1.7, 1.0 - ex.life / ex.dur)); k += 1
+	k = 0
+	for i in range(bullets.size() - 1, -1, -1):   # свежие выстрелы — в конце списка
+		if k >= 6: break
+		L.append(Vector4(bullets[i].x, bullets[i].y, 52 * S, 0.6)); k += 1
+	k = 0
+	for i in range(ebullets.size() - 1, -1, -1):
+		if k >= 5: break
+		L.append(Vector4(ebullets[i].x, ebullets[i].y, 40 * S, 0.45)); k += 1
+	for i in L.size(): _dark_l[i] = Vector4(L[i].x - rx, L[i].y - ry, L[i].z, L[i].w)
+	_dark_mat.set_shader_parameter("lights", _dark_l)
+	_dark_mat.set_shader_parameter("light_n", L.size())
+	_dark_mat.set_shader_parameter("size", Vector2(rw, rh))
+	_dark_mat.set_shader_parameter("dark", 0.92 * darkK)
+	ctx.alpha = 1.0
+	ctx.additive = false
+	ctx.shader_rect(_dark_mat, rx, ry, rw, rh)
 
 
 ## наезд камеры на точку поля (x, y — координаты поля): увеличение z, держится hold секунд, потом плавно назад.
@@ -3168,6 +3213,7 @@ func draw(ctx: Ctx) -> void:
 	E.drawAll(ctx)
 	Foes.drawFront(ctx)
 	Events.drawMid(ctx)
+	if darkK > 0.01: drawDark(ctx)
 	drawBullets(ctx)
 	drawPlayer(ctx)
 	Skills.drawFront(ctx)
